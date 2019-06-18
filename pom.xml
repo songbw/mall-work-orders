@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.fengchao.workorders</groupId>
+    <artifactId>workorders</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+
+    <name>workorders</name>
+    <description>Wordorders of Phoenix Mall</description>
+
+    <repositories>
+        <repository>
+            <id>oschina-repos</id>
+            <name>Oschina Releases</name>
+            <url>http://maven.oschina.net/content/groups/public</url>
+        </repository>
+
+        <repository>
+            <id>aliyun-repos</id>
+            <name>aliyun Releases</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        </repository>
+
+        <repository>
+            <id>java-repos</id>
+            <name>Java Repository</name>
+            <url>https://maven.java.net/content/repositories/public/</url>
+        </repository>
+
+        <repository>
+            <id>JBoss-repos</id>
+            <name>JBoss Repository</name>
+            <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+        </repository>
+
+        <repository>
+            <id>springsource-repos</id>
+            <name>SpringSource Repository</name>
+            <url>http://repo.spring.io/release/</url>
+        </repository>
+
+        <repository>
+            <id>central-repos</id>
+            <name>Central Repository</name>
+            <url>http://repo.maven.apache.org/maven2</url>
+        </repository>
+
+        <repository>
+            <id>central-repos2</id>
+            <name>Central Repository 2</name>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+
+        <repository>
+            <id>activiti-repos</id>
+            <name>Activiti Repository</name>
+            <url>https://maven.alfresco.com/nexus/content/groups/public</url>
+        </repository>
+
+        <repository>
+            <id>activiti-repos2</id>
+            <name>Activiti Repository 2</name>
+            <url>https://app.camunda.com/nexus/content/groups/public</url>
+        </repository>
+
+        <repository>
+            <id>easonjim-repos</id>
+            <name>EasonJim Repository</name>
+            <url>https://raw.github.com/easonjim/repository/master</url>
+        </repository>
+
+    </repositories>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.4.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- 分页插件 -->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>1.2.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.qcloudsms</groupId>
+            <artifactId>qcloudsms</artifactId>
+            <version>1.0.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.9.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.47</version>
+        </dependency>
+        <dependency>
+        <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!--dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <version>5.0.4.RELEASE</version>
+        </dependency-->
+        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <!--dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-redis</artifactId>
+        </dependency-->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jersey</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.swagger2markup</groupId>
+            <artifactId>swagger2markup</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.asciidoctor</groupId>
+            <artifactId>asciidoctorj-pdf</artifactId>
+            <version>1.5.0-alpha.10.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.netzwerg</groupId>
+            <artifactId>paleo-core</artifactId>
+            <version>0.10.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- mybatis generator 自动生成代码插件 -->
+            <plugin>
+                <groupId>org.mybatis.generator</groupId>
+                <artifactId>mybatis-generator-maven-plugin</artifactId>
+                <version>1.3.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId> mysql</groupId>
+                        <artifactId> mysql-connector-java</artifactId>
+                        <version> 5.1.39</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.mybatis.generator</groupId>
+                        <artifactId>mybatis-generator-core</artifactId>
+                        <version>1.3.5</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>Generate MyBatis Artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!--允许移动生成的文件 -->
+                    <verbose>true</verbose>
+                    <!-- 是否覆盖 -->
+                    <overwrite>true</overwrite>
+                    <!-- 自动生成的配置 -->
+                    <configurationFile>
+                        src/main/resources/generator/mybatisGenerator.xml</configurationFile>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.github.swagger2markup</groupId>
+                <artifactId>swagger2markup-maven-plugin</artifactId>
+                <version>1.3.1</version>
+                <configuration>
+                    <swaggerInput>http://localhost:8086/v1/swagger-ui.html</swaggerInput>
+                    <outputDir>src/docs/asciidoc/generated</outputDir>
+                    <config>
+                        <swagger2markup.markupLanguage>ASCIIDOC</swagger2markup.markupLanguage>
+                    </config>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.asciidoctor</groupId>
+                <artifactId>asciidoctor-maven-plugin</artifactId>
+                <version>1.5.6</version>
+                <configuration>
+                    <sourceDirectory>src/docs/asciidoc/generated</sourceDirectory>
+                    <outputDirectory>src/docs/asciidoc/html</outputDirectory>
+                    <backend>html</backend>
+                    <sourceHighlighter>coderay</sourceHighlighter>
+                    <attributes>
+                        <toc>left</toc>
+                    </attributes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
+
+</project>

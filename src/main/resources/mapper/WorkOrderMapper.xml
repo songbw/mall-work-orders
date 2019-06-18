@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fengchao.workorders.mapper.WorkOrderMapper">
+  <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.WorkOrder">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="customer" jdbcType="VARCHAR" property="customer" />
+    <result column="receptionist" jdbcType="VARCHAR" property="receptionist" />
+    <result column="type_id" jdbcType="BIGINT" property="typeId" />
+    <result column="work_flow" jdbcType="VARCHAR" property="workFlow" />
+    <result column="outcome" jdbcType="VARCHAR" property="outcome" />
+    <result column="finish_time" jdbcType="TIMESTAMP" property="finishTime" />
+    <result column="urgent_degree" jdbcType="INTEGER" property="urgentDegree" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, order_id, title, description, customer, receptionist, type_id, work_flow, outcome,
+    finish_time, urgent_degree, status, create_time, update_time, created_by, updated_by
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from work_order
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from work_order
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <select id="selectByOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from work_order
+    where order_id = #{orderId,jdbcType=BIGINT}
+  </select>
+  <select id="selectRange" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from work_order
+    where
+    true
+    <if test="title != null and title.length() != 0">
+      AND title LIKE concat('%', #{title,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="description != null and description.length() != 0">
+      AND description LIKE concat('%', #{description,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="customer != null and customer.length() != 0">
+      AND customer LIKE concat('%', #{customer,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="receptionist != null and receptionist.length() != 0">
+      AND receptionist LIKE concat('%', #{receptionist,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="typeId !=null ">
+      AND type_id = #{typeId,jdbcType=BIGINT}
+    </if>
+    <if test="urgentDegree !=null ">
+      AND urgent_degree = #{urgentDegree,jdbcType=INTEGER}
+    </if>
+    <if test="status !=null ">
+      AND status = #{status,jdbcType=INTEGER}
+    </if>
+    <if test="finishTimeStart !=null ">
+      AND finish_time &gt;= #{finishTimeStart,jdbcType=TIMESTAMP}
+    </if>
+    <if test="finishTimeEnd !=null ">
+      AND finish_time &lt;= #{finishTimeEnd,jdbcType=TIMESTAMP}
+    </if>
+    <if test="createTimeStart !=null ">
+      AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+    </if>
+    <if test="createTimeEnd !=null ">
+      AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+    </if>
+    <if test="sort !=''">
+      ORDER BY ${sort}
+    </if>
+    <if test="order != ''">
+      ${order}
+    </if>
+  </select>
+  <insert id="insert" parameterType="com.fengchao.workorders.model.WorkOrder">
+    insert into work_order (id, order_id, title,
+      description, customer, receptionist,
+      type_id, work_flow, outcome,
+      finish_time, urgent_degree, status,
+      create_time, update_time, created_by,
+      updated_by)
+    values (#{id,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR},
+      #{description,jdbcType=VARCHAR}, #{customer,jdbcType=VARCHAR}, #{receptionist,jdbcType=VARCHAR},
+      #{typeId,jdbcType=BIGINT}, #{workFlow,jdbcType=VARCHAR}, #{outcome,jdbcType=VARCHAR},
+      #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER},
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
+      #{updatedBy,jdbcType=VARCHAR})
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+  </insert>
+  <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkOrder">
+    insert into work_order
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="orderId != null">
+        order_id,
+      </if>
+      <if test="title != null">
+        title,
+      </if>
+      <if test="description != null">
+        description,
+      </if>
+      <if test="customer != null">
+        customer,
+      </if>
+      <if test="receptionist != null">
+        receptionist,
+      </if>
+      <if test="typeId != null">
+        type_id,
+      </if>
+      <if test="workFlow != null">
+        work_flow,
+      </if>
+      <if test="outcome != null">
+        outcome,
+      </if>
+      <if test="finishTime != null">
+        finish_time,
+      </if>
+      <if test="urgentDegree != null">
+        urgent_degree,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="createdBy != null">
+        created_by,
+      </if>
+      <if test="updatedBy != null">
+        updated_by,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="orderId != null">
+        #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="title != null">
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null">
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="customer != null">
+        #{customer,jdbcType=VARCHAR},
+      </if>
+      <if test="receptionist != null">
+        #{receptionist,jdbcType=VARCHAR},
+      </if>
+      <if test="typeId != null">
+        #{typeId,jdbcType=BIGINT},
+      </if>
+      <if test="workFlow != null">
+        #{workFlow,jdbcType=VARCHAR},
+      </if>
+      <if test="outcome != null">
+        #{outcome,jdbcType=VARCHAR},
+      </if>
+      <if test="finishTime != null">
+        #{finishTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="urgentDegree != null">
+        #{urgentDegree,jdbcType=INTEGER},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </trim>
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.WorkOrder">
+    update work_order
+    <set>
+      <if test="orderId != null">
+        order_id = #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="title != null">
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null">
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="customer != null">
+        customer = #{customer,jdbcType=VARCHAR},
+      </if>
+      <if test="receptionist != null">
+        receptionist = #{receptionist,jdbcType=VARCHAR},
+      </if>
+      <if test="typeId != null">
+        type_id = #{typeId,jdbcType=BIGINT},
+      </if>
+      <if test="workFlow != null">
+        work_flow = #{workFlow,jdbcType=VARCHAR},
+      </if>
+      <if test="outcome != null">
+        outcome = #{outcome,jdbcType=VARCHAR},
+      </if>
+      <if test="finishTime != null">
+        finish_time = #{finishTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="urgentDegree != null">
+        urgent_degree = #{urgentDegree,jdbcType=INTEGER},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        created_by = #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        updated_by = #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.WorkOrder">
+    update work_order
+    set order_id = #{orderId,jdbcType=VARCHAR},
+      title = #{title,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      customer = #{customer,jdbcType=VARCHAR},
+      receptionist = #{receptionist,jdbcType=VARCHAR},
+      type_id = #{typeId,jdbcType=BIGINT},
+      work_flow = #{workFlow,jdbcType=VARCHAR},
+      outcome = #{outcome,jdbcType=VARCHAR},
+      finish_time = #{finishTime,jdbcType=TIMESTAMP},
+      urgent_degree = #{urgentDegree,jdbcType=INTEGER},
+      status = #{status,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      created_by = #{createdBy,jdbcType=VARCHAR},
+      updated_by = #{updatedBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>

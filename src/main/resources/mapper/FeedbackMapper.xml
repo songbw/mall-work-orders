@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fengchao.workorders.mapper.FeedbackMapper">
+  <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.Feedback">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="work_order_id" jdbcType="BIGINT" property="workOrderId" />
+    <result column="customer" jdbcType="VARCHAR" property="customer" />
+    <result column="feedback_text" jdbcType="VARCHAR" property="feedbackText" />
+    <result column="feedback_time" jdbcType="TIMESTAMP" property="feedbackTime" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, title, work_order_id, customer, feedback_text, feedback_time, create_time,
+    update_time, created_by, updated_by
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from feedback
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectByWorkOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from feedback
+    where work_order_id = #{workOrderId,jdbcType=BIGINT}
+  </select>
+  <select id="selectRange" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from feedback
+    where
+    true
+    <if test="workOrderId != null">
+      AND work_order_id = #{workOrderId,jdbcType=BIGINT}
+    </if>
+    <if test="customer != null and customer.length() != 0">
+      AND customer LIKE concat('%', #{customer,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="title != null and title.length() != 0">
+      AND title LIKE concat('%', #{title,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="feedbackText != null and feedbackText.length() != 0">
+      AND feedback_text LIKE concat('%', #{feedbackText,jdbcType=VARCHAR},'%')
+    </if>
+    <if test="createTimeStart !=null ">
+      AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+    </if>
+    <if test="createTimeEnd !=null ">
+      AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+    </if>
+    <if test="sort !=''">
+      ORDER BY ${sort}
+    </if>
+    <if test="order != ''">
+      ${order}
+    </if>
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from feedback
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.fengchao.workorders.model.Feedback">
+    insert into feedback (id, title, work_order_id,
+      customer, feedback_text, feedback_time,
+      create_time, update_time, created_by,
+      updated_by)
+    values (#{id,jdbcType=BIGINT}, #{title,jdbcType=VARCHAR}, #{workOrderId,jdbcType=BIGINT},
+      #{customer,jdbcType=VARCHAR}, #{feedbackText,jdbcType=VARCHAR}, #{feedbackTime,jdbcType=TIMESTAMP},
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
+      #{updatedBy,jdbcType=VARCHAR})
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+  </insert>
+  <insert id="insertSelective" parameterType="com.fengchao.workorders.model.Feedback">
+    insert into feedback
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="title != null">
+        title,
+      </if>
+      <if test="workOrderId != null">
+        work_order_id,
+      </if>
+      <if test="customer != null">
+        customer,
+      </if>
+      <if test="feedbackText != null">
+        feedback_text,
+      </if>
+      <if test="feedbackTime != null">
+        feedback_time,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="createdBy != null">
+        created_by,
+      </if>
+      <if test="updatedBy != null">
+        updated_by,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="title != null">
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="workOrderId != null">
+        #{workOrderId,jdbcType=BIGINT},
+      </if>
+      <if test="customer != null">
+        #{customer,jdbcType=VARCHAR},
+      </if>
+      <if test="feedbackText != null">
+        #{feedbackText,jdbcType=VARCHAR},
+      </if>
+      <if test="feedbackTime != null">
+        #{feedbackTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcTypid = #{id,jdbcType=BIGINT}e=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </trim>
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.Feedback">
+    update feedback
+    <set>
+      <if test="title != null">
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="workOrderId != null">
+        work_order_id = #{workOrderId,jdbcType=BIGINT},
+      </if>
+      <if test="customer != null">
+        customer = #{customer,jdbcType=VARCHAR},
+      </if>
+      <if test="feedbackText != null">
+        feedback_text = #{feedbackText,jdbcType=VARCHAR},
+      </if>
+      <if test="feedbackTime != null">
+        feedback_time = #{feedbackTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        created_by = #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        updated_by = #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.Feedback">
+    update feedback
+    set title = #{title,jdbcType=VARCHAR},
+      work_order_id = #{workOrderId,jdbcType=BIGINT},
+      customer = #{customer,jdbcType=VARCHAR},
+      feedback_text = #{feedbackText,jdbcType=VARCHAR},
+      feedback_time = #{feedbackTime,jdbcType=TIMESTAMP},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      created_by = #{createdBy,jdbcType=VARCHAR},
+      updated_by = #{updatedBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>

@@ -1,0 +1,17 @@
+spring:
+  datasource:
+     url: jdbc:mysql://127.0.0.1:3306/work_orders?characterEncoding=utf8&useSSL=false&autoReconnect=true&failOverReadOnly=false&maxReconnects=10
+     username: guest01
+     password: 123qwe
+     driver-class-name: com.mysql.jdbc.Driver
+
+#腾讯云信分配的账号
+AppkeyTXAPP_ID: 1400142593
+#腾讯云信分配的密钥
+AppSecretTXAPP_KEY: ba6fdbd845a766b87f81bc05a2be5733
+#腾讯云验证码有效期
+ActiveTime: 5
+#腾讯云模板登录验证码ID template
+TemplateID1: 195791
+#腾讯云模板更新密码ID template
+TemplateID2: 213259

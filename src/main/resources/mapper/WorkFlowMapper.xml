@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fengchao.workorders.mapper.WorkFlowMapper">
+  <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.WorkFlow">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="work_order_id" jdbcType="BIGINT" property="workOrderId" />
+    <result column="sender" jdbcType="BIGINT" property="sender" />
+    <result column="receiver" jdbcType="BIGINT" property="receiver" />
+    <result column="comments" jdbcType="VARCHAR" property="comments" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id,  work_order_id, sender, receiver, comments, create_time, update_time,
+    created_by, updated_by
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from work_flow
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectByWorkOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from work_flow
+    where work_order_id = #{workOrderId,jdbcType=BIGINT}
+  </select>
+  <select id="selectRange" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from work_flow
+    where
+    true
+    <if test="workOrderId != null">
+      AND  work_order_id = #{workOrderId,jdbcType=BIGINT}
+    </if>
+    <if test="sender != null">
+      AND sender = #{sender,jdbcType=BIGINT}
+    </if>
+    <if test="receiver != null">
+      AND receiver = #{receiver,jdbcType=BIGINT}
+    </if>
+    <if test="createTimeStart !=null ">
+      AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+    </if>
+    <if test="createTimeEnd !=null ">
+      AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+    </if>
+    <if test="sort !=''">
+      ORDER BY ${sort}
+    </if>
+    <if test="order != ''">
+      ${order}
+    </if>
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from work_flow
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.fengchao.workorders.model.WorkFlow">
+    insert into work_flow (id, work_order_id,
+      sender, receiver, comments,
+      create_time, update_time, created_by,
+      updated_by)
+    values (#{id,jdbcType=BIGINT}, #{workOrderId,jdbcType=BIGINT},
+      #{sender,jdbcType=BIGINT}, #{receiver,jdbcType=BIGINT}, #{comments,jdbcType=VARCHAR},
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
+      #{updatedBy,jdbcType=VARCHAR})
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+  </insert>
+  <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkFlow">
+    insert into work_flow
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="workOrderId != null">
+        work_order_id,
+      </if>
+      <if test="sender != null">
+        sender,
+      </if>
+      <if test="receiver != null">
+        receiver,
+      </if>
+      <if test="comments != null">
+        comments,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="createdBy != null">
+        created_by,
+      </if>
+      <if test="updatedBy != null">
+        updated_by,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="workOrderId != null">
+        #{workOrderId,jdbcType=BIGINT},
+      </if>
+      <if test="sender != null">
+        #{sender,jdbcType=BIGINT},
+      </if>
+      <if test="receiver != null">
+        #{receiver,jdbcType=BIGINT},
+      </if>
+      <if test="comments != null">
+        #{comments,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </trim>
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.WorkFlow">
+    update work_flow
+    <set>
+      <if test="workOrderId != null">
+        work_order_id = #{workOrderId,jdbcType=BIGINT},
+      </if>
+      <if test="sender != null">
+        sender = #{sender,jdbcType=BIGINT},
+      </if>
+      <if test="receiver != null">
+        receiver = #{receiver,jdbcType=BIGINT},
+      </if>
+      <if test="comments != null">
+        comments = #{comments,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        created_by = #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        updated_by = #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.WorkFlow">
+    update work_flow
+    set
+      work_order_id = #{workOrderId,jdbcType=BIGINT},
+      sender = #{sender,jdbcType=BIGINT},
+      receiver = #{receiver,jdbcType=BIGINT},
+      comments = #{comments,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      created_by = #{createdBy,jdbcType=VARCHAR},
+      updated_by = #{updatedBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>

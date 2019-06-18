@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fengchao.workorders.mapper.AttachmentMapper">
+  <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.Attachment">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="work_order_id" jdbcType="BIGINT" property="workOrderId" />
+    <result column="submitter" jdbcType="VARCHAR" property="submitter" />
+    <result column="path" jdbcType="VARCHAR" property="path" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, name, work_order_id, submitter, path, create_time, update_time, created_by, updated_by
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from attachment
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="selectByWorkOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from attachment
+        where work_order_id = #{workOrderId,jdbcType=BIGINT}
+    </select>
+  <select id="selectRange" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from attachment
+        where
+          true
+      <if test=" workOrderId != null">
+          AND work_order_id = #{workOrderId,jdbcType=BIGINT}
+      </if>
+      <if test=" name != null and name.length() != 0">
+          AND name LIKE concat('%', #{name,jdbcType=VARCHAR},'%')
+      </if>
+      <if test="submitter != null and submitter.length() != 0">
+          AND submitter LIKE concat('%', #{submitter,jdbcType=VARCHAR},'%')
+      </if>
+      <if test="createTimeStart !=null ">
+          AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+      </if>
+      <if test="createTimeEnd !=null ">
+          AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+      </if>
+      <if test="sort !=''">
+          ORDER BY ${sort}
+      </if>
+      <if test="order != ''">
+          ${order}
+      </if>
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from attachment
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.fengchao.workorders.model.Attachment">
+    insert into attachment (id, name, work_order_id,
+      submitter, path, create_time,
+      update_time, created_by, updated_by
+      )
+    values (#{id,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, #{workOrderId,jdbcType=BIGINT},
+      #{submitter,jdbcType=VARCHAR}, #{path,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},
+      #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, #{updatedBy,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.fengchao.workorders.model.Attachment">
+    insert into attachment
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="workOrderId != null">
+        work_order_id,
+      </if>
+      <if test="submitter != null">
+        submitter,
+      </if>
+      <if test="path != null">
+        path,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="createdBy != null">
+        created_by,
+      </if>
+      <if test="updatedBy != null">
+        updated_by,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="workOrderId != null">
+        #{workOrderId,jdbcType=BIGINT},
+      </if>
+      <if test="submitter != null">
+        #{submitter,jdbcType=VARCHAR},
+      </if>
+      <if test="path != null">
+        #{path,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.Attachment">
+    update attachment
+    <set>
+      <if test="name != null">
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="workOrderId != null">
+        work_order_id = #{workOrderId,jdbcType=BIGINT},
+      </if>
+      <if test="submitter != null">
+        submitter = #{submitter,jdbcType=VARCHAR},
+      </if>
+      <if test="path != null">
+        path = #{path,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createdBy != null">
+        created_by = #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedBy != null">
+        updated_by = #{updatedBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.Attachment">
+    update attachment
+    set name = #{name,jdbcType=VARCHAR},
+      work_order_id = #{workOrderId,jdbcType=BIGINT},
+      submitter = #{submitter,jdbcType=VARCHAR},
+      path = #{path,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      created_by = #{createdBy,jdbcType=VARCHAR},
+      updated_by = #{updatedBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>
