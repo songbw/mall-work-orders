@@ -5,12 +5,14 @@ import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.service.impl.OrderTypeServiceImpl;
 import com.fengchao.workorders.util.*;
 import io.swagger.annotations.*;
-import io.swagger.models.auth.In;
+//
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 //import org.springframework.security.core.Authentication;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,8 @@ import java.util.List;
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 
 public class OrderTypeController {
+
+    private static Logger logger = LoggerFactory.getLogger(OrderTypeController.class);
 
     private OrderTypeServiceImpl orderTypeService;
 
@@ -65,6 +69,11 @@ public class OrderTypeController {
         List<OrderTypeBean> list = new ArrayList<>();
         List<OrderType> orderTypes = orderTypeService.selectAll();
 
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
         result.list = list;
         if (null != orderTypes && orderTypes.size() > 0) {
             for (OrderType o: orderTypes) {
@@ -85,7 +94,7 @@ public class OrderTypeController {
     //@PreAuthorize("hasPermission('OrderType','insert')")
     public IdBean insertOrderType(HttpServletResponse response,
                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                            @RequestBody OrderTypeBean data ) {
+                            @RequestBody OrderTypeBodyBean data ) {
 
         IdBean result = new IdBean();
 
@@ -93,15 +102,16 @@ public class OrderTypeController {
         String workflowText = data.getWorkflowText();
         String workflowUrl = data.getWorkflowUrl();
 
-
-        if (orderTypeName.isEmpty() || orderTypeName.isEmpty()
-                || null == workflowText || 0 == workflowText.length()) {
+        if (null == orderTypeName || orderTypeName.isEmpty()
+            || null == workflowText || 0 == workflowText.length()) {
             StringUtil.throw400Exp(response,"400002: 工单类型名, 工作流程文字说明不能为空");
         }
 
         OrderType orderType = orderTypeService.selectByName(orderTypeName);
         if (null != orderType) {
             StringUtil.throw400Exp(response,"400002: 工单类型名已经存在");
+        } else {
+            orderType = new OrderType();
         }
 
         if (null != workflowUrl && !workflowUrl.isEmpty()) {
@@ -137,16 +147,25 @@ public class OrderTypeController {
                                       @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                       @ApiParam(value="id",required=true)@PathVariable("id") Long id ) {
 
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
+        OrderTypeBean result = new OrderTypeBean();
         if (null == id) {
             StringUtil.throw400Exp(response,"400002: ID为空");
+            return result;
         }
 
         OrderType orderType = orderTypeService.selectById(id);
         if (null == orderType) {
             StringUtil.throw400Exp(response,"400003: Failed to find OrderType");
+            return result;
         }
 
-        OrderTypeBean result = new OrderTypeBean();
+
         BeanUtils.copyProperties(orderType, result);
 
         return result;
@@ -160,7 +179,7 @@ public class OrderTypeController {
     public IdBean updateOrderTypeById(HttpServletResponse response,
                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                             @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                            @RequestBody OrderTypeBean data ) {
+                            @RequestBody OrderTypeBodyBean data ) {
 
         IdBean result = new IdBean();
         String name = data.getName();
@@ -169,11 +188,13 @@ public class OrderTypeController {
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            return result;
         }
 
         OrderType orderType = orderTypeService.selectById(id);
         if (null == orderType) {
             StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            return result;
         }
 
         if (null != name && !orderType.getName().equals(name)) {
@@ -216,9 +237,15 @@ public class OrderTypeController {
                                  @ApiParam(value="id",required=true)@PathVariable("id") Long id
                                  ) {
 
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            return;
         }
 
         OrderType orderType = orderTypeService.selectById(id);
@@ -229,7 +256,7 @@ public class OrderTypeController {
         orderTypeService.deleteById(id);
 
         response.setStatus(MyErrorMap.e204.getCode());
-        return ;
+
     }
 
 
@@ -240,11 +267,22 @@ public class OrderTypeController {
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                             @ApiParam(value="获取页的序号",required=true)@RequestParam Integer pageIndex,
                                             @ApiParam(value="每页返回的最大数",required=true)@RequestParam Integer pageSize,
-                                            @ApiParam(value="名称",required=false)@RequestParam(required=false) String name,
-                                            @ApiParam(value="反馈提交开始时间",required=false)@RequestParam(required=false) String createTimeStart,
-                                            @ApiParam(value="反馈提交结束时间",required=false)@RequestParam(required=false) String createTimeEnd
+                                            @ApiParam(value="名称")@RequestParam(required=false) String name,
+                                            @ApiParam(value="反馈提交开始时间")@RequestParam(required=false) String createTimeStart,
+                                            @ApiParam(value="反馈提交结束时间")@RequestParam(required=false) String createTimeEnd
 
     ) {
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
+        if (null == pageIndex || 0 >= pageIndex
+            || null == pageSize || 0>= pageSize) {
+            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        }
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
@@ -269,11 +307,13 @@ public class OrderTypeController {
         result.setPageSize(pageSize);
         result.setTotal(pageInfo.getTotal());
 
-        for (OrderType f : pageInfo.getRows()) {
-            OrderTypeBean b = new OrderTypeBean();
+        if ((pageIndex -1) * pageSize <= pageInfo.getTotal()) {
+            for (OrderType f : pageInfo.getRows()) {
+                OrderTypeBean b = new OrderTypeBean();
 
-            BeanUtils.copyProperties(f, b);
-            beans.add(b);
+                BeanUtils.copyProperties(f, b);
+                beans.add(b);
+            }
         }
         result.setRows(beans);
 

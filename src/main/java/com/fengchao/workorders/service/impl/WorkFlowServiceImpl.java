@@ -37,7 +37,7 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
 
     @Override
     public Long insert(WorkFlow workFlow) {
-        int rst = workFlowMapper.insert(workFlow);
+        int rst = workFlowMapper.insertSelective(workFlow);
         if (0 < rst) {
             return workFlow.getId();
         } else {

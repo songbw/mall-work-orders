@@ -22,7 +22,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
         Contact contact = new Contact("Clark", "", "1554711952@qq.com");
         List<VendorExtension> vendorExtensions = new ArrayList<>();
         ApiInfo apiInfo = new ApiInfo(
-                "用户管理接口文档",//大标题
+                "工单管理接口文档",//大标题
                 "请勿随意测试删除类接口",//小标题
                 "V1.0.0",//版本
                 "",

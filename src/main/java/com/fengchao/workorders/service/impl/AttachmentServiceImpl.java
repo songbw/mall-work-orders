@@ -32,15 +32,15 @@ public class AttachmentServiceImpl implements IAttachmentService {
 
     @Override
     public Boolean isExistName(String name) {
-        Attachment Attachment = attachmentMapper.selectByName(name);
+        List<Attachment> attachments = attachmentMapper.selectByName(name);
 
-        return (null != Attachment);
+        return (null != attachments && 0 < attachments.size());
     }
 
     @Override
     public Long insertRecord(Attachment attachment)
     {
-        int rst = attachmentMapper.insert(attachment);
+        int rst = attachmentMapper.insertSelective(attachment);
         if (0 >= rst) {
             return 0L;
         } else {
@@ -55,8 +55,15 @@ public class AttachmentServiceImpl implements IAttachmentService {
 
     @Override
     public Boolean isExistNameExcludeId(String name, Long id) {
-        Attachment attachment = attachmentMapper.selectByName(name);
-        return !(null != attachment && !id.equals(attachment.getId()));
+        List<Attachment> attachments = attachmentMapper.selectByName(name);
+        if (null == attachments) {
+            return false;
+        }
+        if (0 == attachments.size()) {
+            return false;
+        }
+
+        return (id.equals(attachments.get(0).getId()));
     }
 
     @Override

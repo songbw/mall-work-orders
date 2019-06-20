@@ -23,7 +23,7 @@ public interface AttachmentMapper {
 
     int updateByPrimaryKey(Attachment record);
 
-    Attachment selectByName(String name);
+    List<Attachment> selectByName(@Param("name") String name);
 
     List<Attachment> selectAll();
 

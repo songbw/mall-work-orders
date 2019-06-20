@@ -21,22 +21,34 @@
     from attachment
     where id = #{id,jdbcType=BIGINT}
   </select>
+  <select id="selectByName" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from attachment
+    where name = #{name,jdbcType=VARCHAR}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from attachment
+    where true
+  </select>
   <select id="selectByWorkOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
         from attachment
         where work_order_id = #{workOrderId,jdbcType=BIGINT}
-    </select>
+  </select>
   <select id="selectRange" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
         from attachment
         where
           true
-      <if test=" workOrderId != null">
+      <if test="workOrderId != null">
           AND work_order_id = #{workOrderId,jdbcType=BIGINT}
       </if>
-      <if test=" name != null and name.length() != 0">
+      <if test="name != null and name.length() != 0">
           AND name LIKE concat('%', #{name,jdbcType=VARCHAR},'%')
       </if>
       <if test="submitter != null and submitter.length() != 0">
@@ -68,6 +80,9 @@
       #{submitter,jdbcType=VARCHAR}, #{path,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},
       #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, #{updatedBy,jdbcType=VARCHAR}
       )
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+          SELECT LAST_INSERT_ID()
+    </selectKey>
   </insert>
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.Attachment">
     insert into attachment
@@ -129,6 +144,9 @@
         #{updatedBy,jdbcType=VARCHAR},
       </if>
     </trim>
+      <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+          SELECT LAST_INSERT_ID()
+      </selectKey>
   </insert>
   <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.Attachment">
     update attachment

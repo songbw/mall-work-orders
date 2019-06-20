@@ -1,6 +1,5 @@
 package com.fengchao.workorders.config;
 
-import com.fengchao.workorders.security.TokenClearLogoutHandler;
 import com.fengchao.workorders.filter.*;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +116,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/v2/api-docs").permitAll()
                     .antMatchers(HttpMethod.OPTIONS).permitAll()
                     .anyRequest().authenticated()
-                    //.anyRequest().permitAll()
+                    .anyRequest().permitAll()
                 .and()
                     .csrf().disable()
                     .formLogin().disable()

@@ -46,7 +46,7 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
             return;
         }
 
-        if (request.getRequestURI().contains("/vendors")) {
+        if (request.getRequestURI().contains("/v1")) {//for debug
             System.out.println("doFilterInternal: access vendors");
             chain.doFilter(request, response);
             return;

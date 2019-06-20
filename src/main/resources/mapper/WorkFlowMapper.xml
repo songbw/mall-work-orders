@@ -61,11 +61,11 @@
     where id = #{id,jdbcType=BIGINT}
   </delete>
   <insert id="insert" parameterType="com.fengchao.workorders.model.WorkFlow">
-    insert into work_flow (id, work_order_id,
+    insert into work_flow (work_order_id,
       sender, receiver, comments,
       create_time, update_time, created_by,
       updated_by)
-    values (#{id,jdbcType=BIGINT}, #{workOrderId,jdbcType=BIGINT},
+    values ( #{workOrderId,jdbcType=BIGINT},
       #{sender,jdbcType=BIGINT}, #{receiver,jdbcType=BIGINT}, #{comments,jdbcType=VARCHAR},
       #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
       #{updatedBy,jdbcType=VARCHAR})
@@ -76,9 +76,6 @@
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkFlow">
     insert into work_flow
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        id,
-      </if>
       <if test="workOrderId != null">
         work_order_id,
       </if>
@@ -105,9 +102,6 @@
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        #{id,jdbcType=BIGINT},
-      </if>
       <if test="workOrderId != null">
         #{workOrderId,jdbcType=BIGINT},
       </if>

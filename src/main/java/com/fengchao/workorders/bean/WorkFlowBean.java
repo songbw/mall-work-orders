@@ -5,7 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
-@ApiModel(value="工单流程内容信息")
+@ApiModel(value="工单流程查询信息")
 public class WorkFlowBean {
 
     @ApiModelProperty(value="ID", example="111",required=false)

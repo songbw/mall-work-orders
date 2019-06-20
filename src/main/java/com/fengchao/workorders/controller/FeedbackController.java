@@ -7,17 +7,19 @@ import com.fengchao.workorders.model.Feedback;
 import com.fengchao.workorders.service.impl.WorkOrderServiceImpl;
 import com.fengchao.workorders.util.*;
 import io.swagger.annotations.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
-import java.lang.NullPointerException;
+//import java.lang.NullPointerException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,6 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class FeedbackController {
+    private static Logger logger = LoggerFactory.getLogger(FeedbackController.class);
 
     private FeedbackServiceImpl feedbackService;
     private WorkOrderServiceImpl workOrderService;
@@ -37,14 +40,9 @@ public class FeedbackController {
         public Long id;
     }
 
-    @ApiModel(value="反馈列表")
-    private class FeedbackListData implements Serializable {
-        public List<Feedback> list;
-    }
-
     @Autowired
     public FeedbackController(WorkOrderServiceImpl workOrderService,
-                              FeedbackServiceImpl FeedbackService
+                              FeedbackServiceImpl feedbackService
                              ) {
         this.feedbackService = feedbackService;
         this.workOrderService = workOrderService;
@@ -57,37 +55,47 @@ public class FeedbackController {
     //@PreAuthorize("hasFeedback('Feedback','insert')")
     public FeedbackResponseData insert(HttpServletResponse response,
                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                            @RequestBody FeedbackBean data ) {
+                            @RequestBody FeedbackBodyBean data ) {
 
         FeedbackResponseData result = new FeedbackResponseData();
         String customer = data.getCustomer();
         String feedbackText = data.getFeedbackText();
         Long workOrderId = data.getWorkOrderId();
         String title = data.getTitle();
-        Date feedbackTime = data.getFeedbackTime();
+        String feedbackTimeStr = data.getFeedbackTime();
 
         if (null == customer || customer.isEmpty()
                 || null == feedbackText || feedbackText.isEmpty()
                 || null == workOrderId || 0 == workOrderId) {
                 StringUtil.throw400Exp(response,"400002: 反馈内容,反馈人, 工单不能为空");
+                return result;
         }
 
         WorkOrder workOrder = workOrderService.selectById(workOrderId);
         if (null == workOrder) {
             StringUtil.throw400Exp(response,"400002: 工单号不存在");
+            return result;
         }
 
         Feedback feedback = new Feedback();
+        try {
+            java.util.Date feedbackTime = StringUtil.String2Date(feedbackTimeStr);
+            feedback.setFeedbackTime(feedbackTime);
+        } catch (ParseException e) {
+            StringUtil.throw400Exp(response,"400002:反馈时间格式必须为:yyyy-MM-dd HH:mm:ss");
+            return result;
+        }
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null != username) {
             feedback.setUpdatedBy(username);
             feedback.setUpdatedBy(username);
         }
+        feedback.setWorkOrderId(workOrderId);
 
         feedback.setCustomer(customer);
         feedback.setFeedbackText(feedbackText);
-        feedback.setFeedbackTime(feedbackTime);
+
         if (null != title && !title.isEmpty()) {
             feedback.setTitle(title);
         }
@@ -113,8 +121,15 @@ public class FeedbackController {
                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                             @ApiParam(value="id",required=true)@PathVariable("id") Long id ) {
 
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
         if (null == id || 0 >= id ) {
             StringUtil.throw400Exp(response,"400002:can not find Feedback");
+            return;
         }
 
         Feedback feedback = feedbackService.selectById(id);
@@ -134,11 +149,7 @@ public class FeedbackController {
     //@PreAuthorize("hasFeedback('Feedback','update')")
     public FeedbackResponseData update(HttpServletResponse response,@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                             @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                            @RequestBody FeedbackBean data ) {
-
-        if (null == id || null == data) {
-            StringUtil.throw400Exp(response,"400002:can not find Feedback");
-        }
+                            @RequestBody FeedbackBodyBean data ) {
 
         FeedbackResponseData result = new FeedbackResponseData();
         Feedback feedback;
@@ -147,10 +158,17 @@ public class FeedbackController {
         String feedbackText = data.getFeedbackText();
         Long workOrderId = data.getWorkOrderId();
         String title = data.getTitle();
+        String feedbackTimeStr = data.getFeedbackTime();
+
+        if (null == id) {
+            StringUtil.throw400Exp(response,"400002:can not find Feedback");
+            return result;
+        }
 
         feedback = feedbackService.selectById(id);
         if ( null == feedback ) {
             StringUtil.throw400Exp(response,"400002:反馈不存在");
+            return result;
         }
 
         if (null != workOrderId && 0 != workOrderId) {
@@ -162,6 +180,15 @@ public class FeedbackController {
             }
         }
 
+        if (null != feedbackTimeStr && !feedbackTimeStr.isEmpty()) {
+            try {
+                Date feedbackTime = StringUtil.String2Date(feedbackTimeStr);
+                feedback.setFeedbackTime(feedbackTime);
+            } catch (ParseException e) {
+                StringUtil.throw400Exp(response, "400002:反馈时间格式必须为:yyyy-MM-dd HH:mm:ss");
+                return result;
+            }
+        }
         if (null != title && !title.isEmpty()) {
             feedback.setTitle(title);
         }
@@ -191,14 +218,25 @@ public class FeedbackController {
                                       @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                       @ApiParam(value="获取页的序号",required=true)@RequestParam Integer pageIndex,
                                       @ApiParam(value="每页返回的最大数",required=true)@RequestParam Integer pageSize,
-                                      @ApiParam(value="工单号",required=false)@RequestParam(required=false) Long workOrderId,
-                                      @ApiParam(value="反馈者",required=false)@RequestParam(required=false) String customer,
-                                      @ApiParam(value="标题",required=false)@RequestParam(required=false) String title,
-                                      @ApiParam(value="反馈内容",required=false)@RequestParam(required=false) String feedbackText,
-                                      @ApiParam(value="反馈提交开始时间",required=false)@RequestParam(required=false) String createTimeStart,
-                                      @ApiParam(value="反馈提交结束时间",required=false)@RequestParam(required=false) String createTimeEnd
+                                      @ApiParam(value="工单号")@RequestParam(required=false) Long workOrderId,
+                                      @ApiParam(value="反馈者")@RequestParam(required=false) String customer,
+                                      @ApiParam(value="标题")@RequestParam(required=false) String title,
+                                      @ApiParam(value="反馈内容")@RequestParam(required=false) String feedbackText,
+                                      @ApiParam(value="反馈提交开始时间")@RequestParam(required=false) String createTimeStart,
+                                      @ApiParam(value="反馈提交结束时间")@RequestParam(required=false) String createTimeEnd
                                       ) {
 
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
+        if (null == pageIndex || 0 >= pageIndex
+                || null == pageSize || 0>= pageSize) {
+            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        }
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
@@ -223,11 +261,13 @@ public class FeedbackController {
         result.setPageSize(pageSize);
         result.setTotal(pageInfo.getTotal());
 
-        for (Feedback f : pageInfo.getRows()) {
-            FeedbackBean b = new FeedbackBean();
+        if ((pageIndex -1) * pageSize <= pageInfo.getTotal()) {
+            for (Feedback f : pageInfo.getRows()) {
+                FeedbackBean b = new FeedbackBean();
 
-            BeanUtils.copyProperties(f, b);
-            beans.add(b);
+                BeanUtils.copyProperties(f, b);
+                beans.add(b);
+            }
         }
         result.setRows(beans);
 

@@ -47,12 +47,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public void deleteById(long id) {
+    public void deleteById(Long id) {
         workOrderMapper.deleteByPrimaryKey(id);
     }
 
     @Override
-    public WorkOrder selectById(long id) {
+    public WorkOrder selectById(Long id) {
         return workOrderMapper.selectByPrimaryKey(id);
     }
 

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.BeanUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+//import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ public class WorkOrderController {
 
     private WorkOrderServiceImpl workOrderService;
     private WorkFlowServiceImpl workFlowService;
+    private OrderTypeServiceImpl orderTypeService;
 
     @ApiModel(value = "工单信息ID")
     private class IdData implements Serializable {
@@ -41,18 +42,14 @@ public class WorkOrderController {
 
     }
 
-    @ApiModel(value = "工单List")
-    private class ListData implements Serializable {
-
-        public List<WorkOrderBean> list;
-
-    }
-
     @Autowired
-    public WorkOrderController(WorkFlowServiceImpl workFlowService,WorkOrderServiceImpl workOrderService
+    public WorkOrderController(WorkFlowServiceImpl workFlowService,
+                               OrderTypeServiceImpl orderTypeService,
+                               WorkOrderServiceImpl workOrderService
                              ) {
         this.workOrderService = workOrderService;
         this.workFlowService = workFlowService;
+        this.orderTypeService = orderTypeService;
     }
 
     @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
@@ -64,14 +61,21 @@ public class WorkOrderController {
                                  @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
         WorkOrderBean bean = new WorkOrderBean();
-        //String username = JwtTokenUtil.getUsername(authentication);
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            return bean;
         }
 
         WorkOrder workOrder = workOrderService.selectById(id);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:Failed to find work_order");
+            return bean;
         }
 
         BeanUtils.copyProperties(workOrder, bean);
@@ -87,25 +91,36 @@ public class WorkOrderController {
     @GetMapping("work_orders/pages")
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                   @ApiParam(value="页码",required=true)@RequestParam(required=true) Integer pageIndex,
-                                                   @ApiParam(value="每页记录数",required=true)@RequestParam(required=true) Integer pageSize,
-                                                   @ApiParam(value="标题",required=false)String title,
-                                                   @ApiParam(value="描述",required=false)String description,
-                                                   @ApiParam(value="订单所属客户",required=false)String customer,
-                                                   @ApiParam(value="工单指定接待员",required=false)String receptionist,
-                                                   @ApiParam(value="工单类型ID",required=false)Long typeId,
-                                                   @ApiParam(value="工单紧急程度",required=false)Integer urgentDegree,
-                                                   @ApiParam(value="工单状态码",required=false)Integer status,
-                                                   @ApiParam(value="预计完成时间开始",required=false)@RequestParam(required=false) String finishTimeStart,
-                                                   @ApiParam(value="预计完成时间结束",required=false)@RequestParam(required=false) String finishTimeEnd,
-                                                   @ApiParam(value="创建开始时间",required=false)@RequestParam(required=false) String createTimeStart,
-                                                   @ApiParam(value="创建结束时间",required=false)@RequestParam(required=false) String createTimeEnd
+                                                   @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
+                                                   @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                   @ApiParam(value="标题")String title,
+                                                   @ApiParam(value="描述")String description,
+                                                   @ApiParam(value="订单所属客户")String customer,
+                                                   @ApiParam(value="工单指定接待员")String receptionist,
+                                                   @ApiParam(value="工单类型ID")Long typeId,
+                                                   @ApiParam(value="工单紧急程度")Integer urgentDegree,
+                                                   @ApiParam(value="工单状态码")Integer status,
+                                                   @ApiParam(value="预计完成时间开始")@RequestParam(required=false) String finishTimeStart,
+                                                   @ApiParam(value="预计完成时间结束")@RequestParam(required=false) String finishTimeEnd,
+                                                   @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
+                                                   @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd
                                                      ) {
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
         java.util.Date dateFinishTimeStart = null;
         java.util.Date dateFinishTimeEnd = null;
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
+        if (null == pageIndex || 0 >= pageIndex
+                || null == pageSize || 0>= pageSize) {
+            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        }
 
         try {
             if (null != createTimeStart && !createTimeStart.isEmpty()) {
@@ -128,12 +143,14 @@ public class WorkOrderController {
                 "id", "DESC",title,description,customer,receptionist,typeId,urgentDegree,status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
 
         List<WorkOrderBean> list = new ArrayList<>();
-        for (WorkOrder a : pages.getRows()) {
-            WorkOrderBean b = new WorkOrderBean();
-            BeanUtils.copyProperties(a, b);
-            list.add(b);
-        }
 
+        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
+            for (WorkOrder a : pages.getRows()) {
+                WorkOrderBean b = new WorkOrderBean();
+                BeanUtils.copyProperties(a, b);
+                list.add(b);
+            }
+        }
         PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
@@ -147,7 +164,7 @@ public class WorkOrderController {
     @PostMapping("work_orders")
     public IdData createProfile(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @RequestBody WorkOrderBean data) throws RuntimeException {
+                                            @RequestBody WorkOrderBodyBean data) throws RuntimeException {
 
         logger.info("create WorkOrder enter");
         IdData result = new IdData();
@@ -158,8 +175,7 @@ public class WorkOrderController {
         String customer = data.getCustomer();
         String receptionist = data.getDescription();
         Long typeId = data.getTypeId();
-        String workFlow = data.getWorkFlow();
-        Date finishTime = data.getFinishTime();
+        String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
         if (null == typeId || 0 == typeId ||
@@ -170,7 +186,22 @@ public class WorkOrderController {
             StringUtil.throw400Exp(response, "400002:工单标题, 工单描述, 工单类型, 所属订单不能空缺");
         }
 
+        OrderType orderType = orderTypeService.selectById(typeId);
+        if (null == orderType) {
+            StringUtil.throw400Exp(response, "400002:工单类型错误");
+
+        }
+
         WorkOrder workOrder = new WorkOrder();
+
+        if (null != finishTimeStr && !finishTimeStr.isEmpty()) {
+            try {
+                Date finishTime = StringUtil.String2Date(finishTimeStr);
+                workOrder.setFinishTime(finishTime);
+            } catch (ParseException ex) {
+                StringUtil.throw400Exp(response,"400002:dateTime format error");
+            }
+        }
 
         workOrder.setTitle(title);
         workOrder.setDescription(description);
@@ -185,14 +216,6 @@ public class WorkOrderController {
             workOrder.setReceptionist(receptionist);
         }
 
-        if (null != finishTime) {
-            workOrder.setFinishTime(finishTime);
-        }
-
-        if (null != workFlow && !workFlow.isEmpty()) {
-            workOrder.setWorkFlow(workFlow);
-        }
-
         if (null != urgentDegree) {
             workOrder.setUrgentDegree(urgentDegree);
         }
@@ -204,9 +227,7 @@ public class WorkOrderController {
             workOrder.setUpdatedBy(username);
         }
 
-        Long id = workOrderService.insert(workOrder);
-
-        result.id = id;
+        result.id = workOrderService.insert(workOrder);
         response.setStatus(MyErrorMap.e201.getCode());
 
         return result;
@@ -219,7 +240,8 @@ public class WorkOrderController {
     public IdData updateProfile(HttpServletResponse response,
                                 @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                @RequestBody WorkOrderBean data) throws RuntimeException {
+                                @RequestBody WorkOrderBodyBean data) throws RuntimeException {
+
 
         logger.info("update WorkOrder");
         IdData result = new IdData();
@@ -231,16 +253,27 @@ public class WorkOrderController {
         String receptionist = data.getDescription();
         Long typeId = data.getTypeId();
         String workFlow = data.getWorkFlow();
-        Date finishTime = data.getFinishTime();
+        String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            return result;
         }
 
         WorkOrder workOrder = workOrderService.selectById(id);
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400002:工单流程不存在");
+            StringUtil.throw400Exp(response, "400003:工单不存在");
+            return result;
+        }
+
+        if (null != finishTimeStr && !finishTimeStr.isEmpty()) {
+            try {
+                Date finishTime = StringUtil.String2Date(finishTimeStr);
+                workOrder.setFinishTime(finishTime);
+            } catch (ParseException ex) {
+                StringUtil.throw400Exp(response,"400002:dateTime format error");
+            }
         }
 
         if (null != title && !title.isEmpty() ) {
@@ -248,6 +281,11 @@ public class WorkOrderController {
         }
 
         if (null != typeId) {
+            OrderType orderType = orderTypeService.selectById(typeId);
+            if (null == orderType) {
+                StringUtil.throw400Exp(response, "400002:工单类型错误");
+
+            }
             workOrder.setTypeId(typeId);
         }
         if (null != orderId) {
@@ -263,10 +301,6 @@ public class WorkOrderController {
 
         if (null != receptionist && !receptionist.isEmpty()) {
             workOrder.setReceptionist(receptionist);
-        }
-
-        if (null != finishTime) {
-            workOrder.setFinishTime(finishTime);
         }
 
         if (null != workFlow && !workFlow.isEmpty()) {
@@ -305,6 +339,13 @@ public class WorkOrderController {
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
+            return;
+        }
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
         }
 
         WorkOrder workOrder = workOrderService.selectById(id);
@@ -330,11 +371,19 @@ public class WorkOrderController {
         //String username = JwtTokenUtil.getUsername(authentication);
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            return new ArrayList<>();
+        }
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
         }
 
         WorkOrder workOrder = workOrderService.selectById(id);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:Failed to find work_order");
+            return new ArrayList<>();
         }
 
         List<WorkFlow> flows = workFlowService.selectByWorkOrderId(workOrder.getId());

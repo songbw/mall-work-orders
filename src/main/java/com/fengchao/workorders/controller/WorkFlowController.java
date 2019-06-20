@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.BeanUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+//import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ public class WorkFlowController {
     private static Logger logger = LoggerFactory.getLogger(WorkFlowController.class);
 
     private WorkFlowServiceImpl workFlowService;
+    private WorkOrderServiceImpl workOrderService;
 
     @ApiModel(value = "工单流程信息ID")
     private class IdData implements Serializable {
@@ -48,9 +49,11 @@ public class WorkFlowController {
     }
 
     @Autowired
-    public WorkFlowController(WorkFlowServiceImpl workFlowService
+    public WorkFlowController(WorkOrderServiceImpl workOrderService,
+                            WorkFlowServiceImpl workFlowService
                              ) {
         this.workFlowService = workFlowService;
+        this.workOrderService = workOrderService;
     }
 
     @ApiOperation(value = "获取工单流程列表", notes = "获取工单流程列表")
@@ -60,6 +63,12 @@ public class WorkFlowController {
     public ListData getList(HttpServletResponse response,
                             @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication
                             ) {
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
 
         List<WorkFlow> WorkFlows = workFlowService.selectAll();
         List<WorkFlowBean> list = new ArrayList<>();
@@ -85,14 +94,20 @@ public class WorkFlowController {
                                  @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
         WorkFlowBean bean = new WorkFlowBean();
-        //String username = JwtTokenUtil.getUsername(authentication);
+
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            return bean;
         }
+        String username = JwtTokenUtil.getUsername(authentication);
 
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
         WorkFlow workFlow = workFlowService.selectById(id);
         if (null == workFlow) {
             StringUtil.throw400Exp(response, "400003:Failed to find work_flow");
+            return bean;
         }
 
         BeanUtils.copyProperties(workFlow, bean);
@@ -108,16 +123,27 @@ public class WorkFlowController {
     @GetMapping("work_flows/pages")
     public PageInfo<WorkFlowBean> queryWorkFlows(HttpServletResponse response,
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                     @ApiParam(value="页码",required=true)@RequestParam(required=true) Integer pageIndex,
-                                                     @ApiParam(value="每页记录数",required=true)@RequestParam(required=true) Integer pageSize,
-                                                     @ApiParam(value="流程上一步操作者",required=false)Long sender,
-                                                     @ApiParam(value="当前流程操作者",required=false)Long receiver,
-                                                     @ApiParam(value="创建开始时间",required=false)@RequestParam(required=false) String createTimeStart,
-                                                     @ApiParam(value="创建结束时间",required=false)@RequestParam(required=false) String createTimeEnd,
-                                                     @ApiParam(value="workOrderId",required=false)Long workOrderId) {
+                                                     @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
+                                                     @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                     @ApiParam(value="流程上一步操作者")Long sender,
+                                                     @ApiParam(value="当前流程操作者")Long receiver,
+                                                     @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
+                                                     @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
+                                                     @ApiParam(value="workOrderId")Long workOrderId) {
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
+        if (null == pageIndex || 0 >= pageIndex
+                || null == pageSize || 0>= pageSize) {
+            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        }
 
         try {
             if (null != createTimeStart && !createTimeStart.isEmpty()) {
@@ -134,10 +160,13 @@ public class WorkFlowController {
                 "id", "DESC",workOrderId,sender,receiver, dateCreateTimeStart, dateCreateTimeEnd);
 
         List<WorkFlowBean> list = new ArrayList<>();
-        for (WorkFlow a : pages.getRows()) {
-            WorkFlowBean b = new WorkFlowBean();
-            BeanUtils.copyProperties(a, b);
-            list.add(b);
+
+        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
+            for (WorkFlow a : pages.getRows()) {
+                WorkFlowBean b = new WorkFlowBean();
+                BeanUtils.copyProperties(a, b);
+                list.add(b);
+            }
         }
 
         PageInfo<WorkFlowBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
@@ -153,7 +182,7 @@ public class WorkFlowController {
     @PostMapping("work_flows")
     public IdData createProfile(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @RequestBody WorkFlowBean data) throws RuntimeException {
+                                            @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
         logger.info("create WorkFlow enter");
         IdData result = new IdData();
@@ -168,6 +197,11 @@ public class WorkFlowController {
             null == workOrderId || 0 == workOrderId
             ) {
             StringUtil.throw400Exp(response, "400002:流程操作者无效");
+        }
+
+        WorkOrder workOrder = workOrderService.selectById(workOrderId);
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400002:工单号不存在");
         }
 
         WorkFlow workFlow = new WorkFlow();
@@ -186,9 +220,8 @@ public class WorkFlowController {
             workFlow.setUpdatedBy(username);
         }
 
-        Long id = workFlowService.insert(workFlow);
+        result.id = workFlowService.insert(workFlow);
 
-        result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());
 
         return result;
@@ -201,7 +234,7 @@ public class WorkFlowController {
     public IdData updateProfile(HttpServletResponse response,
                                 @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                @RequestBody WorkFlowBean data) throws RuntimeException {
+                                @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
         logger.info("update WorkFlow");
         IdData result = new IdData();
@@ -213,11 +246,13 @@ public class WorkFlowController {
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            return result;
         }
 
         WorkFlow workFlow = workFlowService.selectById(id);
         if (null == workFlow) {
             StringUtil.throw400Exp(response, "400002:工单流程不存在");
+            return result;
         }
 
         if (null != sender ) {
@@ -227,7 +262,12 @@ public class WorkFlowController {
         if (null != receiver) {
             workFlow.setReceiver(receiver);
         }
+
         if (null != workOrderId) {
+            WorkOrder workOrder = workOrderService.selectById(workOrderId);
+            if (null == workOrder) {
+                StringUtil.throw400Exp(response, "400002:工单号不存在");
+            }
             workFlow.setWorkOrderId(workOrderId);
         }
 
@@ -237,6 +277,9 @@ public class WorkFlowController {
             workFlow.setUpdatedBy(username);
         }
 
+        if (null != comments && !comments.isEmpty()) {
+            workFlow.setComments(comments);
+        }
         workFlowService.update(workFlow);
 
         result.id = id;
@@ -259,6 +302,13 @@ public class WorkFlowController {
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
+            return;
+        }
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
         }
 
         WorkFlow workFlow = workFlowService.selectById(id);

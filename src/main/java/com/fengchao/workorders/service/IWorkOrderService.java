@@ -12,9 +12,9 @@ public interface IWorkOrderService {
 
     Long insert(WorkOrder workOrder);
 
-    void deleteById(long id);
+    void deleteById(Long id);
 
-    WorkOrder selectById(long id);
+    WorkOrder selectById(Long id);
 
     void update(WorkOrder workOrder);
 

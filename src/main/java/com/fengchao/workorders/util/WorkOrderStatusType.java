@@ -1,14 +1,17 @@
 package com.fengchao.workorders.util;
 
-public enum CompanyStatusType {
+public enum WorkOrderStatusType {
     EDITING(1, "待审核"),
     PENDING(2, "审核中"),
     APPROVED(3, "审核通过"),
-    REJECT(4, "审核失败");
+    REJECT(4, "审核失败"),
+    HANDLING(5, "处理中"),
+    CLOSED(6, "处理完成");
+
     private Integer code;
     private String msg;
 
-    CompanyStatusType(Integer code, String msg) {
+    WorkOrderStatusType(Integer code, String msg) {
         this.code = code;
         this.msg = msg;
     }
@@ -32,9 +35,9 @@ public enum CompanyStatusType {
     public static Integer String2Int(String status) {
         if (null != status && !status.isEmpty()) {
             int i;
-            for (i = 0; i < CompanyStatusType.values().length; i++) {
-                if (CompanyStatusType.values()[i].toString().equals(status)) {
-                    return CompanyStatusType.values()[i].getCode();
+            for (i = 0; i < WorkOrderStatusType.values().length; i++) {
+                if (WorkOrderStatusType.values()[i].toString().equals(status)) {
+                    return WorkOrderStatusType.values()[i].getCode();
                 }
             }
         }
@@ -44,9 +47,9 @@ public enum CompanyStatusType {
     public static String Int2String(Integer code) {
         if (null != code && 0 != code) {
             int i;
-            for (i = 0; i < CompanyStatusType.values().length; i++) {
-                if (CompanyStatusType.values()[i].getCode() == code) {
-                    return CompanyStatusType.values()[i].toString();
+            for (i = 0; i < WorkOrderStatusType.values().length; i++) {
+                if (WorkOrderStatusType.values()[i].getCode() == code) {
+                    return WorkOrderStatusType.values()[i].toString();
                 }
             }
         }

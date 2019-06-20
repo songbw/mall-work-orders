@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.BeanUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+//import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ public class AttachmentController {
     private static Logger logger = LoggerFactory.getLogger(AttachmentController.class);
 
     private AttachmentServiceImpl attachmentService;
+    private WorkOrderServiceImpl workOrderService;
 
     @ApiModel(value = "附件信息ID")
     private class IdData implements Serializable {
@@ -48,9 +49,11 @@ public class AttachmentController {
     }
 
     @Autowired
-    public AttachmentController(AttachmentServiceImpl attachmentService
+    public AttachmentController(WorkOrderServiceImpl workOrderService,
+                                AttachmentServiceImpl attachmentService
                              ) {
         this.attachmentService = attachmentService;
+        this.workOrderService = workOrderService;
     }
 
     @ApiOperation(value = "获取附件信息列表", notes = "获取附件信息列表")
@@ -60,6 +63,11 @@ public class AttachmentController {
     public ListData getList(HttpServletResponse response,
                             @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication
                             ) {
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
 
         List<Attachment> attachments = attachmentService.selectAll();
         List<AttachmentBean> list = new ArrayList<>();
@@ -88,11 +96,17 @@ public class AttachmentController {
         //String username = JwtTokenUtil.getUsername(authentication);
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            return  bean;
         }
+        String username = JwtTokenUtil.getUsername(authentication);
 
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
         Attachment attachment = attachmentService.selectById(id);
         if (null == attachment) {
-            StringUtil.throw400Exp(response, "400003:Failed to find profile");
+            StringUtil.throw400Exp(response, "400003:Failed to find attachment record");
+            return bean;
         }
 
         BeanUtils.copyProperties(attachment, bean);
@@ -108,16 +122,21 @@ public class AttachmentController {
     @GetMapping("attachments")
     public PageInfo<AttachmentBean> queryAttachments(HttpServletResponse response,
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                     @ApiParam(value="页码",required=true)@RequestParam(required=true) Integer pageIndex,
-                                                     @ApiParam(value="每页记录数",required=true)@RequestParam(required=true) Integer pageSize,
-                                                     @ApiParam(value="name",required=false)String name,
-                                                     @ApiParam(value="submitter",required=false)String submitter,
-                                                     @ApiParam(value="创建开始时间",required=false)@RequestParam(required=false) String createTimeStart,
-                                                     @ApiParam(value="创建结束时间",required=false)@RequestParam(required=false) String createTimeEnd,
-                                                     @ApiParam(value="workOrderId",required=false)Long workOrderId) {
+                                                     @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
+                                                     @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                     @ApiParam(value="name")@RequestParam(required=false) String name,
+                                                     @ApiParam(value="submitter")@RequestParam(required=false) String submitter,
+                                                     @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
+                                                     @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
+                                                     @ApiParam(value="workOrderId")@RequestParam(required=false) Long workOrderId) {
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
+
+        if (null == pageIndex || 0 >= pageIndex
+                || null == pageSize || 0>= pageSize) {
+            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        }
 
         try {
             if (null != createTimeStart && !createTimeStart.isEmpty()) {
@@ -130,16 +149,24 @@ public class AttachmentController {
             StringUtil.throw400Exp(response,"400002:createTime format is wrong");
         }
 
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
+
         PageInfo<Attachment> pages = attachmentService.selectAttachments(pageIndex,pageSize,
                 "id", "DESC",workOrderId,name,submitter, dateCreateTimeStart, dateCreateTimeEnd);
 
         List<AttachmentBean> list = new ArrayList<>();
-        for (Attachment a : pages.getRows()) {
-            AttachmentBean b = new AttachmentBean();
-            BeanUtils.copyProperties(a, b);
-            list.add(b);
-        }
 
+        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
+            for (Attachment a : pages.getRows()) {
+                AttachmentBean b = new AttachmentBean();
+                BeanUtils.copyProperties(a, b);
+                list.add(b);
+            }
+        }
         PageInfo<AttachmentBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
@@ -153,41 +180,49 @@ public class AttachmentController {
     @PostMapping("attachments")
     public IdData createProfile(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @RequestBody AttachmentBean data) throws RuntimeException {
+                                            @RequestBody AttachmentProfileBean data) throws RuntimeException {
 
-        logger.info("create attachment enter");
+        System.out.println("create attachment enter");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String path = data.getPath();
         String submitter = data.getSubmitter();
         String name = data.getName();
+        Long workOrderId = data.getWorkOrderId();
 
         if (null == path || path.isEmpty() ||
-            null ==name || name.isEmpty()
+            null ==name || name.isEmpty() ||
+            null == workOrderId || 0 == workOrderId
             ) {
-            StringUtil.throw400Exp(response, "400002:名称,路径,不能为空");
+            StringUtil.throw400Exp(response, "400002:名称,路径,工单号,不能为空");
         }
 
         if (attachmentService.isExistName(name)) {
-            StringUtil.throw400Exp(response, "400001:附件名已存在");
+            StringUtil.throw400Exp(response, "400003:附件名已存在");
+        }
+
+        WorkOrder workOrder = workOrderService.selectById(workOrderId);
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400002:工单号不存在");
         }
 
         Attachment attachment = new Attachment();
         attachment.setName(name);
         attachment.setPath(path);
-        if (null != submitter) {
+        attachment.setWorkOrderId(workOrderId);
+        if (null != submitter && !submitter.isEmpty()) {
             attachment.setSubmitter(submitter);
         }
+
         attachment.setCreateTime(new Date());
         attachment.setUpdateTime(new Date());
-        if (null != username) {
+        if (null != username && !username.isEmpty()) {
             attachment.setCreatedBy(username);
             attachment.setUpdatedBy(username);
         }
 
-        Long attachmentId = attachmentService.insertRecord(attachment);
+        result.id = attachmentService.insertRecord(attachment);
 
-        result.id = attachmentId;
         response.setStatus(MyErrorMap.e201.getCode());
         logger.info("create Attachment : " + name);
         return result;
@@ -201,26 +236,39 @@ public class AttachmentController {
     public IdData updateProfile(HttpServletResponse response,
                                 @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                @RequestBody AttachmentBean data) throws RuntimeException {
+                                @RequestBody AttachmentProfileBean data) throws RuntimeException {
 
-        logger.info("update attachment");
+        System.out.println("update attachment");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String path = data.getPath();
         String submitter = data.getSubmitter();
         String name = data.getName();
+        Long workOrderId = data.getWorkOrderId();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+            System.out.println("update attachment err1");
         }
 
         Attachment attachment = attachmentService.selectById(id);
         if (null == attachment) {
             StringUtil.throw400Exp(response, "400002:附件不存在");
+            System.out.println("update attachment err2");
+            return result;
         }
 
         if (null != name && attachmentService.isExistNameExcludeId(name, id)) {
             StringUtil.throw400Exp(response, "400001:附件名已存在");
+            System.out.println("update attachment er3");
+        }
+
+        if (null != workOrderId) {
+            WorkOrder workOrder = workOrderService.selectById(workOrderId);
+            if (null == workOrder) {
+                StringUtil.throw400Exp(response, "400002:工单号不存在");
+            }
+            attachment.setWorkOrderId(workOrderId);
         }
 
         if (null != name && !name.isEmpty()) {
@@ -260,8 +308,11 @@ public class AttachmentController {
 
         logger.info("delete attachment");
 
-        //String username = sysUserService.getUsernameInToken(authentication);
+        String username = JwtTokenUtil.getUsername(authentication);
 
+        if (null == username) {
+            logger.warn("can not find username in token");
+        }
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
         }

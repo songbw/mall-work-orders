@@ -5,12 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
-@ApiModel(value="工单内容信息")
-public class WorkOrderBean {
-
-    @ApiModelProperty(value="ID", example="111",required=false)
-    private Long id;
-
+@ApiModel(value="工单更新信息")
+public class WorkOrderBodyBean {
     @ApiModelProperty(value="所属订单ID", example="111",required=true)
     private String orderId;
 
@@ -32,27 +28,11 @@ public class WorkOrderBean {
     @ApiModelProperty(value="工单流程文字记录", example="submit, handle, close",required=false)
     private String workFlow;
 
-    @ApiModelProperty(value="工单处理结果", example="退货完成",required=false)
-    private String outcome;
-
     @ApiModelProperty(value="预计完成时间", example="2019-06-18 11:11:11",required=false)
-    private Date finishTime;
+    private String finishTime;
 
     @ApiModelProperty(value="工单紧急程度, 数字越大级别越高", example="11",required=false)
     private Integer urgentDegree;
-
-    @ApiModelProperty(value="工单状态码", example="1",required=false)
-    private Integer status;
-
-    @ApiModelProperty(value="提交时间", example="2019-06-16 11:11:11",required=false)
-    private Date createTime;
-
-    @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
-    private Date updateTime;
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public void setOrderId(String orderId) {
         this.orderId = orderId;
@@ -82,32 +62,12 @@ public class WorkOrderBean {
         this.workFlow = workFlow;
     }
 
-    public void setOutcome(String outcome) {
-        this.outcome = outcome;
-    }
-
-    public void setFinishTime(Date finishTime) {
+    public void setFinishTime(String finishTime) {
         this.finishTime = finishTime;
     }
 
     public void setUrgentDegree(Integer urgentDegree) {
         this.urgentDegree = urgentDegree;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getOrderId() {
@@ -138,27 +98,11 @@ public class WorkOrderBean {
         return workFlow;
     }
 
-    public String getOutcome() {
-        return outcome;
-    }
-
-    public Date getFinishTime() {
+    public String getFinishTime() {
         return finishTime;
     }
 
     public Integer getUrgentDegree() {
         return urgentDegree;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
     }
 }
