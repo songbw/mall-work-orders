@@ -30,6 +30,6 @@ public interface FeedbackMapper {
                                @Param("customer") String customer,
                                @Param("title") String title,
                                @Param("feedbackText") String feedbackText,
-                               @Param("createTimeStart") Date createTimeStart,
-                               @Param("createTimeEnd") Date createTimeEnd);
+                               @Param("dateTimeStart") Date dateTimeStart,
+                               @Param("dateTimeEnd") Date dateTimeEnd);
 }

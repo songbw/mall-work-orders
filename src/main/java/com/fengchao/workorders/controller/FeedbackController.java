@@ -222,8 +222,8 @@ public class FeedbackController {
                                       @ApiParam(value="反馈者")@RequestParam(required=false) String customer,
                                       @ApiParam(value="标题")@RequestParam(required=false) String title,
                                       @ApiParam(value="反馈内容")@RequestParam(required=false) String feedbackText,
-                                      @ApiParam(value="反馈提交开始时间")@RequestParam(required=false) String createTimeStart,
-                                      @ApiParam(value="反馈提交结束时间")@RequestParam(required=false) String createTimeEnd
+                                      @ApiParam(value="反馈提交开始时间")@RequestParam(required=false) String feedbackTimeStart,
+                                      @ApiParam(value="反馈提交结束时间")@RequestParam(required=false) String feedbackTimeEnd
                                       ) {
 
 
@@ -238,22 +238,22 @@ public class FeedbackController {
             StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
         }
 
-        java.util.Date dateCreateTimeStart = null;
-        java.util.Date dateCreateTimeEnd = null;
+        java.util.Date dateStart = null;
+        java.util.Date dateEnd = null;
 
         try {
-            if (null != createTimeStart && !createTimeStart.isEmpty()) {
-                dateCreateTimeStart = StringUtil.String2Date(createTimeStart);
+            if (null != feedbackTimeStart && !feedbackTimeStart.isEmpty()) {
+                dateStart = StringUtil.String2Date(feedbackTimeStart);
             }
-            if (null != createTimeEnd && !createTimeEnd.isEmpty()) {
-                dateCreateTimeEnd = StringUtil.String2Date(createTimeEnd);
+            if (null != feedbackTimeEnd && !feedbackTimeEnd.isEmpty()) {
+                dateEnd = StringUtil.String2Date(feedbackTimeEnd);
             }
         } catch (ParseException ex) {
             StringUtil.throw400Exp(response,"400002:date format is wrong");
         }
 
         PageInfo<Feedback> pageInfo = feedbackService.selectPage(pageIndex, pageSize,
-                "id", "ASC", workOrderId,customer, title,feedbackText, dateCreateTimeStart, dateCreateTimeEnd);
+                "id", "ASC", workOrderId,customer, title,feedbackText, dateStart, dateEnd);
 
         List<FeedbackBean> beans = new ArrayList<>();
         PageInfo<FeedbackBean> result = new PageInfo<>(pageInfo.getTotal(),pageIndex, pageSize, beans);

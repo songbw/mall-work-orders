@@ -125,11 +125,11 @@ public class WorkFlowController {
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                      @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
                                                      @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
-                                                     @ApiParam(value="流程上一步操作者")Long sender,
-                                                     @ApiParam(value="当前流程操作者")Long receiver,
+                                                     @ApiParam(value="流程上一步操作者")@RequestParam(required=false)Long sender,
+                                                     @ApiParam(value="当前流程操作者")@RequestParam(required=false)Long receiver,
                                                      @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
                                                      @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
-                                                     @ApiParam(value="workOrderId")Long workOrderId) {
+                                                     @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;

@@ -50,12 +50,12 @@ public class FeedbackServiceImpl implements IFeedbackService {
     public PageInfo<Feedback> selectPage(int pageIndex, int pageSize, String sort, String order,
                                          Long workOrderId, String customer, String title,
                                          String feedbackText,
-                                         Date createTimeStart, Date createTimeEnd) {
+                                         Date dateTimeStart, Date dateTimeEnd) {
 
-        int counts = feedbackMapper.selectRange(sort, order, workOrderId,customer, title, feedbackText, createTimeStart, createTimeEnd).size();
+        int counts = feedbackMapper.selectRange(sort, order, workOrderId,customer, title, feedbackText, dateTimeStart, dateTimeEnd).size();
 
         PageHelper.startPage(pageIndex, pageSize);
-        List<Feedback> list = feedbackMapper.selectRange(sort, order, workOrderId,customer, title, feedbackText, createTimeStart, createTimeEnd);
+        List<Feedback> list = feedbackMapper.selectRange(sort, order, workOrderId,customer, title, feedbackText, dateTimeStart, dateTimeEnd);
 
         return new PageInfo<>(counts, pageSize, pageIndex,list);
     }

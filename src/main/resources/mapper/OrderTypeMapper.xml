@@ -42,6 +42,12 @@
     <if test="name != null and name.length() != 0">
       AND name LIKE concat('%', #{name,jdbcType=VARCHAR},'%')
     </if>
+    <if test="createTimeStart !=null ">
+      AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+    </if>
+    <if test="createTimeEnd !=null ">
+      AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+    </if>
     <if test="sort !=''">
       ORDER BY ${sort}
     </if>

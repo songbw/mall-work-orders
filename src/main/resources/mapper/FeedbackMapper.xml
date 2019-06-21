@@ -47,11 +47,11 @@
     <if test="feedbackText != null and feedbackText.length() != 0">
       AND feedback_text LIKE concat('%', #{feedbackText,jdbcType=VARCHAR},'%')
     </if>
-    <if test="createTimeStart !=null ">
-      AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+    <if test="dateTimeStart !=null ">
+      AND feedback_time &gt;= #{dateTimeStart,jdbcType=TIMESTAMP}
     </if>
-    <if test="createTimeEnd !=null ">
-      AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+    <if test="dateTimeEnd !=null ">
+      AND feedback_time &lt;= #{dateTimeEnd,jdbcType=TIMESTAMP}
     </if>
     <if test="sort !=''">
       ORDER BY ${sort}
