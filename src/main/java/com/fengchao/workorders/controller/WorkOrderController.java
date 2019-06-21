@@ -42,6 +42,13 @@ public class WorkOrderController {
 
     }
 
+    @ApiModel(value = "工作流程信息列表")
+    private class WorkFlowListData implements Serializable {
+        @ApiModelProperty(value = "流程信息列表", example = "", required = true)
+        public List<WorkFlowBean> list;
+
+    }
+
     @Autowired
     public WorkOrderController(WorkFlowServiceImpl workFlowService,
                                OrderTypeServiceImpl orderTypeService,
@@ -228,6 +235,9 @@ public class WorkOrderController {
         }
 
         result.id = workOrderService.insert(workOrder);
+        if (0 == result.id) {
+            StringUtil.throw400Exp(response,"400003:Failed to create work_order");
+        }
         response.setStatus(MyErrorMap.e201.getCode());
 
         return result;
@@ -350,7 +360,7 @@ public class WorkOrderController {
 
         WorkOrder workOrder = workOrderService.selectById(id);
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400003: failed to find record");
+            StringUtil.throw400Exp(response, "400002: failed to find record");
         }
 
         workOrderService.deleteById(id);
@@ -364,14 +374,15 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/{id}/work_flows")
-    public List<WorkFlowBean> getWorkFlowById(HttpServletResponse response,
+    public WorkFlowListData getWorkFlowById(HttpServletResponse response,
                                           @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                           @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
+        WorkFlowListData result = new WorkFlowListData();
         //String username = JwtTokenUtil.getUsername(authentication);
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
-            return new ArrayList<>();
+            return result;
         }
 
         String username = JwtTokenUtil.getUsername(authentication);
@@ -380,10 +391,11 @@ public class WorkOrderController {
             logger.warn("can not find username in token");
         }
 
+
         WorkOrder workOrder = workOrderService.selectById(id);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:Failed to find work_order");
-            return new ArrayList<>();
+            return result;
         }
 
         List<WorkFlow> flows = workFlowService.selectByWorkOrderId(workOrder.getId());
@@ -393,9 +405,9 @@ public class WorkOrderController {
             BeanUtils.copyProperties(a, b);
             list.add(b);
         }
-
+        result.list = list;
         response.setStatus(MyErrorMap.e200.getCode());
-        return list;
+        return result;
 
     }
 

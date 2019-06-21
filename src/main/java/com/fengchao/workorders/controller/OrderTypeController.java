@@ -161,7 +161,7 @@ public class OrderTypeController {
 
         OrderType orderType = orderTypeService.selectById(id);
         if (null == orderType) {
-            StringUtil.throw400Exp(response,"400003: Failed to find OrderType");
+            StringUtil.throw400Exp(response,"400003: Failed to find order_type");
             return result;
         }
 
@@ -187,20 +187,20 @@ public class OrderTypeController {
         String workflowUrl = data.getWorkflowUrl();
 
         if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            StringUtil.throw400Exp(response,"400002: id is wrong");
             return result;
         }
 
         OrderType orderType = orderTypeService.selectById(id);
         if (null == orderType) {
-            StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            StringUtil.throw400Exp(response,"400003: 工单类型不存在");
             return result;
         }
 
         if (null != name && !orderType.getName().equals(name)) {
             OrderType o = orderTypeService.selectByName(name);
             if (null != o) {
-                StringUtil.throw400Exp(response, "400003: 工单类型名已经存在");
+                StringUtil.throw400Exp(response, "400002: 工单类型名已经存在");
             }
         }
 
@@ -244,13 +244,13 @@ public class OrderTypeController {
         }
 
         if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            StringUtil.throw400Exp(response,"400002: Id is wrong");
             return;
         }
 
         OrderType orderType = orderTypeService.selectById(id);
         if (null == orderType) {
-            StringUtil.throw400Exp(response,"400002: 工单类型不存在");
+            StringUtil.throw400Exp(response,"400003: 工单类型不存在");
         }
 
         orderTypeService.deleteById(id);
@@ -261,7 +261,7 @@ public class OrderTypeController {
 
 
     @ApiOperation(value = "查询工单类型", notes="Header中必须包含Token")
-    @GetMapping("orderTypes/pages")
+    @GetMapping("order_types/pages")
     //@PreAuthorize("hasPermission('orderType','list')")
     public PageInfo<OrderTypeBean> getPages(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,

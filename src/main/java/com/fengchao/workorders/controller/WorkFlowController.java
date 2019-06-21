@@ -221,7 +221,9 @@ public class WorkFlowController {
         }
 
         result.id = workFlowService.insert(workFlow);
-
+        if (0 == result.id) {
+            StringUtil.throw400Exp(response, "400003:Failed to create work_flow");
+        }
         response.setStatus(MyErrorMap.e201.getCode());
 
         return result;
@@ -251,7 +253,7 @@ public class WorkFlowController {
 
         WorkFlow workFlow = workFlowService.selectById(id);
         if (null == workFlow) {
-            StringUtil.throw400Exp(response, "400002:工单流程不存在");
+            StringUtil.throw400Exp(response, "400003:工单流程不存在");
             return result;
         }
 

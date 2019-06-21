@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Api(tags="FeedbackAPI", description = "用户权限相关", produces = "application/json;charset=UTF-8")
+@Api(tags="FeedbackAPI", description = "反馈信息相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class FeedbackController {
@@ -46,6 +46,32 @@ public class FeedbackController {
                              ) {
         this.feedbackService = feedbackService;
         this.workOrderService = workOrderService;
+    }
+
+    @ApiOperation(value = "获取指定反馈信息", notes="Header中必须包含Token")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to update Feedback") })
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @GetMapping("/feedback/{id}")
+    //@PreAuthorize("hasFeedback('Feedback','get')")
+    public FeedbackBean getById(HttpServletResponse response,@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                @ApiParam(value="id",required=true)@PathVariable("id") Long id
+                                ) {
+
+        FeedbackBean result = new FeedbackBean();
+
+        if (null == id || 0 == id) {
+            StringUtil.throw400Exp(response,"400002:id is wrong");
+            return result;
+        }
+
+        Feedback feedback = feedbackService.selectById(id);
+        if ( null == feedback ) {
+            StringUtil.throw400Exp(response,"400003:反馈记录不存在");
+            return result;
+        }
+
+        BeanUtils.copyProperties(feedback, result);
+        return result;
     }
 
     @ApiOperation(value = "增加反馈信息", notes="Header中必须包含Token")
@@ -167,7 +193,7 @@ public class FeedbackController {
 
         feedback = feedbackService.selectById(id);
         if ( null == feedback ) {
-            StringUtil.throw400Exp(response,"400002:反馈不存在");
+            StringUtil.throw400Exp(response,"400003:反馈不存在");
             return result;
         }
 

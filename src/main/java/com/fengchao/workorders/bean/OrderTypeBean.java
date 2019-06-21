@@ -14,7 +14,7 @@ public class OrderTypeBean {
     @ApiModelProperty(value="工单流程名称", example="退货退款",required=true)
     private String name;
 
-    @ApiModelProperty(value="工单流程图链接", example="反馈",required=false)
+    @ApiModelProperty(value="工单流程图链接", example="http://example.cn/feedback001.png",required=false)
     private String workflowUrl;
 
     @ApiModelProperty(value="工单流程文字说明", example="反馈",required=true)

@@ -55,7 +55,7 @@ public class AttachmentController {
         this.attachmentService = attachmentService;
         this.workOrderService = workOrderService;
     }
-
+/*
     @ApiOperation(value = "获取附件信息列表", notes = "获取附件信息列表")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
@@ -83,7 +83,7 @@ public class AttachmentController {
         return result;
 
     }
-
+*/
     @ApiOperation(value = "获取附件信息", notes = "附件信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
@@ -119,7 +119,7 @@ public class AttachmentController {
     @ApiOperation(value = "条件查询附件信息", notes = "查询附件信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping("attachments")
+    @GetMapping("attachments/pages")
     public PageInfo<AttachmentBean> queryAttachments(HttpServletResponse response,
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                      @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
@@ -253,13 +253,13 @@ public class AttachmentController {
 
         Attachment attachment = attachmentService.selectById(id);
         if (null == attachment) {
-            StringUtil.throw400Exp(response, "400002:附件不存在");
+            StringUtil.throw400Exp(response, "400003:附件不存在");
             System.out.println("update attachment err2");
             return result;
         }
 
         if (null != name && attachmentService.isExistNameExcludeId(name, id)) {
-            StringUtil.throw400Exp(response, "400001:附件名已存在");
+            StringUtil.throw400Exp(response, "400002:附件名已存在");
             System.out.println("update attachment er3");
         }
 
