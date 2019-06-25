@@ -122,8 +122,8 @@ public class AttachmentController {
     @GetMapping("attachments/pages")
     public PageInfo<AttachmentBean> queryAttachments(HttpServletResponse response,
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                     @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
-                                                     @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                     @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
+                                                     @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                      @ApiParam(value="name")@RequestParam(required=false) String name,
                                                      @ApiParam(value="submitter")@RequestParam(required=false) String submitter,
                                                      @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
@@ -133,11 +133,12 @@ public class AttachmentController {
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
 
-        if (null == pageIndex || 0 >= pageIndex
-                || null == pageSize || 0>= pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
         }
-
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
+        }
         try {
             if (null != createTimeStart && !createTimeStart.isEmpty()) {
                 dateCreateTimeStart = StringUtil.String2Date(createTimeStart);

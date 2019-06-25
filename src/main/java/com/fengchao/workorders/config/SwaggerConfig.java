@@ -37,7 +37,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
     @Bean
     public Docket Api() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("/v1/workorders")
+                .groupName("/workorders")
 //                .genericModelSubstitutes(DeferredResult.class)
 //                .useDefaultResponseMessages(false)
 //                .forCodeGeneration(false)
@@ -53,8 +53,8 @@ public class SwaggerConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry)
     {
         //enabling swagger-ui part for visual documentation
-        registry.addResourceHandler("/v1/swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
-        registry.addResourceHandler("/v1/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
+        registry.addResourceHandler("/swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
+        registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
     }
 }
 

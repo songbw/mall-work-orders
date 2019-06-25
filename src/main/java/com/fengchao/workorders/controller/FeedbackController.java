@@ -242,8 +242,8 @@ public class FeedbackController {
     //@PreAuthorize("hasFeedback('user','list')")
     public PageInfo<FeedbackBean> pages(HttpServletResponse response,
                                       @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                      @ApiParam(value="获取页的序号",required=true)@RequestParam Integer pageIndex,
-                                      @ApiParam(value="每页返回的最大数",required=true)@RequestParam Integer pageSize,
+                                      @ApiParam(value="获取页的序号",required=false)@RequestParam(required=false) Integer pageIndex,
+                                      @ApiParam(value="每页返回的最大数",required=false)@RequestParam(required=false) Integer pageSize,
                                       @ApiParam(value="工单号")@RequestParam(required=false) Long workOrderId,
                                       @ApiParam(value="反馈者")@RequestParam(required=false) String customer,
                                       @ApiParam(value="标题")@RequestParam(required=false) String title,
@@ -259,11 +259,12 @@ public class FeedbackController {
             logger.warn("can not find username in token");
         }
 
-        if (null == pageIndex || 0 >= pageIndex
-                || null == pageSize || 0>= pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
         }
-
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
+        }
         java.util.Date dateStart = null;
         java.util.Date dateEnd = null;
 

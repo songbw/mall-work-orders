@@ -98,8 +98,8 @@ public class WorkOrderController {
     @GetMapping("work_orders/pages")
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                   @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
-                                                   @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                   @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
+                                                   @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="标题")@RequestParam(required=false) String title,
                                                    @ApiParam(value="描述")@RequestParam(required=false) String description,
                                                    @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
@@ -125,9 +125,11 @@ public class WorkOrderController {
             logger.warn("can not find username in token");
         }
 
-        if (null == pageIndex || 0 >= pageIndex
-                || null == pageSize || 0>= pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
+        }
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
         }
 
         try {

@@ -1,16 +1,11 @@
 package com.fengchao.workorders.util;
 
-/**
- * @Author Clark
- * @Date 2018/11/29 15:10
- * @Description
- */
 
 public class Constant {
     /**
      * 版本号
      */
-    public static final String V1 = "/v1";
+    public static final String V2 = "/v2";
 
     /**
      * 字符串转换编码

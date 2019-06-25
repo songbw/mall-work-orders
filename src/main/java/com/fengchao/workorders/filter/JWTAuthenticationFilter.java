@@ -39,15 +39,15 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        System.out.println("doFilterInternal");
-        if (request.getRequestURI().contains("/api/swagger-ui.html")) {
-            //System.out.println("doFilterInternal: swagger");
+        //System.out.println("doFilterInternal");
+        if (request.getRequestURI().contains("workorders")) {//since gateway will check security
+            System.out.println("doFilterInternal: access all");
             chain.doFilter(request, response);
             return;
         }
 
-        if (request.getRequestURI().contains("/v1")) {//for debug
-            System.out.println("doFilterInternal: access vendors");
+        if (request.getRequestURI().contains("/api/swagger-ui.html")) {
+            //System.out.println("doFilterInternal: swagger");
             chain.doFilter(request, response);
             return;
         }

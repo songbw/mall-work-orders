@@ -123,8 +123,8 @@ public class WorkFlowController {
     @GetMapping("work_flows/pages")
     public PageInfo<WorkFlowBean> queryWorkFlows(HttpServletResponse response,
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                     @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
-                                                     @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                     @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
+                                                     @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                      @ApiParam(value="流程上一步操作者")@RequestParam(required=false)Long sender,
                                                      @ApiParam(value="当前流程操作者")@RequestParam(required=false)Long receiver,
                                                      @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
@@ -140,9 +140,11 @@ public class WorkFlowController {
             logger.warn("can not find username in token");
         }
 
-        if (null == pageIndex || 0 >= pageIndex
-                || null == pageSize || 0>= pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
+        }
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
         }
 
         try {

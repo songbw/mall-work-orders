@@ -54,12 +54,12 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_orders")
     public IdResponseData createWorkOrder(HttpServletResponse response,
-                                                    @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                                    //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                                     @RequestBody CustomerWorkOrderBean data) throws RuntimeException {
 
         logger.info("create WorkOrder enter");
         IdResponseData result = new IdResponseData();
-        String username = JwtTokenUtil.getUsername(authentication);
+        String username = null;//JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
@@ -116,14 +116,14 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PutMapping("work_orders/{id}")
     public IdResponseData updateWorkOrder(HttpServletResponse response,
-                                                    @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                                    //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                                     @ApiParam(value="id",required=true)@PathVariable("id") Long id,
                                                     @RequestBody CustomerWorkOrderBean data) throws RuntimeException {
 
 
         logger.info("update WorkOrder");
         IdResponseData result = new IdResponseData();
-        String username = JwtTokenUtil.getUsername(authentication);
+        String username = null; //JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
@@ -189,22 +189,24 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/pages")
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
-                                                   @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                   @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
-                                                   @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                   //@RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
+                                                   @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
+                                                   @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
                                                    @ApiParam(value="订单ID")@RequestParam(required=false) String orderId) {
 
-
+/*
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
             logger.warn("can not find username in token");
         }
-
-        if (null == pageIndex || 0 >= pageIndex
-                || null == pageSize || 0>= pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+*/
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
+        }
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
         }
 
         if (null != customer) {

@@ -36,8 +36,8 @@ public class systemController {
     //@PreAuthorize("hasPermission('log','list')")
     public PageInfo<SysLog> searchLog(HttpServletResponse response,@ApiParam(value="data:pageIndex, pageSize",required=true)
                                                         @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                                        @ApiParam(value="页码",required=true)@RequestParam Integer pageIndex,
-                                                        @ApiParam(value="每页记录数",required=true)@RequestParam Integer pageSize,
+                                                        @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
+                                                        @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                         @ApiParam(value="方法")@RequestParam(required=false) String method,
                                                         @ApiParam(value="访问链接")@RequestParam(required=false) String url,
                                                         @ApiParam(value="用户名")@RequestParam(required=false) String username,
@@ -55,9 +55,11 @@ public class systemController {
 
         // long currentUserId = sysUserService.getUserIdInToken(authentication);
 
-        if (null == pageIndex || null == pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize wrong");
-            return new PageInfo<>(0,0,0,null);
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
+        }
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
         }
 
         try {

@@ -24,7 +24,7 @@ public class swagger2doc {
                 .withMarkupLanguage(MarkupLanguage.ASCIIDOC)
                 .build();
 
-        Swagger2MarkupConverter.from(new URL("http://localhost:8087/workorders/v1/api-docs?group=workorders"))
+        Swagger2MarkupConverter.from(new URL("http://localhost:8087/workorders/api-docs?group=workorders"))
                 .withConfig(config)
                 .build()
                 .toFile(Paths.get("src/docs/asciidoc/api"));

@@ -52,7 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 */
     @Override
     public void configure(WebSecurity web) {
-        web.ignoring().antMatchers("/config/**", "/css/**", "/fonts/**", "/img/**", "/js/**","/v2/api-docs","/webjars/**","/swagger-resources/**","/swagger-ui.html");
+        web.ignoring().antMatchers("/config/**", "/css/**", "/fonts/**", "/img/**", "/js/**","/v2/api-docs","/webjars/**","/swagger-resources/**","/swagger-ui.html","/workorders/**");
     }
     /*
     @Override
@@ -110,8 +110,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                    .antMatchers("/vendors").permitAll()
-                    .antMatchers("/vendors/*").permitAll()
                     .antMatchers("/swagger-ui**").permitAll()
                     .antMatchers("/v2/api-docs").permitAll()
                     .antMatchers(HttpMethod.OPTIONS).permitAll()
@@ -134,9 +132,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     //.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler())
                     //.logoutSuccessHandler(new CustomLogoutSuccessHandler())
                 //.and()
-                    .addFilterAfter(new OptionsRequestFilter(), CorsFilter.class)
+                    .addFilterAfter(new OptionsRequestFilter(), CorsFilter.class);
                 //验证token
-                    .addFilterBefore(new JWTAuthenticationFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
+                    //.addFilterBefore(new JWTAuthenticationFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class);
     }
 
     //@Bean

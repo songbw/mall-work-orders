@@ -265,8 +265,8 @@ public class OrderTypeController {
     //@PreAuthorize("hasPermission('orderType','list')")
     public PageInfo<OrderTypeBean> getPages(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @ApiParam(value="获取页的序号",required=true)@RequestParam Integer pageIndex,
-                                            @ApiParam(value="每页返回的最大数",required=true)@RequestParam Integer pageSize,
+                                            @ApiParam(value="获取页的序号",required=false)@RequestParam(required=false) Integer pageIndex,
+                                            @ApiParam(value="每页返回的最大数",required=false)@RequestParam(required=false) Integer pageSize,
                                             @ApiParam(value="名称")@RequestParam(required=false) String name,
                                             @ApiParam(value="反馈提交开始时间")@RequestParam(required=false) String createTimeStart,
                                             @ApiParam(value="反馈提交结束时间")@RequestParam(required=false) String createTimeEnd
@@ -279,9 +279,11 @@ public class OrderTypeController {
             logger.warn("can not find username in token");
         }
 
-        if (null == pageIndex || 0 >= pageIndex
-            || null == pageSize || 0>= pageSize) {
-            StringUtil.throw400Exp(response,"400002:pageIndex or pageSize is wrong");
+        if (null == pageIndex || 0 >= pageIndex) {
+            pageIndex = 1;
+        }
+        if (null == pageSize || 0>= pageSize) {
+            pageSize = 10;
         }
 
         java.util.Date dateCreateTimeStart = null;
