@@ -52,7 +52,10 @@
       AND description LIKE concat('%', #{description,jdbcType=VARCHAR},'%')
     </if>
     <if test="customer != null and customer.length() != 0">
-      AND customer LIKE concat('%', #{customer,jdbcType=VARCHAR},'%')
+      AND customer = #{customer,jdbcType=VARCHAR}
+    </if>
+    <if test="orderId != null and orderId.length() != 0">
+      AND order_id = #{orderId,jdbcType=VARCHAR}
     </if>
     <if test="receptionist != null and receptionist.length() != 0">
       AND receptionist LIKE concat('%', #{receptionist,jdbcType=VARCHAR},'%')

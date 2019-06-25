@@ -103,6 +103,7 @@ public class WorkOrderController {
                                                    @ApiParam(value="标题")@RequestParam(required=false) String title,
                                                    @ApiParam(value="描述")@RequestParam(required=false) String description,
                                                    @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
+                                                   @ApiParam(value="订单所属客户")@RequestParam(required=false) String orderId,
                                                    @ApiParam(value="工单指定接待员")@RequestParam(required=false) String receptionist,
                                                    @ApiParam(value="工单类型ID")@RequestParam(required=false) Long typeId,
                                                    @ApiParam(value="工单紧急程度")@RequestParam(required=false) Integer urgentDegree,
@@ -147,7 +148,7 @@ public class WorkOrderController {
         }
 
         PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,
-                "id", "DESC",title,description,customer,receptionist,typeId,urgentDegree,status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
+                "id", "DESC",title,description,customer,orderId,receptionist,typeId,urgentDegree,status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
 
         List<WorkOrderBean> list = new ArrayList<>();
 
@@ -180,7 +181,7 @@ public class WorkOrderController {
         String title = data.getTitle();
         String description = data.getDescription();
         String customer = data.getCustomer();
-        String receptionist = data.getDescription();
+        String receptionist = data.getReceptionist();
         Long typeId = data.getTypeId();
         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();

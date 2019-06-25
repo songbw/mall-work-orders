@@ -72,7 +72,7 @@ public class SysLogAOP {
         log.setIp(request.getRemoteAddr());
         log.setUrl(request.getRequestURL().toString());
         log.setUserAgent(request.getHeader("user-agent"));
-        systemService.insertSysControllerLog(log);
+        //systemService.insertSysControllerLog(log);
 
         logger.info("request contentType:{}", request.getHeader("Accept"));
         logger.info("request param : {}", log.getParam());

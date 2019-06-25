@@ -19,7 +19,7 @@ public interface IWorkOrderService {
     void update(WorkOrder workOrder);
 
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,
-                                   String title, String description, String customer,
+                                   String title, String description, String customer, String orderId,
                                    String receptionist, Long typeId,  Integer urgentDegree,Integer status,
                                    Date finishTimeStart, Date finishTimeEnd,
                                    Date createTimeStart, Date createTimeEnd);

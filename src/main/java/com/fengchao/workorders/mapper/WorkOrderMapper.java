@@ -29,6 +29,7 @@ public interface WorkOrderMapper {
                                @Param("title") String title,
                                @Param("description") String description,
                                @Param("customer") String customer,
+                               @Param("orderId") String orderId,
                                @Param("receptionist") String receptionist,
                                @Param("typeId") Long typeId,
                                @Param("urgentDegree") Integer urgentDegree,

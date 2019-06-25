@@ -68,19 +68,19 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                          String title, String description, String customer,
+                                          String title, String description, String customer, String orderId,
                                           String receptionist, Long typeId,  Integer urgentDegree,Integer status,
                                           Date finishTimeStart, Date finishTimeEnd,
                                          Date createTimeStart, Date createTimeEnd) {
 
         int counts = workOrderMapper.selectRange(sort, order,
-                                                    title, description, customer,
+                                                    title, description, customer,orderId,
                                                     receptionist, typeId, urgentDegree,status,
                                                     finishTimeStart, finishTimeEnd,
                                                     createTimeStart, createTimeEnd).size();
 
         PageHelper.startPage(pageIndex, pageSize);
-        List<WorkOrder> workOrders = workOrderMapper.selectRange(sort, order, title, description, customer,
+        List<WorkOrder> workOrders = workOrderMapper.selectRange(sort, order, title, description, customer, orderId,
                 receptionist, typeId, urgentDegree,status,
                 finishTimeStart, finishTimeEnd,
                 createTimeStart, createTimeEnd);
