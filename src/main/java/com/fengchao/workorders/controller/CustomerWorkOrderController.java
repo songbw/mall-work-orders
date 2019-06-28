@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
-import java.text.ParseException;
+//import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -88,6 +88,7 @@ public class CustomerWorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setTypeId(typeId);
+        workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
 
         if (null != customer && !customer.isEmpty()) {
             workOrder.setCustomer(customer);
@@ -187,7 +188,7 @@ public class CustomerWorkOrderController {
     @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping("work_orders/pages")
+    @GetMapping("work_orders")
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    //@RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                    @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,

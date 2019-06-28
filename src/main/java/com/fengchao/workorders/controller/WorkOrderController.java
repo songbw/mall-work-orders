@@ -217,6 +217,7 @@ public class WorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setTypeId(typeId);
+        workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
 
         if (null != customer && !customer.isEmpty()) {
             workOrder.setCustomer(customer);
