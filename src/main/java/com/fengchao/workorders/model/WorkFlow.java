@@ -7,9 +7,7 @@ public class WorkFlow {
 
     private Long workOrderId;
 
-    private Long sender;
-
-    private Long receiver;
+    private Integer status;
 
     private String comments;
 
@@ -21,75 +19,67 @@ public class WorkFlow {
 
     private String updatedBy;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setWorkOrderId(Long workOrderId) {
-        this.workOrderId = workOrderId;
-    }
-
-    public void setSender(Long sender) {
-        this.sender = sender;
-    }
-
-    public void setReceiver(Long receiver) {
-        this.receiver = receiver;
-    }
-
-    public void setComments(String comments) {
-        this.comments = comments;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getWorkOrderId() {
         return workOrderId;
     }
 
-    public Long getSender() {
-        return sender;
+    public void setWorkOrderId(Long workOrderId) {
+        this.workOrderId = workOrderId;
     }
 
-    public Long getReceiver() {
-        return receiver;
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
     public String getComments() {
         return comments;
     }
 
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
     public Date getCreateTime() {
         return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
     }
 
     public Date getUpdateTime() {
         return updateTime;
     }
 
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
+
     public String getCreatedBy() {
         return createdBy;
     }
 
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
     public String getUpdatedBy() {
         return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

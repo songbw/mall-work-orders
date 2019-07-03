@@ -25,20 +25,30 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
     private static final Logger logger = LoggerFactory.getLogger(WorkFlowServiceImpl.class);
 
     private WorkFlowMapper workFlowMapper;
+    private WorkOrderMapper workOrderMapper;
 
     // @Autowired
     // private RedisTemplate<Object, Object> redisTemplate;
 
     @Autowired
-    public WorkFlowServiceImpl(WorkFlowMapper workFlowMapper
+    public WorkFlowServiceImpl(WorkFlowMapper workFlowMapper,WorkOrderMapper workOrderMapper
                               ) {
         this.workFlowMapper = workFlowMapper;
+        this.workOrderMapper = workOrderMapper;
     }
 
     @Override
     public Long insert(WorkFlow workFlow) {
         int rst = workFlowMapper.insertSelective(workFlow);
         if (0 < rst) {
+            WorkOrder workOrder = workOrderMapper.selectByPrimaryKey(1L);
+            if (null != workOrder && null != workOrder.getStatus()) {
+                if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+                    workOrder.setStatus(workFlow.getStatus());
+                    workOrderMapper.updateByPrimaryKey(workOrder);
+                }
+            }
+
             return workFlow.getId();
         } else {
             return 0L;
@@ -68,18 +78,17 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
     @Override
     public List<WorkFlow> selectAll() {
 
-        return workFlowMapper.selectRange("id", "DESC", null,null, null, null, null);
+        return workFlowMapper.selectRange("id", "DESC",  null, null, null);
     }
 
     @Override
     public PageInfo<WorkFlow> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                         Long workOrderId, Long sender, Long receiver,
-                                         Date createTimeStart, Date createTimeEnd) {
+                                         Long workOrderId, Date createTimeStart, Date createTimeEnd) {
 
-        int counts = workFlowMapper.selectRange(sort, order, workOrderId,sender, receiver, createTimeStart, createTimeEnd).size();
+        int counts = workFlowMapper.selectRange(sort, order, workOrderId, createTimeStart, createTimeEnd).size();
 
         PageHelper.startPage(pageIndex, pageSize);
-        List<WorkFlow> workFlows = workFlowMapper.selectRange(sort, order, workOrderId,sender, receiver, createTimeStart, createTimeEnd);
+        List<WorkFlow> workFlows = workFlowMapper.selectRange(sort, order, workOrderId, createTimeStart, createTimeEnd);
 
         return new PageInfo<>(counts, pageSize, pageIndex,workFlows);
     }
@@ -89,9 +98,4 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
         return workFlowMapper.selectByWorkOrderId(workOrderId);
     }
 
-    @Override
-    public List<WorkFlow> selectList(Long sender, Long receiver) {
-        return workFlowMapper.selectRange("id", "ASC", null,sender, receiver, null, null);
-
-    }
 }

@@ -5,19 +5,21 @@ import java.util.Date;
 public class WorkOrder {
     private Long id;
 
+    private Long merchantId;
+
     private String orderId;
 
     private String title;
 
     private String description;
 
-    private String customer;
+    private String receiverId;
 
-    private String receptionist;
+    private String receiverName;
 
     private Long typeId;
 
-    private String workFlow;
+    private String receiverPhone;
 
     private String outcome;
 
@@ -43,12 +45,20 @@ public class WorkOrder {
         this.id = id;
     }
 
+    public Long getMerchantId() {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId) {
+        this.merchantId = merchantId;
+    }
+
     public String getOrderId() {
         return orderId;
     }
 
     public void setOrderId(String orderId) {
-        this.orderId = orderId == null ? null : orderId.trim();
+        this.orderId = orderId;
     }
 
     public String getTitle() {
@@ -56,7 +66,7 @@ public class WorkOrder {
     }
 
     public void setTitle(String title) {
-        this.title = title == null ? null : title.trim();
+        this.title = title;
     }
 
     public String getDescription() {
@@ -64,23 +74,23 @@ public class WorkOrder {
     }
 
     public void setDescription(String description) {
-        this.description = description == null ? null : description.trim();
+        this.description = description;
     }
 
-    public String getCustomer() {
-        return customer;
+    public String getReceiverId() {
+        return receiverId;
     }
 
-    public void setCustomer(String customer) {
-        this.customer = customer == null ? null : customer.trim();
+    public void setReceiverId(String receiverId) {
+        this.receiverId = receiverId;
     }
 
-    public String getReceptionist() {
-        return receptionist;
+    public String getReceiverName() {
+        return receiverName;
     }
 
-    public void setReceptionist(String receptionist) {
-        this.receptionist = receptionist == null ? null : receptionist.trim();
+    public void setReceiverName(String receiverName) {
+        this.receiverName = receiverName;
     }
 
     public Long getTypeId() {
@@ -91,12 +101,12 @@ public class WorkOrder {
         this.typeId = typeId;
     }
 
-    public String getWorkFlow() {
-        return workFlow;
+    public String getReceiverPhone() {
+        return receiverPhone;
     }
 
-    public void setWorkFlow(String workFlow) {
-        this.workFlow = workFlow == null ? null : workFlow.trim();
+    public void setReceiverPhone(String receiverPhone) {
+        this.receiverPhone = receiverPhone;
     }
 
     public String getOutcome() {
@@ -104,7 +114,7 @@ public class WorkOrder {
     }
 
     public void setOutcome(String outcome) {
-        this.outcome = outcome == null ? null : outcome.trim();
+        this.outcome = outcome;
     }
 
     public Date getFinishTime() {
@@ -152,7 +162,7 @@ public class WorkOrder {
     }
 
     public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy == null ? null : createdBy.trim();
+        this.createdBy = createdBy;
     }
 
     public String getUpdatedBy() {
@@ -160,6 +170,6 @@ public class WorkOrder {
     }
 
     public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy == null ? null : updatedBy.trim();
+        this.updatedBy = updatedBy;
     }
 }

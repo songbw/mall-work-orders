@@ -21,11 +21,8 @@ public interface IWorkFlowService {
     List<WorkFlow> selectAll();
 
     PageInfo<WorkFlow> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                  Long workOrderId, Long sender, Long receiver,
-                                  Date createTimeStart, Date createTimeEnd);
+                                  Long workOrderId, Date createTimeStart, Date createTimeEnd);
 
     List<WorkFlow> selectByWorkOrderId(Long workOrderId);
 
-
-    List<WorkFlow> selectList(Long sender, Long receiver);
 }

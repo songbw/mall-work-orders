@@ -19,8 +19,8 @@ public interface IWorkOrderService {
     void update(WorkOrder workOrder);
 
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,
-                                   String title, String description, String customer, String orderId,
-                                   String receptionist, Long typeId,  Integer urgentDegree,Integer status,
+                                   String title, String receiverId, String receiverName, String receiverPhone,
+                                   String orderId, Long typeId, Long merchantId,Integer status,
                                    Date finishTimeStart, Date finishTimeEnd,
                                    Date createTimeStart, Date createTimeEnd);
 

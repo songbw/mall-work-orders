@@ -101,17 +101,13 @@ public class WorkOrderController {
                                                    @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
                                                    @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="标题")@RequestParam(required=false) String title,
-                                                   @ApiParam(value="描述")@RequestParam(required=false) String description,
-                                                   @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
-                                                   @ApiParam(value="订单所属客户")@RequestParam(required=false) String orderId,
-                                                   @ApiParam(value="工单指定接待员")@RequestParam(required=false) String receptionist,
+                                                   @ApiParam(value="订单ID")@RequestParam(required=false) String orderId,
+                                                   @ApiParam(value="客户ID")@RequestParam(required=false) String receiverId,
+                                                   @ApiParam(value="客户电话")@RequestParam(required=false) String receiverPhone,
+                                                   @ApiParam(value="客户名称")@RequestParam(required=false) String receiverName,
                                                    @ApiParam(value="工单类型ID")@RequestParam(required=false) Long typeId,
-                                                   @ApiParam(value="工单紧急程度")@RequestParam(required=false) Integer urgentDegree,
-                                                   @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status,
-                                                   @ApiParam(value="预计完成时间开始")@RequestParam(required=false) String finishTimeStart,
-                                                   @ApiParam(value="预计完成时间结束")@RequestParam(required=false) String finishTimeEnd,
-                                                   @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
-                                                   @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd
+                                                   @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
+                                                   @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status
                                                      ) {
 
         java.util.Date dateCreateTimeStart = null;
@@ -132,25 +128,9 @@ public class WorkOrderController {
             pageSize = 10;
         }
 
-        try {
-            if (null != createTimeStart && !createTimeStart.isEmpty()) {
-                dateCreateTimeStart = StringUtil.String2Date(createTimeStart);
-            }
-            if (null != createTimeEnd && !createTimeEnd.isEmpty()) {
-                dateCreateTimeEnd = StringUtil.String2Date(createTimeEnd);
-            }
-            if (null != finishTimeStart && !finishTimeStart.isEmpty()) {
-                dateFinishTimeStart = StringUtil.String2Date(finishTimeStart);
-            }
-            if (null != finishTimeEnd && !finishTimeEnd.isEmpty()) {
-                dateFinishTimeEnd = StringUtil.String2Date(finishTimeEnd);
-            }
-        } catch (ParseException ex) {
-            StringUtil.throw400Exp(response,"400002:dateTime format error");
-        }
-
-        PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,
-                "id", "DESC",title,description,customer,orderId,receptionist,typeId,urgentDegree,status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
+        PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,"id", "DESC",
+                                title,receiverId,receiverName,receiverPhone,orderId,typeId,merchantId,
+                                status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
 
         List<WorkOrderBean> list = new ArrayList<>();
 
@@ -182,18 +162,18 @@ public class WorkOrderController {
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
-        String customer = data.getCustomer();
-        String receptionist = data.getReceptionist();
+        String receiverid = data.getReceiverId();
+        String receiverPhone = data.getReceiverPhone();
+        String receiverName = data.getReceiverName();
+        Long merchantId = data.getMerchantId();
         Long typeId = data.getTypeId();
         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
         if (null == typeId || 0 == typeId ||
-            null == orderId || orderId.isEmpty() ||
-            null == title || title.isEmpty() ||
-            null == description || description.isEmpty()
+            null == title || title.isEmpty()
             ) {
-            StringUtil.throw400Exp(response, "400002:工单标题, 工单描述, 工单类型, 所属订单不能空缺");
+            StringUtil.throw400Exp(response, "400002:工单标题, 工单类型不能空缺");
         }
 
         OrderType orderType = orderTypeService.selectById(typeId);
@@ -217,14 +197,22 @@ public class WorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setTypeId(typeId);
-        workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
+        workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
 
-        if (null != customer && !customer.isEmpty()) {
-            workOrder.setCustomer(customer);
+        if (null != receiverid && !receiverid.isEmpty()) {
+            workOrder.setReceiverId(receiverid);
         }
 
-        if (null != receptionist && !receptionist.isEmpty()) {
-            workOrder.setReceptionist(receptionist);
+        if (null != receiverPhone && !receiverPhone.isEmpty()) {
+            workOrder.setReceiverPhone(receiverPhone);
+        }
+
+        if (null != receiverName && !receiverName.isEmpty()) {
+            workOrder.setReceiverName(receiverName);
+        }
+
+        if (null != merchantId) {
+            workOrder.setMerchantId(merchantId);
         }
 
         if (null != urgentDegree) {
@@ -263,10 +251,11 @@ public class WorkOrderController {
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
-        String customer = data.getCustomer();
-        String receptionist = data.getDescription();
+        String receiverid = data.getReceiverId();
+        String receiverPhone = data.getReceiverPhone();
+        String receiverName = data.getReceiverName();
+        Long merchantId = data.getMerchantId();
         Long typeId = data.getTypeId();
-        String workFlow = data.getWorkFlow();
         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
@@ -309,16 +298,20 @@ public class WorkOrderController {
             workOrder.setDescription(description);
         }
 
-        if (null != customer && !customer.isEmpty()) {
-            workOrder.setCustomer(customer);
+        if (null != receiverid && !receiverid.isEmpty()) {
+            workOrder.setReceiverId(receiverid);
         }
 
-        if (null != receptionist && !receptionist.isEmpty()) {
-            workOrder.setReceptionist(receptionist);
+        if (null != receiverPhone && !receiverPhone.isEmpty()) {
+            workOrder.setReceiverPhone(receiverPhone);
         }
 
-        if (null != workFlow && !workFlow.isEmpty()) {
-            workOrder.setWorkFlow(workFlow);
+        if (null != receiverName && !receiverName.isEmpty()) {
+            workOrder.setReceiverName(receiverName);
+        }
+
+        if (null != merchantId) {
+            workOrder.setMerchantId(merchantId);
         }
 
         if (null != urgentDegree) {
@@ -373,7 +366,7 @@ public class WorkOrderController {
         logger.info("delete WorkOrder profile");
 
     }
-
+/*
     @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
@@ -414,5 +407,5 @@ public class WorkOrderController {
         return result;
 
     }
-
+*/
 }

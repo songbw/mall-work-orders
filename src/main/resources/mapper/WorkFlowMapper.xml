@@ -4,8 +4,7 @@
   <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.WorkFlow">
     <id column="id" jdbcType="BIGINT" property="id" />
     <result column="work_order_id" jdbcType="BIGINT" property="workOrderId" />
-    <result column="sender" jdbcType="BIGINT" property="sender" />
-    <result column="receiver" jdbcType="BIGINT" property="receiver" />
+    <result column="status" jdbcType="INTEGER" property="status" />
     <result column="comments" jdbcType="VARCHAR" property="comments" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
@@ -13,7 +12,7 @@
     <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
   </resultMap>
   <sql id="Base_Column_List">
-    id,  work_order_id, sender, receiver, comments, create_time, update_time,
+    id,  work_order_id, status, comments, create_time, update_time,
     created_by, updated_by
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -37,12 +36,6 @@
     <if test="workOrderId != null">
       AND  work_order_id = #{workOrderId,jdbcType=BIGINT}
     </if>
-    <if test="sender != null">
-      AND sender = #{sender,jdbcType=BIGINT}
-    </if>
-    <if test="receiver != null">
-      AND receiver = #{receiver,jdbcType=BIGINT}
-    </if>
     <if test="createTimeStart !=null ">
       AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
     </if>
@@ -61,12 +54,12 @@
     where id = #{id,jdbcType=BIGINT}
   </delete>
   <insert id="insert" parameterType="com.fengchao.workorders.model.WorkFlow">
-    insert into work_flow (work_order_id,
-      sender, receiver, comments,
+    insert into work_flow (id, work_order_id,
+      status, comments,
       create_time, update_time, created_by,
       updated_by)
-    values ( #{workOrderId,jdbcType=BIGINT},
-      #{sender,jdbcType=BIGINT}, #{receiver,jdbcType=BIGINT}, #{comments,jdbcType=VARCHAR},
+    values (#{id,jdbcType=BIGINT}, #{workOrderId,jdbcType=BIGINT},
+      #{status,jdbcType=INTEGER}, #{comments,jdbcType=VARCHAR},
       #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
       #{updatedBy,jdbcType=VARCHAR})
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
@@ -76,14 +69,14 @@
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkFlow">
     insert into work_flow
     <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
       <if test="workOrderId != null">
         work_order_id,
       </if>
-      <if test="sender != null">
-        sender,
-      </if>
-      <if test="receiver != null">
-        receiver,
+      <if test="status != null">
+        status,
       </if>
       <if test="comments != null">
         comments,
@@ -102,14 +95,14 @@
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
       <if test="workOrderId != null">
         #{workOrderId,jdbcType=BIGINT},
       </if>
-      <if test="sender != null">
-        #{sender,jdbcType=BIGINT},
-      </if>
-      <if test="receiver != null">
-        #{receiver,jdbcType=BIGINT},
+      <if test="status != null">
+        #{status,jdbcType=INTEGER},
       </if>
       <if test="comments != null">
         #{comments,jdbcType=VARCHAR},
@@ -137,11 +130,8 @@
       <if test="workOrderId != null">
         work_order_id = #{workOrderId,jdbcType=BIGINT},
       </if>
-      <if test="sender != null">
-        sender = #{sender,jdbcType=BIGINT},
-      </if>
-      <if test="receiver != null">
-        receiver = #{receiver,jdbcType=BIGINT},
+      <if test="status != null">
+        status = #{status,jdbcType=INTEGER},
       </if>
       <if test="comments != null">
         comments = #{comments,jdbcType=VARCHAR},
@@ -165,8 +155,7 @@
     update work_flow
     set
       work_order_id = #{workOrderId,jdbcType=BIGINT},
-      sender = #{sender,jdbcType=BIGINT},
-      receiver = #{receiver,jdbcType=BIGINT},
+      status = #{status,jdbcType=INTEGER},
       comments = #{comments,jdbcType=VARCHAR},
       create_time = #{createTime,jdbcType=TIMESTAMP},
       update_time = #{updateTime,jdbcType=TIMESTAMP},

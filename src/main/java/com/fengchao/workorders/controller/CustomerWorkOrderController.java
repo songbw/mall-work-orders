@@ -88,10 +88,10 @@ public class CustomerWorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setTypeId(typeId);
-        workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
+        workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
 
         if (null != customer && !customer.isEmpty()) {
-            workOrder.setCustomer(customer);
+            workOrder.setReceiverId(customer);
         }
 
         workOrder.setUrgentDegree(1);
@@ -129,7 +129,6 @@ public class CustomerWorkOrderController {
         String title = data.getTitle();
         String description = data.getDescription();
         String customer = data.getCustomer();
-        String receptionist = data.getDescription();
         Long typeId = data.getTypeId();
 
         if (null == id || 0 == id) {
@@ -163,13 +162,8 @@ public class CustomerWorkOrderController {
         }
 
         if (null != customer && !customer.isEmpty()) {
-            workOrder.setCustomer(customer);
+            workOrder.setReceiverId(customer);
         }
-
-        if (null != receptionist && !receptionist.isEmpty()) {
-            workOrder.setReceptionist(receptionist);
-        }
-
 
         workOrder.setUpdateTime(new Date());
 

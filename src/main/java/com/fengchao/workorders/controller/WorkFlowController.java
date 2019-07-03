@@ -56,6 +56,7 @@ public class WorkFlowController {
         this.workOrderService = workOrderService;
     }
 
+    /*
     @ApiOperation(value = "获取工单流程列表", notes = "获取工单流程列表")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
@@ -84,7 +85,7 @@ public class WorkFlowController {
         return result;
 
     }
-
+*/
     @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
@@ -125,8 +126,6 @@ public class WorkFlowController {
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                      @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
                                                      @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
-                                                     @ApiParam(value="流程上一步操作者")@RequestParam(required=false)Long sender,
-                                                     @ApiParam(value="当前流程操作者")@RequestParam(required=false)Long receiver,
                                                      @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
                                                      @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
                                                      @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
@@ -159,7 +158,7 @@ public class WorkFlowController {
         }
 
         PageInfo<WorkFlow> pages = workFlowService.selectPage(pageIndex,pageSize,
-                "id", "DESC",workOrderId,sender,receiver, dateCreateTimeStart, dateCreateTimeEnd);
+                "id", "DESC",workOrderId,dateCreateTimeStart, dateCreateTimeEnd);
 
         List<WorkFlowBean> list = new ArrayList<>();
 
@@ -179,7 +178,7 @@ public class WorkFlowController {
     }
 
     @ApiOperation(value = "创建工单流程信息", notes = "创建工单流程信息")
-    @ApiResponses({ @ApiResponse(code = 400, message = "failed to creat record") })
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_flows")
     public IdData createProfile(HttpServletResponse response,
@@ -190,15 +189,12 @@ public class WorkFlowController {
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();
-        Long sender = data.getSender();
-        Long receiver = data.getReceiver();
+        Integer status = data.getStatus();
         String comments = data.getComments();
 
-        if (null == sender || 0 == sender ||
-            null == receiver || 0 == receiver ||
-            null == workOrderId || 0 == workOrderId
+        if (null == workOrderId || 0 == workOrderId
             ) {
-            StringUtil.throw400Exp(response, "400002:流程操作者无效");
+            StringUtil.throw400Exp(response, "400002:工单号不能为空");
         }
 
         WorkOrder workOrder = workOrderService.selectById(workOrderId);
@@ -209,8 +205,10 @@ public class WorkFlowController {
         WorkFlow workFlow = new WorkFlow();
 
         workFlow.setWorkOrderId(workOrderId);
-        workFlow.setSender(sender);
-        workFlow.setReceiver(receiver);
+
+        if (null != status && !WorkOrderStatusType.Int2String(status).isEmpty()) {
+            workFlow.setStatus(status);
+        }
 
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
@@ -244,8 +242,7 @@ public class WorkFlowController {
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String comments = data.getComments();
-        Long sender = data.getSender();
-        Long receiver = data.getReceiver();
+        Integer status = data.getStatus();
         Long workOrderId = data.getWorkOrderId();
 
         if (null == id || 0 == id) {
@@ -257,14 +254,6 @@ public class WorkFlowController {
         if (null == workFlow) {
             StringUtil.throw400Exp(response, "400003:工单流程不存在");
             return result;
-        }
-
-        if (null != sender ) {
-            workFlow.setSender(sender);
-        }
-
-        if (null != receiver) {
-            workFlow.setReceiver(receiver);
         }
 
         if (null != workOrderId) {
@@ -284,6 +273,11 @@ public class WorkFlowController {
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
         }
+
+        if (null != status && !WorkOrderStatusType.Int2String(status).isEmpty()) {
+            workFlow.setStatus(status);
+        }
+
         workFlowService.update(workFlow);
 
         result.id = id;

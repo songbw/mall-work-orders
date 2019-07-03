@@ -1,12 +1,13 @@
 package com.fengchao.workorders.util;
 
 public enum WorkOrderStatusType {
-    EDITING(1, "待审核"),
-    PENDING(2, "审核中"),
-    APPROVED(3, "审核通过"),
-    REJECT(4, "审核失败"),
-    HANDLING(5, "处理中"),
-    CLOSED(6, "处理完成");
+    PENDING(1, "等待审核"),
+    RETURN(2, "待退货"),
+    RETURNED(3, "已退货"),
+    REFUND(4, "待退款"),
+    REFUNDED(5, "退款成功"),
+    CLOSED(6, "退款关闭"),
+    REJECT(7, "审核已拒绝");
 
     private Integer code;
     private String msg;
@@ -53,6 +54,6 @@ public enum WorkOrderStatusType {
                 }
             }
         }
-        return "PENDING";
+        return "";
     }
 }

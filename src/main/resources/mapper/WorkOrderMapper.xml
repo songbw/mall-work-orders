@@ -4,12 +4,13 @@
   <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.WorkOrder">
     <id column="id" jdbcType="BIGINT" property="id" />
     <result column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="merchant_id" jdbcType="BIGINT" property="merchantId" />
     <result column="title" jdbcType="VARCHAR" property="title" />
     <result column="description" jdbcType="VARCHAR" property="description" />
-    <result column="customer" jdbcType="VARCHAR" property="customer" />
-    <result column="receptionist" jdbcType="VARCHAR" property="receptionist" />
+    <result column="receiver_id" jdbcType="VARCHAR" property="receiverId" />
+    <result column="receiver_name" jdbcType="VARCHAR" property="receiverName" />
     <result column="type_id" jdbcType="BIGINT" property="typeId" />
-    <result column="work_flow" jdbcType="VARCHAR" property="workFlow" />
+    <result column="receiver_phone" jdbcType="VARCHAR" property="receiverPhone" />
     <result column="outcome" jdbcType="VARCHAR" property="outcome" />
     <result column="finish_time" jdbcType="TIMESTAMP" property="finishTime" />
     <result column="urgent_degree" jdbcType="INTEGER" property="urgentDegree" />
@@ -20,7 +21,7 @@
     <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
   </resultMap>
   <sql id="Base_Column_List">
-    id, order_id, title, description, customer, receptionist, type_id, work_flow, outcome,
+    id, order_id, merchant_id,title, description, receiver_id, receiver_name, type_id, receiver_phone, outcome,
     finish_time, urgent_degree, status, create_time, update_time, created_by, updated_by
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -48,23 +49,23 @@
     <if test="title != null and title.length() != 0">
       AND title LIKE concat('%', #{title,jdbcType=VARCHAR},'%')
     </if>
-    <if test="description != null and description.length() != 0">
-      AND description LIKE concat('%', #{description,jdbcType=VARCHAR},'%')
+    <if test="receiverPhone != null and receiverPhone.length() != 0">
+      AND receiver_phone = #{receiverPhone,jdbcType=VARCHAR}
     </if>
-    <if test="customer != null and customer.length() != 0">
-      AND customer = #{customer,jdbcType=VARCHAR}
+    <if test="receiverId != null and receiverId.length() != 0">
+      AND receiver_id = #{receiverId,jdbcType=VARCHAR}
     </if>
     <if test="orderId != null and orderId.length() != 0">
       AND order_id = #{orderId,jdbcType=VARCHAR}
     </if>
-    <if test="receptionist != null and receptionist.length() != 0">
-      AND receptionist LIKE concat('%', #{receptionist,jdbcType=VARCHAR},'%')
+    <if test="receiverName != null and receiverName.length() != 0">
+      AND receiver_name LIKE concat('%', #{receiverName,jdbcType=VARCHAR},'%')
     </if>
     <if test="typeId !=null ">
       AND type_id = #{typeId,jdbcType=BIGINT}
     </if>
-    <if test="urgentDegree !=null ">
-      AND urgent_degree = #{urgentDegree,jdbcType=INTEGER}
+    <if test="merchantId !=null ">
+      AND merchant_id = #{merchantId,jdbcType=BIGINT}
     </if>
     <if test="status !=null ">
       AND status = #{status,jdbcType=INTEGER}
@@ -89,15 +90,15 @@
     </if>
   </select>
   <insert id="insert" parameterType="com.fengchao.workorders.model.WorkOrder">
-    insert into work_order (id, order_id, title,
-      description, customer, receptionist,
-      type_id, work_flow, outcome,
+    insert into work_order (id, order_id, merchant_id, title,
+      description, receiver_id, receiver_name,
+      type_id, receiver_phone, outcome,
       finish_time, urgent_degree, status,
       create_time, update_time, created_by,
       updated_by)
-    values (#{id,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR},
-      #{description,jdbcType=VARCHAR}, #{customer,jdbcType=VARCHAR}, #{receptionist,jdbcType=VARCHAR},
-      #{typeId,jdbcType=BIGINT}, #{workFlow,jdbcType=VARCHAR}, #{outcome,jdbcType=VARCHAR},
+    values (#{id,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{merchantId,jdbcType=BIGINT}, #{title,jdbcType=VARCHAR},
+      #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR},
+      #{typeId,jdbcType=BIGINT}, #{receiverPhone,jdbcType=VARCHAR}, #{outcome,jdbcType=VARCHAR},
       #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER},
       #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
       #{updatedBy,jdbcType=VARCHAR})
@@ -114,23 +115,26 @@
       <if test="orderId != null">
         order_id,
       </if>
+      <if test="merchantId != null">
+        merchant_id,
+      </if>
       <if test="title != null">
         title,
       </if>
       <if test="description != null">
         description,
       </if>
-      <if test="customer != null">
-        customer,
+      <if test="receiverId != null">
+          receiver_id,
       </if>
-      <if test="receptionist != null">
-        receptionist,
+      <if test="receiverName != null">
+          receiver_name,
       </if>
       <if test="typeId != null">
         type_id,
       </if>
-      <if test="workFlow != null">
-        work_flow,
+      <if test="receiverPhone != null">
+          receiver_phone,
       </if>
       <if test="outcome != null">
         outcome,
@@ -164,23 +168,26 @@
       <if test="orderId != null">
         #{orderId,jdbcType=VARCHAR},
       </if>
+      <if test="merchantId != null">
+        #{merchantId,jdbcType=BIGINT},
+      </if>
       <if test="title != null">
         #{title,jdbcType=VARCHAR},
       </if>
       <if test="description != null">
         #{description,jdbcType=VARCHAR},
       </if>
-      <if test="customer != null">
-        #{customer,jdbcType=VARCHAR},
+      <if test="receiverId != null">
+        #{receiver_id,jdbcType=VARCHAR},
       </if>
-      <if test="receptionist != null">
-        #{receptionist,jdbcType=VARCHAR},
+      <if test="receiverName != null">
+        #{receiverName,jdbcType=VARCHAR},
       </if>
       <if test="typeId != null">
         #{typeId,jdbcType=BIGINT},
       </if>
-      <if test="workFlow != null">
-        #{workFlow,jdbcType=VARCHAR},
+      <if test="receiver_phone != null">
+        #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="outcome != null">
         #{outcome,jdbcType=VARCHAR},
@@ -217,23 +224,26 @@
       <if test="orderId != null">
         order_id = #{orderId,jdbcType=VARCHAR},
       </if>
+      <if test="merchantId != null">
+        merchant_id = #{merchantId,jdbcType=BIGINT},
+      </if>
       <if test="title != null">
         title = #{title,jdbcType=VARCHAR},
       </if>
       <if test="description != null">
         description = #{description,jdbcType=VARCHAR},
       </if>
-      <if test="customer != null">
-        customer = #{customer,jdbcType=VARCHAR},
+      <if test="receiverId != null">
+          receiver_id = #{receiverId,jdbcType=VARCHAR},
       </if>
-      <if test="receptionist != null">
-        receptionist = #{receptionist,jdbcType=VARCHAR},
+      <if test="receiverName != null">
+          receiver_name = #{receiverName,jdbcType=VARCHAR},
       </if>
       <if test="typeId != null">
         type_id = #{typeId,jdbcType=BIGINT},
       </if>
-      <if test="workFlow != null">
-        work_flow = #{workFlow,jdbcType=VARCHAR},
+      <if test="receiverPhone != null">
+          receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="outcome != null">
         outcome = #{outcome,jdbcType=VARCHAR},
@@ -265,12 +275,13 @@
   <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.WorkOrder">
     update work_order
     set order_id = #{orderId,jdbcType=VARCHAR},
+      merchant_id = #{merchantId,jdbcType=BIGINT},
       title = #{title,jdbcType=VARCHAR},
       description = #{description,jdbcType=VARCHAR},
-      customer = #{customer,jdbcType=VARCHAR},
-      receptionist = #{receptionist,jdbcType=VARCHAR},
+      receiver_id = #{receiverId,jdbcType=VARCHAR},
+      receiver_name= #{receiverName,jdbcType=VARCHAR},
       type_id = #{typeId,jdbcType=BIGINT},
-      work_flow = #{workFlow,jdbcType=VARCHAR},
+      receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
       outcome = #{outcome,jdbcType=VARCHAR},
       finish_time = #{finishTime,jdbcType=TIMESTAMP},
       urgent_degree = #{urgentDegree,jdbcType=INTEGER},

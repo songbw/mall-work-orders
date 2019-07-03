@@ -27,8 +27,6 @@ public interface WorkFlowMapper {
 
     List<WorkFlow> selectRange(@Param("sort") String sort, @Param("order") String order,
                                @Param("workOrderId")Long workOrderId,
-                               @Param("sender") Long sender,
-                               @Param("receiver") Long receiver,
                                @Param("createTimeStart") Date createTimeStart,
                                @Param("createTimeEnd") Date createTimeEnd);
 }
