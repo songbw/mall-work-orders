@@ -54,10 +54,10 @@ public class TokenAuthenticationService {
     public static void addAuthenticatiotoHttpHeader(HttpServletResponse response, Authentication authentication) {
         //Generate jwt
         String username = authentication.getName();
-        String uid = StringUtil.getUserId(username);
+        //String uid = StringUtil.getUserId(username);
         Claims claims = Jwts.claims().setSubject(username);
         //生成token的时候可以把自定义数据加进去,比如用户权限
-        claims.put("uid", uid);
+        //claims.put("uid", uid);
         //System.out.println("add uid in token: " + uid + " claims = " + claims);
         String token = Jwts.builder()
                 .setSubject(authentication.getName())
@@ -67,8 +67,7 @@ public class TokenAuthenticationService {
                 .compact();
 
         //System.out.println("user: "+authentication.getName() +"  add header token: " + token);
-        StringUtil.setToken(authentication.getName(), token);
-        //把token设置到响应头中去
+                //把token设置到响应头中去
         response.addHeader(HEADER_STRING, TOKEN_PREFIX + token);
     }
 
@@ -87,8 +86,7 @@ public class TokenAuthenticationService {
                 .compact();
 
         //System.out.println("user: "+ username +"  add header token: " + token);
-        StringUtil.setToken(username, token);
-        return token;
+                return token;
     }
 
     /**
@@ -102,7 +100,7 @@ public class TokenAuthenticationService {
         if(token == null){
             return null;
         }
-        System.out.println("try get token from request : " + token);
+        //System.out.println("try get token from request : " + token);
         //may throw exception
         Claims claims;
         try {
@@ -110,11 +108,11 @@ public class TokenAuthenticationService {
             //Key signingKey = new SecretKeySpec(apiKeySecretBytes, SignatureAlgorithm.HS256.getJcaName());
             Jws<Claims> claimsJws = Jwts.parser().setSigningKey(SECRET)
                                        .parseClaimsJws(token.replace(TOKEN_PREFIX, ""));
-            System.out.println("===: jws: " + claimsJws);
+            //System.out.println("===: jws: " + claimsJws);
             claims = claimsJws.getBody();
-            System.out.println("===: claims: " + claimsJws.getBody());
+            //System.out.println("===: claims: " + claimsJws.getBody());
         }catch (Exception e){
-            System.out.println("Exception : " + e.getMessage());
+            //System.out.println("Exception : " + e.getMessage());
             return null;
         }
 
@@ -133,23 +131,6 @@ public class TokenAuthenticationService {
 
         if (null != claims && null != claims.get("uid")) {
             System.out.println("=== get uid from token: " + claims.get("uid").toString());
-        }
-        String receivedToken = token.substring(7);
-        String storedToken = StringUtil.getToken(username);
-        //System.out.println("received token: " + receivedToken);
-        //System.out.println("stored token : " + storedToken);
-        if (null == storedToken || storedToken.isEmpty() || null == receivedToken ||!storedToken.equals(receivedToken)) {
-            System.out.println("error token expired");
-            return null;
-        }
-
-        //得到过期时间
-        Date expiration = claims.getExpiration();
-        Date now = new Date();
-
-        if (now.getTime() > (expiration.getTime() - (EXPIRATIONTIME/2))) {
-            System.out.println("-=-=-=- should refresh Token: now= " + now.getTime() + " expir= " + expiration.getTime()/2);
-            addAuthenticatiotoHttpHeader(response, new UsernamePasswordAuthenticationToken(username, null, authorities));
         }
 
         return new UsernamePasswordAuthenticationToken(username, null, authorities);

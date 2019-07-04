@@ -1,9 +1,5 @@
 package com.fengchao.workorders.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -12,19 +8,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.ArrayList;
-import com.fengchao.workorders.util.RedisUtil;
-
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * @Author Clark
- * @Date 2018/11/29 15:11
- * @Description
- */
 public class StringUtil {
-    private static Logger log = LoggerFactory.getLogger(StringUtil.class);
 
     public static String exceptionDetail(Throwable throwable) {
         Writer writer = new StringWriter();
@@ -132,51 +118,6 @@ public class StringUtil {
         return true;
     }
 
-    public static boolean isRightPermissionCode(String code) {
-        if (null == code || code.isEmpty()) {
-            return false;
-        }
-
-        code = code.trim();
-        Pattern pattern = Pattern.compile("^[a-zA-Z]{1}([a-zA-Z]+[:])[a-zA-Z]+[a-zA-Z]$");
-        Matcher matcher = pattern.matcher(code);
-        if (!matcher.matches()) {
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean isRightPassword(String password) {
-        if (null == password || password.isEmpty()) {
-            return false;
-        }
-/*
-        password = password.trim();
-        //System.out.println("=== password: " + password);
-        Pattern pattern = Pattern.compile("^([a-zA-z0-9])([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){3,20}$");
-        Matcher matcher = pattern.matcher(password);
-        if (!matcher.matches()) {
-            //System.out.println("=== password: Not match 1" );
-            return false;
-        }
-
-        Pattern strongPattern = Pattern.compile("^[a-zA-z0-9](?![a-zA-z0-9]+$)(?!\\d+$)(?![!@#$%^&*]+$)(?![a-zA-z\\d]+$)(?![a-zA-z!@#$%^&*]+$)(?![\\d!@#$%^&*]+$)[a-zA-Z\\d!@#$%^&*]+$");
-        Matcher strongMatcher = strongPattern.matcher(password);
-        if (strongMatcher.matches()) {
-            System.out.println("Strong password");
-        } else {
-            Pattern middlePattern = Pattern.compile("^(?![a-zA-z0-9]+$)(?!\\d+$)(?![!@#$%^&*]+$)[a-zA-Z\\d!@#$%^&*]+$");
-            Matcher middleMatcher = middlePattern.matcher(password);
-            if (middleMatcher.matches()) {
-                System.out.println("middle password");
-            } else {
-                System.out.println("weak password" );
-            }
-        }
-*/
-        return true;
-    }
-
     public static String Date2String(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(date);
@@ -205,123 +146,6 @@ public class StringUtil {
         }
     }
 
-    public static String getToken(String name) {
-        return RedisUtil.getValue(name);
-    }
-    public static void setToken(String name, String token) {
-        RedisUtil.putRedis(name, token, RedisUtil.webexpire);
-    }
-    public static void deleteToken(String name) {
-        RedisUtil.removeValue(name);
-    }
 
-    public static String getVerificationCode(String name) {
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("Code");
-        String key = s.toString();
-        return RedisUtil.getValue(key);
-    }
-    public static void setVerificationCode(String name, String code) {
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("Code");
-        String key = s.toString();
-        RedisUtil.putRedis(key, code, RedisUtil.webexpire);
-    }
-
-    public static String getPhone(String name) {
-        if (null == name || name.isEmpty()) {
-            return "";
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("Phone");
-        String key = s.toString();
-        return RedisUtil.getValue(key);
-    }
-    public static void setPhone(String name, String phone) {
-        if (null == name || name.isEmpty() || null == phone || phone.isEmpty()) {
-            return ;
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("Phone");
-        String key = s.toString();
-        RedisUtil.putRedis(key, phone, RedisUtil.webexpire);
-    }
-
-    public static String getRole(String name) {
-        if (null == name || name.isEmpty()) {
-            return "";
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("Role");
-        String key = s.toString();
-        return RedisUtil.getValue(key);
-    }
-    public static void setRole(String name, String role) {
-        if (null == name || name.isEmpty() || null == role || role.isEmpty()) {
-            return ;
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("Role");
-        String key = s.toString();
-        RedisUtil.putRedis(key, role, RedisUtil.webexpire);
-    }
-
-    public static String getRoleId(String name) {
-        if (null == name || name.isEmpty()) {
-            return "";
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("RId");
-        String key = s.toString();
-        return RedisUtil.getValue(key);
-    }
-    public static void setRoleId(String name, Long roleId) {
-        if (null == name || name.isEmpty() || null == roleId) {
-            return ;
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("RId");
-        String key = s.toString();
-        RedisUtil.putRedis(key, roleId.toString(), RedisUtil.webexpire);
-    }
-
-    public static String getUserId(String name) {
-        if (null == name || name.isEmpty()) {
-            return "";
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("UId");
-        String key = s.toString();
-        return RedisUtil.getValue(key);
-    }
-    public static void setUserId(String name, Long userId) {
-        if (null == name || name.isEmpty() || null == userId) {
-            return ;
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(name);
-        s.append("UId");
-        String key = s.toString();
-        RedisUtil.putRedis(key, userId.toString(), RedisUtil.webexpire);
-    }
-
-    public static void setCacheValue(String key, String value) {
-        RedisUtil.putRedis(key,value,RedisUtil.webexpire);
-    }
-    public static String getCacheValue(String key) {
-        return RedisUtil.getValue(key);
-    }
-    public static void clearCacheValue(String key) {
-        RedisUtil.removeValue(key);
-    }
 
 }

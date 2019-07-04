@@ -81,12 +81,22 @@ public class AttachmentServiceImpl implements IAttachmentService {
                                                   Long workOrderId,
                                                   String name, String submitter, Date createTimeStart,
                                                   Date createTimeEnd) {
-        int counts = attachmentMapper.selectRange(sort, order, workOrderId,name, submitter, createTimeStart, createTimeEnd).size();
 
-        PageHelper.startPage(pageIndex, pageSize);
-        List<Attachment> list = attachmentMapper.selectRange(sort, order, workOrderId,name, submitter, createTimeStart, createTimeEnd);
+        if (null == workOrderId && null == name && null == submitter && null == createTimeStart && null == createTimeEnd) {
+            int counts = attachmentMapper.selectAll().size();
 
-        return new PageInfo<>(counts, pageSize, pageIndex,list);
+            PageHelper.startPage(pageIndex, pageSize);
+            List<Attachment> list = attachmentMapper.selectAll();
+
+            return new PageInfo<>(counts, pageSize, pageIndex, list);
+        } else {
+            int counts = attachmentMapper.selectRange(sort, order, workOrderId, name, submitter, createTimeStart, createTimeEnd).size();
+
+            PageHelper.startPage(pageIndex, pageSize);
+            List<Attachment> list = attachmentMapper.selectRange(sort, order, workOrderId, name, submitter, createTimeStart, createTimeEnd);
+
+            return new PageInfo<>(counts, pageSize, pageIndex, list);
+        }
     }
 
     @Override

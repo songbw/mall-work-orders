@@ -195,11 +195,13 @@ public class WorkFlowController {
         if (null == workOrderId || 0 == workOrderId
             ) {
             StringUtil.throw400Exp(response, "400002:工单号不能为空");
+            return result;
         }
 
         WorkOrder workOrder = workOrderService.selectById(workOrderId);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400002:工单号不存在");
+            return result;
         }
 
         WorkFlow workFlow = new WorkFlow();
@@ -208,6 +210,7 @@ public class WorkFlowController {
 
         if (null != status && !WorkOrderStatusType.Int2String(status).isEmpty()) {
             workFlow.setStatus(status);
+            workOrder.setStatus(status);
         }
 
         if (null != comments && !comments.isEmpty()) {
@@ -215,12 +218,23 @@ public class WorkFlowController {
         }
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(new Date());
-        if (null != username) {
+        if (null != username && !username.isEmpty()) {
             workFlow.setCreatedBy(username);
             workFlow.setUpdatedBy(username);
         }
 
-        result.id = workFlowService.insert(workFlow);
+        try {
+            workOrderService.update(workOrder);
+        } catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response, ex.getMessage());
+        }
+
+        try {
+            result.id = workFlowService.insert(workFlow);
+        }  catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response, ex.getMessage());
+        }
+
         if (0 == result.id) {
             StringUtil.throw400Exp(response, "400003:Failed to create work_flow");
         }
@@ -242,8 +256,6 @@ public class WorkFlowController {
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String comments = data.getComments();
-        Integer status = data.getStatus();
-        Long workOrderId = data.getWorkOrderId();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
@@ -256,29 +268,15 @@ public class WorkFlowController {
             return result;
         }
 
-        if (null != workOrderId) {
-            WorkOrder workOrder = workOrderService.selectById(workOrderId);
-            if (null == workOrder) {
-                StringUtil.throw400Exp(response, "400002:工单号不存在");
-            }
-            workFlow.setWorkOrderId(workOrderId);
-        }
-
         workFlow.setUpdateTime(new Date());
 
-        if (null != username) {
+        if (null != username && !username.isEmpty()) {
             workFlow.setUpdatedBy(username);
         }
 
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
         }
-
-        if (null != status && !WorkOrderStatusType.Int2String(status).isEmpty()) {
-            workFlow.setStatus(status);
-        }
-
-        workFlowService.update(workFlow);
 
         result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());

@@ -29,7 +29,6 @@ public class CustomerWorkOrderController {
     private static Logger logger = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
-    private WorkFlowServiceImpl workFlowService;
     private OrderTypeServiceImpl orderTypeService;
 
     @ApiModel(value = "工单信息ID")
@@ -40,12 +39,10 @@ public class CustomerWorkOrderController {
     }
 
     @Autowired
-    public CustomerWorkOrderController(WorkFlowServiceImpl workFlowService,
-                               OrderTypeServiceImpl orderTypeService,
+    public CustomerWorkOrderController(OrderTypeServiceImpl orderTypeService,
                                WorkOrderServiceImpl workOrderService
     ) {
         this.workOrderService = workOrderService;
-        this.workFlowService = workFlowService;
         this.orderTypeService = orderTypeService;
     }
 
@@ -54,12 +51,11 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_orders")
     public IdResponseData createWorkOrder(HttpServletResponse response,
-                                                    //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                                    @RequestBody CustomerWorkOrderBean data) throws RuntimeException {
+                                          //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                          @RequestBody CustomerWorkOrderBean data) throws RuntimeException {
 
-        logger.info("create WorkOrder enter");
         IdResponseData result = new IdResponseData();
-        String username = null;//JwtTokenUtil.getUsername(authentication);
+
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
@@ -69,20 +65,23 @@ public class CustomerWorkOrderController {
 
         if (null == typeId || 0 == typeId ||
                 null == orderId || orderId.isEmpty() ||
-                null == title || title.isEmpty() ||
-                null == description || description.isEmpty()
+                null == title || title.isEmpty()
         ) {
-            StringUtil.throw400Exp(response, "400002:工单标题, 工单描述, 工单类型, 所属订单不能空缺");
+            StringUtil.throw400Exp(response, "400002:工单标题, 工单类型, 所属订单不能空缺");
+            return result;
         }
 
-        OrderType orderType = orderTypeService.selectById(typeId);
-        if (null == orderType) {
-            StringUtil.throw400Exp(response, "400002:工单类型错误");
-
+        try {
+            OrderType orderType = orderTypeService.selectById(typeId);
+            if (null == orderType) {
+                StringUtil.throw400Exp(response, "400002:工单类型错误");
+                return result;
+            }
+        } catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response, ex.getMessage());
         }
 
         WorkOrder workOrder = new WorkOrder();
-
 
         workOrder.setTitle(title);
         workOrder.setDescription(description);
@@ -98,12 +97,20 @@ public class CustomerWorkOrderController {
 
         workOrder.setCreateTime(new Date());
         workOrder.setUpdateTime(new Date());
+
+        /*
+        String username = null;//JwtTokenUtil.getUsername(authentication);
         if (null != username) {
             workOrder.setCreatedBy(username);
             workOrder.setUpdatedBy(username);
         }
+        */
+        try {
+            result.id = workOrderService.insert(workOrder);
+        } catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response,ex.getMessage());
+        }
 
-        result.id = workOrderService.insert(workOrder);
         if (0 == result.id) {
             StringUtil.throw400Exp(response,"400003:Failed to create work_order");
         }
@@ -122,8 +129,8 @@ public class CustomerWorkOrderController {
                                                     @RequestBody CustomerWorkOrderBean data) throws RuntimeException {
 
 
-        logger.info("update WorkOrder");
         IdResponseData result = new IdResponseData();
+        WorkOrder workOrder = null;
         String username = null; //JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
         String title = data.getTitle();
@@ -136,9 +143,15 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        WorkOrder workOrder = workOrderService.selectById(id);
-        if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400003:工单不存在");
+        try {
+            workOrder = workOrderService.selectById(id);
+
+            if (null == workOrder) {
+                StringUtil.throw400Exp(response, "400003:工单不存在");
+                return result;
+            }
+        } catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response, ex.getMessage());
             return result;
         }
 
@@ -147,13 +160,17 @@ public class CustomerWorkOrderController {
         }
 
         if (null != typeId) {
-            OrderType orderType = orderTypeService.selectById(typeId);
-            if (null == orderType) {
-                StringUtil.throw400Exp(response, "400002:工单类型错误");
-
+            try {
+                OrderType orderType = orderTypeService.selectById(typeId);
+                if (null == orderType) {
+                    StringUtil.throw400Exp(response, "400002:工单类型错误");
+                }
+                workOrder.setTypeId(typeId);
+            } catch (RuntimeException ex) {
+                StringUtil.throw400Exp(response, ex.getMessage());
             }
-            workOrder.setTypeId(typeId);
         }
+
         if (null != orderId) {
             workOrder.setOrderId(orderId);
         }
@@ -171,7 +188,11 @@ public class CustomerWorkOrderController {
             workOrder.setUpdatedBy(username);
         }
 
-        workOrderService.update(workOrder);
+        try {
+            workOrderService.update(workOrder);
+        } catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response, ex.getMessage());
+        }
 
         result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());
