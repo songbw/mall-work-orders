@@ -2,9 +2,13 @@ package com.fengchao.workorders.bean;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
+@Getter
+@Setter
 @ApiModel(value="工单类型信息")
 public class OrderTypeBean {
 
@@ -26,51 +30,4 @@ public class OrderTypeBean {
     @ApiModelProperty(value="更新时间", example="2019-06-06 20:10:10",required=false)
     private Date updateTime;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setWorkflowUrl(String workflowUrl) {
-        this.workflowUrl = workflowUrl;
-    }
-
-    public void setWorkflowText(String workflowText) {
-        this.workflowText = workflowText;
-    }
-
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getWorkflowUrl() {
-        return workflowUrl;
-    }
-
-    public String getWorkflowText() {
-        return workflowText;
-    }
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
-    }
 }

@@ -2,7 +2,11 @@ package com.fengchao.workorders.bean;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @ApiModel(value="附件记录信息")
 public class AttachmentProfileBean {
     @ApiModelProperty(value="附件所属工单ID", example="123",required=true)
@@ -17,35 +21,4 @@ public class AttachmentProfileBean {
     @ApiModelProperty(value="附件提交者", example="张赞",required=true)
     private String submitter;
 
-    public void setWorkOrderId(Long workOrderId) {
-        this.workOrderId = workOrderId;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public void setSubmitter(String submitter) {
-        this.submitter = submitter;
-    }
-
-    public Long getWorkOrderId() {
-        return workOrderId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public String getSubmitter() {
-        return submitter;
-    }
 }

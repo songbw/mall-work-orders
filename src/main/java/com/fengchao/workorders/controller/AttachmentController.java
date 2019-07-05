@@ -7,8 +7,9 @@ import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
+@Slf4j
 @Api(tags="AttachmentAPI", description = "附件管理相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class AttachmentController {
 
-    private static Logger logger = LoggerFactory.getLogger(AttachmentController.class);
+    //private static Logger log = LoggerFactory.getLogger(AttachmentController.class);
 
     private AttachmentServiceImpl attachmentService;
     private WorkOrderServiceImpl workOrderService;
@@ -66,7 +67,7 @@ public class AttachmentController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         List<Attachment> attachments = attachmentService.selectAll();
@@ -105,7 +106,7 @@ public class AttachmentController {
             //String username = JwtTokenUtil.getUsername(authentication);
 
             //if (null == username) {
-            //    logger.warn("can not find username in token");
+            //    log.warn("can not find username in token");
             //}
         //}
         try {
@@ -162,7 +163,7 @@ public class AttachmentController {
 
         if (null != authentication) {
             String username = JwtTokenUtil.getUsername(authentication);
-            logger.info("username : " + username);
+            log.info("username : " + username);
         }
 
         try {
@@ -250,7 +251,7 @@ public class AttachmentController {
         try {
             result.id = attachmentService.insertRecord(attachment);
             response.setStatus(MyErrorMap.e201.getCode());
-            logger.info("create Attachment : " + name);
+            log.info("create Attachment : " + name);
         } catch (RuntimeException ex) {
             StringUtil.throw400Exp(response, "400003:failed to create attachment " + ex.getMessage());
         }
@@ -337,7 +338,7 @@ public class AttachmentController {
 
             result.id = id;
             response.setStatus(MyErrorMap.e201.getCode());
-            logger.info("update Attachment profile");
+            log.info("update Attachment profile");
         } catch (RuntimeException ex) {
             StringUtil.throw400Exp(response, ex.getMessage());
         }
@@ -354,13 +355,13 @@ public class AttachmentController {
                                           @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
                                           ) throws RuntimeException {
 
-        logger.info("delete attachment");
+        log.info("delete attachment");
 
         if (null != authentication) {
             String username = JwtTokenUtil.getUsername(authentication);
 
             if (!username.isEmpty()) {
-                logger.info("username : " + username);
+                log.info("username : " + username);
             }
         }
 
@@ -384,7 +385,7 @@ public class AttachmentController {
             attachmentService.deleteById(id);
             response.setStatus(MyErrorMap.e204.getCode());
 
-            logger.info("delete Attachment");
+            log.info("delete Attachment");
         } catch (RuntimeException ex) {
             StringUtil.throw400Exp(response, ex.getMessage());
         }

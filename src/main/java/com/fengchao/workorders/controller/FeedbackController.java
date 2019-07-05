@@ -7,8 +7,9 @@ import com.fengchao.workorders.model.Feedback;
 import com.fengchao.workorders.service.impl.WorkOrderServiceImpl;
 import com.fengchao.workorders.util.*;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -25,11 +26,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Api(tags="FeedbackAPI", description = "反馈信息相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class FeedbackController {
-    private static Logger logger = LoggerFactory.getLogger(FeedbackController.class);
+    //private static Logger log = LoggerFactory.getLogger(FeedbackController.class);
 
     private FeedbackServiceImpl feedbackService;
     private WorkOrderServiceImpl workOrderService;
@@ -150,7 +152,7 @@ public class FeedbackController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         if (null == id || 0 >= id ) {
@@ -256,7 +258,7 @@ public class FeedbackController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         if (null == pageIndex || 0 >= pageIndex) {

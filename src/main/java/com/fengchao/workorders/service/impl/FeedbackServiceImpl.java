@@ -4,8 +4,7 @@ import com.fengchao.workorders.mapper.FeedbackMapper;
 import com.fengchao.workorders.model.Feedback;
 import com.fengchao.workorders.util.PageInfo;
 import com.fengchao.workorders.service.IFeedbackService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +12,10 @@ import com.github.pagehelper.PageHelper;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Transactional
 @Service
 public class FeedbackServiceImpl implements IFeedbackService {
-    private static Logger log = LoggerFactory.getLogger(FeedbackServiceImpl.class);
 
     private FeedbackMapper feedbackMapper;
 

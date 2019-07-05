@@ -5,9 +5,10 @@ import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.service.impl.OrderTypeServiceImpl;
 import com.fengchao.workorders.util.*;
 import io.swagger.annotations.*;
-//
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -26,14 +27,14 @@ import java.util.Date;
 //import java.util.HashMap;
 import java.util.List;
 
-
+@Slf4j
 @Api(tags="OrderTypeAPI", description = "工单类型相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 
 public class OrderTypeController {
 
-    private static Logger logger = LoggerFactory.getLogger(OrderTypeController.class);
+    //private static Logger log = LoggerFactory.getLogger(OrderTypeController.class);
 
     private OrderTypeServiceImpl orderTypeService;
 
@@ -72,7 +73,7 @@ public class OrderTypeController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
         result.list = list;
         if (null != orderTypes && orderTypes.size() > 0) {
@@ -150,7 +151,7 @@ public class OrderTypeController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         OrderTypeBean result = new OrderTypeBean();
@@ -240,7 +241,7 @@ public class OrderTypeController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         if (null == id || 0 == id) {
@@ -276,7 +277,7 @@ public class OrderTypeController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         if (null == pageIndex || 0 >= pageIndex) {

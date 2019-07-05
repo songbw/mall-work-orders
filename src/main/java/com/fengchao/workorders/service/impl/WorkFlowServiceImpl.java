@@ -6,8 +6,7 @@ import com.fengchao.workorders.mapper.*;
 import com.fengchao.workorders.service.IWorkFlowService;
 import com.fengchao.workorders.util.PageInfo;
 //import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Service(value="WorkFlowServiceImpl")
 @Transactional
 public class WorkFlowServiceImpl implements IWorkFlowService {
-
-    private static final Logger logger = LoggerFactory.getLogger(WorkFlowServiceImpl.class);
 
     private WorkFlowMapper workFlowMapper;
     private WorkOrderMapper workOrderMapper;
@@ -72,7 +70,7 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
         }
         workFlowMapper.updateByPrimaryKeySelective(workFlow);
         //System.out.println("updated workFlow for: " + workFlow.getId());
-        logger.info("updated user for: " + workFlow.getId());
+        log.info("updated user for: " + workFlow.getId());
     }
 
     @Override

@@ -5,8 +5,6 @@ import com.fengchao.workorders.mapper.*;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.util.PageInfo;
 import com.fengchao.workorders.service.IOrderTypeService;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +15,6 @@ import java.util.List;
 @Service
 @Transactional
 public class OrderTypeServiceImpl implements IOrderTypeService {
-    //private static Logger log = LoggerFactory.getLogger(OrderTypeServiceImpl.class);
 
     private OrderTypeMapper orderTypeMapper;
 

@@ -2,9 +2,13 @@ package com.fengchao.workorders.bean;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
+@Getter
+@Setter
 @ApiModel(value="反馈信息体")
 public class FeedbackBodyBean {
     @ApiModelProperty(value="反馈客户名", example="tom",required=true)
@@ -22,43 +26,4 @@ public class FeedbackBodyBean {
     @ApiModelProperty(value="反馈时间", example="2019-06-06 11:11:11",required=true)
     private String feedbackTime;
 
-    public void setCustomer(String customer) {
-        this.customer = customer;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setFeedbackText(String feedbackText) {
-        this.feedbackText = feedbackText;
-    }
-
-    public void setWorkOrderId(Long workOrderId) {
-        this.workOrderId = workOrderId;
-    }
-
-    public void setFeedbackTime(String feedbackTime) {
-        this.feedbackTime = feedbackTime;
-    }
-
-    public String getCustomer() {
-        return customer;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getFeedbackText() {
-        return feedbackText;
-    }
-
-    public Long getWorkOrderId() {
-        return workOrderId;
-    }
-
-    public String getFeedbackTime() {
-        return feedbackTime;
-    }
 }

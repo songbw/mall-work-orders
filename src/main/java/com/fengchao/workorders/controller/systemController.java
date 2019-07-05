@@ -5,8 +5,9 @@ import com.fengchao.workorders.service.impl.SystemServiceImpl;
 import com.fengchao.workorders.model.SysLog;
 import com.fengchao.workorders.util.*;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 //import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,11 +17,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 //import java.util.Date;
 
+@Slf4j
 @Api(tags="LogAPI", description = "日志相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/sys", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class systemController {
-    private static Logger logger = LoggerFactory.getLogger(systemController.class);
+    //private static Logger log = LoggerFactory.getLogger(systemController.class);
 
     private SystemServiceImpl systemService;
 
@@ -48,7 +50,7 @@ public class systemController {
         String usernameInToken = JwtTokenUtil.getUsername(authentication);
 
         if (null == usernameInToken) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
@@ -97,7 +99,7 @@ public class systemController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
         if (null == id || 0 >= id ) {
             StringUtil.throw400Exp(response,"400002:can not find log");
@@ -127,7 +129,7 @@ public class systemController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
         if (null == data.getIdList() || 0 == data.getIdList().size()) {
             StringUtil.throw400Exp(response, "400002:can not find log");

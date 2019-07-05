@@ -7,8 +7,9 @@ import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
+@Slf4j
 @Api(tags="WorkOrderAPI", description = "工单管理相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class WorkOrderController {
 
-    private static Logger logger = LoggerFactory.getLogger(WorkOrderController.class);
+    //private static Logger log = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
     private WorkFlowServiceImpl workFlowService;
@@ -71,7 +72,7 @@ public class WorkOrderController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         if (null == id || 0 == id) {
@@ -98,6 +99,7 @@ public class WorkOrderController {
     @GetMapping("work_orders/pages")
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
+                                                   @RequestHeader(value = "merchant") Long merchantIdInHeader,
                                                    @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
                                                    @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="标题")@RequestParam(required=false) String title,
@@ -115,10 +117,10 @@ public class WorkOrderController {
         java.util.Date dateFinishTimeStart = null;
         java.util.Date dateFinishTimeEnd = null;
 
-        String username = JwtTokenUtil.getUsername(authentication);
+        //String username = JwtTokenUtil.getUsername(authentication);
 
-        if (null == username) {
-            logger.warn("can not find username in token");
+        if (null == merchantIdInHeader) {
+            log.warn("can not find username in header");
         }
 
         if (null == pageIndex || 0 >= pageIndex) {
@@ -128,8 +130,15 @@ public class WorkOrderController {
             pageSize = 10;
         }
 
+        Long merchant;
+        if (0 != merchantIdInHeader) {
+            merchant = merchantIdInHeader;
+        } else {
+            merchant = merchantId;
+        }
+
         PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,"id", "DESC",
-                                title,receiverId,receiverName,receiverPhone,orderId,typeId,merchantId,
+                                title,receiverId,receiverName,receiverPhone,orderId,typeId,merchant,
                                 status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
 
         List<WorkOrderBean> list = new ArrayList<>();
@@ -156,7 +165,7 @@ public class WorkOrderController {
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                             @RequestBody WorkOrderBodyBean data) throws RuntimeException {
 
-        logger.info("create WorkOrder enter");
+        log.info("create WorkOrder enter");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
@@ -245,7 +254,7 @@ public class WorkOrderController {
                                 @RequestBody WorkOrderBodyBean data) throws RuntimeException {
 
 
-        logger.info("update WorkOrder");
+        log.info("update WorkOrder");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
@@ -328,7 +337,7 @@ public class WorkOrderController {
 
         result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());
-        logger.info("update WorkOrder done");
+        log.info("update WorkOrder done");
         return result;
     }
 
@@ -342,7 +351,7 @@ public class WorkOrderController {
                                           @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
                                           ) throws RuntimeException {
 
-        logger.info("delete WorkOrder");
+        log.info("delete WorkOrder");
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
@@ -352,7 +361,7 @@ public class WorkOrderController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         WorkOrder workOrder = workOrderService.selectById(id);
@@ -363,7 +372,7 @@ public class WorkOrderController {
         workOrderService.deleteById(id);
         response.setStatus(MyErrorMap.e204.getCode());
 
-        logger.info("delete WorkOrder profile");
+        log.info("delete WorkOrder profile");
 
     }
 /*
@@ -385,7 +394,7 @@ public class WorkOrderController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
 

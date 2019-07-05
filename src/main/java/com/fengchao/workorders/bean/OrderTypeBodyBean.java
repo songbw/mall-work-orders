@@ -2,7 +2,11 @@ package com.fengchao.workorders.bean;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @ApiModel(value="工单类型登记信息")
 public class OrderTypeBodyBean {
     @ApiModelProperty(value="工单流程名称", example="退货退款",required=true)
@@ -14,27 +18,4 @@ public class OrderTypeBodyBean {
     @ApiModelProperty(value="工单流程文字说明", example="反馈",required=true)
     private String workflowText;
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setWorkflowUrl(String workflowUrl) {
-        this.workflowUrl = workflowUrl;
-    }
-
-    public void setWorkflowText(String workflowText) {
-        this.workflowText = workflowText;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getWorkflowUrl() {
-        return workflowUrl;
-    }
-
-    public String getWorkflowText() {
-        return workflowText;
-    }
 }

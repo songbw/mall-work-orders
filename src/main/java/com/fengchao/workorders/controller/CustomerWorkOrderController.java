@@ -6,8 +6,9 @@ import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,12 +22,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Api(tags="CustomerWorkOrderAPI", description = "客户工单管理相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/customers/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class CustomerWorkOrderController {
 
-    private static Logger logger = LoggerFactory.getLogger(WorkOrderController.class);
+    //private static Logger log = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
     private OrderTypeServiceImpl orderTypeService;
@@ -61,6 +63,7 @@ public class CustomerWorkOrderController {
         String description = data.getDescription();
         String customer = data.getCustomer();
         Long typeId = data.getTypeId();
+        Long merchantId = data.getMerchantId();
 
 
         if (null == typeId || 0 == typeId ||
@@ -87,6 +90,7 @@ public class CustomerWorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setTypeId(typeId);
+        workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
 
         if (null != customer && !customer.isEmpty()) {
@@ -137,6 +141,7 @@ public class CustomerWorkOrderController {
         String description = data.getDescription();
         String customer = data.getCustomer();
         Long typeId = data.getTypeId();
+        Long merchantId = data.getMerchantId();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
@@ -182,6 +187,10 @@ public class CustomerWorkOrderController {
             workOrder.setReceiverId(customer);
         }
 
+        if (null != merchantId) {
+            workOrder.setMerchantId(merchantId);
+        }
+
         workOrder.setUpdateTime(new Date());
 
         if (null != username) {
@@ -196,7 +205,7 @@ public class CustomerWorkOrderController {
 
         result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());
-        logger.info("update WorkOrder done");
+        log.info("update WorkOrder done");
         return result;
     }
 
@@ -215,7 +224,7 @@ public class CustomerWorkOrderController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 */
         if (null == pageIndex || 0 >= pageIndex) {

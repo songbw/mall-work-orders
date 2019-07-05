@@ -7,8 +7,9 @@ import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
+@Slf4j
 @Api(tags="WorkFlowAPI", description = "工单流程管理相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class WorkFlowController {
 
-    private static Logger logger = LoggerFactory.getLogger(WorkFlowController.class);
+    //private static Logger log = LoggerFactory.getLogger(WorkFlowController.class);
 
     private WorkFlowServiceImpl workFlowService;
     private WorkOrderServiceImpl workOrderService;
@@ -68,7 +69,7 @@ public class WorkFlowController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         List<WorkFlow> WorkFlows = workFlowService.selectAll();
@@ -103,7 +104,7 @@ public class WorkFlowController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
         WorkFlow workFlow = workFlowService.selectById(id);
         if (null == workFlow) {
@@ -136,7 +137,7 @@ public class WorkFlowController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         if (null == pageIndex || 0 >= pageIndex) {
@@ -185,7 +186,7 @@ public class WorkFlowController {
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                             @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
-        logger.info("create WorkFlow enter");
+        log.info("create WorkFlow enter");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();
@@ -252,7 +253,7 @@ public class WorkFlowController {
                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id,
                                 @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
-        logger.info("update WorkFlow");
+        log.info("update WorkFlow");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String comments = data.getComments();
@@ -280,7 +281,7 @@ public class WorkFlowController {
 
         result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());
-        logger.info("update WorkFlow done");
+        log.info("update WorkFlow done");
         return result;
     }
 
@@ -294,7 +295,7 @@ public class WorkFlowController {
                                           @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
                                           ) throws RuntimeException {
 
-        logger.info("delete WorkFlow");
+        log.info("delete WorkFlow");
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
@@ -304,7 +305,7 @@ public class WorkFlowController {
         String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == username) {
-            logger.warn("can not find username in token");
+            log.warn("can not find username in token");
         }
 
         WorkFlow workFlow = workFlowService.selectById(id);
@@ -315,7 +316,7 @@ public class WorkFlowController {
         workFlowService.deleteById(id);
         response.setStatus(MyErrorMap.e204.getCode());
 
-        logger.info("delete WorkFlow profile");
+        log.info("delete WorkFlow profile");
 
     }
 
