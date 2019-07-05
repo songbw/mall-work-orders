@@ -17,6 +17,12 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+#VSCode
+.classpath
+.factorypath
+.project
+.settings/
+
 # =========================
 # Operating System Files
 # =========================
@@ -27,7 +33,6 @@ $RECYCLE.BIN/
 .DS_Store
 .AppleDouble
 .LSOverride
-
 # Thumbnails
 ._*
 
