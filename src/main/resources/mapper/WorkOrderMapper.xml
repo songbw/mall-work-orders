@@ -89,6 +89,13 @@
       ${order}
     </if>
   </select>
+  <select id="countType"  resultType="integer">
+    select count(id)
+    from work_order
+    where type_id = #{typeId,jdbcType=BIGINT}
+      and create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
+      and create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
+  </select>
   <insert id="insert" parameterType="com.fengchao.workorders.model.WorkOrder">
     insert into work_order (id, order_id, merchant_id, title,
       description, receiver_id, receiver_name,

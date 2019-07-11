@@ -38,4 +38,8 @@ public interface WorkOrderMapper {
                                @Param("finishTimeEnd") Date finishTimeEnd,
                                @Param("createTimeStart") Date createTimeStart,
                                @Param("createTimeEnd") Date createTimeEnd);
+
+    int countType(@Param("typeId") Long typeId,
+                    @Param("createTimeStart") Date createTimeStart,
+                    @Param("createTimeEnd") Date createTimeEnd);
 }

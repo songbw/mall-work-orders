@@ -33,8 +33,6 @@ public class WorkOrderController {
     //private static Logger log = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
-    private WorkFlowServiceImpl workFlowService;
-    private OrderTypeServiceImpl orderTypeService;
 
     @ApiModel(value = "工单信息ID")
     private class IdData implements Serializable {
@@ -50,14 +48,17 @@ public class WorkOrderController {
 
     }
 
+    @ApiModel(value = "退货统计")
+    private class ReturnCount {
+        @ApiModelProperty(value = "统计数", example = "100", required = true)
+        public Integer count;
+
+    }
+
     @Autowired
-    public WorkOrderController(WorkFlowServiceImpl workFlowService,
-                               OrderTypeServiceImpl orderTypeService,
-                               WorkOrderServiceImpl workOrderService
+    public WorkOrderController(WorkOrderServiceImpl workOrderService
                              ) {
         this.workOrderService = workOrderService;
-        this.workFlowService = workFlowService;
-        this.orderTypeService = orderTypeService;
     }
 
     @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
@@ -183,12 +184,7 @@ public class WorkOrderController {
             null == title || title.isEmpty()
             ) {
             StringUtil.throw400Exp(response, "400002:工单标题, 工单类型不能空缺");
-        }
-
-        OrderType orderType = orderTypeService.selectById(typeId);
-        if (null == orderType) {
-            StringUtil.throw400Exp(response, "400002:工单类型错误");
-
+            return result;
         }
 
         WorkOrder workOrder = new WorkOrder();
@@ -202,10 +198,18 @@ public class WorkOrderController {
             }
         }
 
+        if (null != typeId) {
+            if (WorkOrderType.Int2String((int)(long)typeId).isEmpty()) {
+                StringUtil.throw400Exp(response, "400002:工单类型错误");
+                return result;
+            } else {
+                workOrder.setTypeId(typeId);
+            }
+        }
+
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
-        workOrder.setTypeId(typeId);
         workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
 
         if (null != receiverid && !receiverid.isEmpty()) {
@@ -293,13 +297,13 @@ public class WorkOrderController {
         }
 
         if (null != typeId) {
-            OrderType orderType = orderTypeService.selectById(typeId);
-            if (null == orderType) {
+            if (WorkOrderType.Int2String((int)(long)typeId).isEmpty()) {
                 StringUtil.throw400Exp(response, "400002:工单类型错误");
-
             }
-            workOrder.setTypeId(typeId);
+
+            workOrder.setTypeId((long)typeId);
         }
+
         if (null != orderId) {
             workOrder.setOrderId(orderId);
         }
@@ -375,6 +379,55 @@ public class WorkOrderController {
         log.info("delete WorkOrder profile");
 
     }
+
+    @ApiOperation(value = "退款统计", notes = "退款统计信息")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("work_orders/refunds")
+    public ResultObject<ReturnCount> countReturn(@ApiParam(value="开始日期",required=true)@RequestParam String timeStart,
+                                                 @ApiParam(value="结束日期",required=true)@RequestParam String timeEnd
+                                                ) {
+
+        ReturnCount countNum = new ReturnCount();
+        ResultObject<ReturnCount> result = new ResultObject<ReturnCount>(400, "failed: parameter missing", countNum);
+        java.util.Date dateCreateTimeStart = null;
+        java.util.Date dateCreateTimeEnd = null;
+
+        if (null == timeStart || timeStart.isEmpty() ||
+                null == timeEnd || timeEnd.isEmpty()) {
+            return result;
+        }
+
+        timeStart = timeStart.trim();
+        timeEnd = timeEnd.trim();
+        if (10 > timeStart.length() || 10 > timeEnd.length()) {
+            return result;
+        }
+
+        if (10 == timeStart.length()) {
+            timeStart = timeStart + " 00:00:00";
+        }
+        if (10 == timeEnd.length()) {
+            timeEnd = timeEnd + " 23:59:59";
+        }
+
+        try {
+            dateCreateTimeStart = StringUtil.String2Date(timeStart);
+            dateCreateTimeEnd = StringUtil.String2Date(timeEnd);
+        } catch (ParseException ex) {
+            log.error("createTime string is wrong");
+            result.setMsg("createTime is wrong");
+            return result;
+        }
+
+        int countReturn = workOrderService.countReturn(dateCreateTimeStart, dateCreateTimeEnd);
+        countNum.count = countReturn;
+        result.setCode(200);
+        result.setMsg("success");
+
+        return result;
+    }
+
 /*
     @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })

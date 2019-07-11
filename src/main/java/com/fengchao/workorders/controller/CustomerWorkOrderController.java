@@ -31,7 +31,6 @@ public class CustomerWorkOrderController {
     //private static Logger log = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
-    private OrderTypeServiceImpl orderTypeService;
 
     @ApiModel(value = "工单信息ID")
     private class IdResponseData implements Serializable {
@@ -41,11 +40,9 @@ public class CustomerWorkOrderController {
     }
 
     @Autowired
-    public CustomerWorkOrderController(OrderTypeServiceImpl orderTypeService,
-                               WorkOrderServiceImpl workOrderService
-    ) {
+    public CustomerWorkOrderController(WorkOrderServiceImpl workOrderService
+                                        ) {
         this.workOrderService = workOrderService;
-        this.orderTypeService = orderTypeService;
     }
 
     @ApiOperation(value = "创建工单信息", notes = "创建工单信息")
@@ -62,9 +59,8 @@ public class CustomerWorkOrderController {
         String title = data.getTitle();
         String description = data.getDescription();
         String customer = data.getCustomer();
-        Long typeId = data.getTypeId();
+        Integer typeId = data.getTypeId();
         Long merchantId = data.getMerchantId();
-
 
         if (null == typeId || 0 == typeId ||
                 null == orderId || orderId.isEmpty() ||
@@ -74,14 +70,9 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        try {
-            OrderType orderType = orderTypeService.selectById(typeId);
-            if (null == orderType) {
-                StringUtil.throw400Exp(response, "400002:工单类型错误");
-                return result;
-            }
-        } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response, ex.getMessage());
+        if (WorkOrderType.Int2String(typeId).isEmpty()) {
+            StringUtil.throw400Exp(response, "400002:工单类型错误");
+            return result;
         }
 
         WorkOrder workOrder = new WorkOrder();
@@ -89,7 +80,7 @@ public class CustomerWorkOrderController {
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
-        workOrder.setTypeId(typeId);
+        workOrder.setTypeId((long)typeId);
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
 
@@ -112,11 +103,11 @@ public class CustomerWorkOrderController {
         try {
             result.id = workOrderService.insert(workOrder);
         } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response,ex.getMessage());
+            StringUtil.throw400Exp(response, ex.getMessage());
         }
 
         if (0 == result.id) {
-            StringUtil.throw400Exp(response,"400003:Failed to create work_order");
+            StringUtil.throw400Exp(response, "400003:Failed to create work_order");
         }
         response.setStatus(MyErrorMap.e201.getCode());
 
@@ -140,7 +131,7 @@ public class CustomerWorkOrderController {
         String title = data.getTitle();
         String description = data.getDescription();
         String customer = data.getCustomer();
-        Long typeId = data.getTypeId();
+        Integer typeId = data.getTypeId();
         Long merchantId = data.getMerchantId();
 
         if (null == id || 0 == id) {
@@ -165,15 +156,11 @@ public class CustomerWorkOrderController {
         }
 
         if (null != typeId) {
-            try {
-                OrderType orderType = orderTypeService.selectById(typeId);
-                if (null == orderType) {
+                if (WorkOrderType.Int2String(typeId).isEmpty()) {
                     StringUtil.throw400Exp(response, "400002:工单类型错误");
                 }
-                workOrder.setTypeId(typeId);
-            } catch (RuntimeException ex) {
-                StringUtil.throw400Exp(response, ex.getMessage());
-            }
+
+                workOrder.setTypeId((long)typeId);
         }
 
         if (null != orderId) {

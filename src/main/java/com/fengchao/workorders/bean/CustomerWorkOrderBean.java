@@ -25,6 +25,6 @@ public class CustomerWorkOrderBean {
     private String customer;
 
     @ApiModelProperty(value="工单类型ID", example="123",required=true)
-    private Long typeId;
+    private Integer typeId;
 
 }

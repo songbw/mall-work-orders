@@ -26,4 +26,6 @@ public interface IWorkOrderService {
 
     List<WorkOrder> selectByOrderId(Long orderId);
 
+    int countReturn(Date createTimeStart, Date createTimeEnd);
+
 }

@@ -28,14 +28,12 @@ import java.util.Date;
 import java.util.List;
 
 @Slf4j
-@Api(tags="OrderTypeAPI", description = "工单类型相关", produces = "application/json;charset=UTF-8")
+//@Api(tags="OrderTypeAPI", description = "工单类型相关", produces = "application/json;charset=UTF-8")
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 
 public class OrderTypeController {
-
-    //private static Logger log = LoggerFactory.getLogger(OrderTypeController.class);
-
+/*
     private OrderTypeServiceImpl orderTypeService;
 
 
@@ -323,5 +321,5 @@ public class OrderTypeController {
         response.setStatus(MyErrorMap.e200.getCode());
         return result;
     }
-
+*/
 }

@@ -1,5 +1,6 @@
 package com.fengchao.workorders.service.impl;
 
+import com.fengchao.workorders.util.WorkOrderType;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.mapper.*;
@@ -92,5 +93,16 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         return workOrderMapper.selectByOrderId(orderId);
     }
 
+    @Override
+    public int countReturn(Date createTimeStart, Date createTimeEnd) {
+        long typeId;
 
+        typeId = (long)WorkOrderType.RETURN.getCode();
+        int c1 = workOrderMapper.countType(typeId,createTimeStart, createTimeEnd);
+
+        typeId = (long)WorkOrderType.REFUND.getCode();
+        int c2 = workOrderMapper.countType(typeId,createTimeStart, createTimeEnd);
+
+        return c1 + c2;
+    }
 }
