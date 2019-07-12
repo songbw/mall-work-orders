@@ -229,7 +229,7 @@ public class CustomerWorkOrderController {
         }
 
         PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,
-                "id", "DESC",null,null,customer,orderId,null,null,null,null,null, null, null,null);
+                "id", "DESC",null,customer,null,null,orderId,null,null,null,null, null, null,null);
 
         List<WorkOrderBean> list = new ArrayList<>();
 
