@@ -145,6 +145,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     public WorkOrder getValidNumOfOrder(String openId, String orderId) {
         int validNum = 0;
 
+        if (null == openId || null == orderId) {
+            WorkOrder w = new WorkOrder();
+            w.setReturnedNum(0);
+            return w;
+        }
+
         openId = openId.trim();
         orderId = orderId.trim();
 
