@@ -4,9 +4,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 @ApiModel(value="客户工单更新信息")
 public class CustomerWorkOrderBean {
     @ApiModelProperty(value="所属订单ID", example="111",required=true)
@@ -26,5 +28,8 @@ public class CustomerWorkOrderBean {
 
     @ApiModelProperty(value="工单类型ID", example="123",required=true)
     private Integer typeId;
+
+    @ApiModelProperty(value="退货数量", example="1",required=true)
+    private Integer num;
 
 }

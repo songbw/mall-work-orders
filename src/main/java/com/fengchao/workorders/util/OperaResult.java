@@ -1,9 +1,12 @@
 package com.fengchao.workorders.util;
+import lombok.ToString;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("serial")
+@ToString
 public class OperaResult implements Serializable {
 
 	// 结果码

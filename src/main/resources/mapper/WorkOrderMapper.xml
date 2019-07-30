@@ -3,14 +3,17 @@
 <mapper namespace="com.fengchao.workorders.mapper.WorkOrderMapper">
   <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.WorkOrder">
     <id column="id" jdbcType="BIGINT" property="id" />
-    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
     <result column="merchant_id" jdbcType="BIGINT" property="merchantId" />
+    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="order_goods_num" jdbcType="INTEGER" property="orderGoodsNum" />
+    <result column="trade_no" jdbcType="VARCHAR" property="tradeNo" />
+    <result column="returned_num" jdbcType="INTEGER" property="returnedNum" />
     <result column="title" jdbcType="VARCHAR" property="title" />
     <result column="description" jdbcType="VARCHAR" property="description" />
     <result column="receiver_id" jdbcType="VARCHAR" property="receiverId" />
     <result column="receiver_name" jdbcType="VARCHAR" property="receiverName" />
-    <result column="type_id" jdbcType="BIGINT" property="typeId" />
     <result column="receiver_phone" jdbcType="VARCHAR" property="receiverPhone" />
+    <result column="type_id" jdbcType="BIGINT" property="typeId" />
     <result column="outcome" jdbcType="VARCHAR" property="outcome" />
     <result column="finish_time" jdbcType="TIMESTAMP" property="finishTime" />
     <result column="urgent_degree" jdbcType="INTEGER" property="urgentDegree" />
@@ -20,12 +23,86 @@
     <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
     <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
   </resultMap>
-  <sql id="Base_Column_List">
-    id, order_id, merchant_id,title, description, receiver_id, receiver_name, type_id, receiver_phone, outcome,
-    finish_time, urgent_degree, status, create_time, update_time, created_by, updated_by
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
   </sql>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, merchant_id, order_id, order_goods_num, trade_no, returned_num, title, description, 
+    receiver_id, receiver_name, receiver_phone, type_id, outcome, finish_time, urgent_degree, 
+    status, create_time, update_time, created_by, updated_by
+  </sql>
+  <select id="selectByExample" parameterType="com.fengchao.workorders.model.WorkOrderExample" resultMap="BaseResultMap">
     select
+    <if test="distinct">
+      distinct
+    </if>
+    'true' as QUERYID,
+    <include refid="Base_Column_List" />
+    from work_order
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
     <include refid="Base_Column_List" />
     from work_order
     where id = #{id,jdbcType=BIGINT}
@@ -34,96 +111,51 @@
     delete from work_order
     where id = #{id,jdbcType=BIGINT}
   </delete>
-  <select id="selectByOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select
-    <include refid="Base_Column_List" />
-    from work_order
-    where order_id = #{orderId,jdbcType=BIGINT}
-  </select>
-  <select id="selectRange" resultMap="BaseResultMap">
-    select
-    <include refid="Base_Column_List" />
-    from work_order
-    where
-    true
-    <if test="title != null and title.length() != 0">
-      AND title LIKE concat('%', #{title,jdbcType=VARCHAR},'%')
+  <delete id="deleteByExample" parameterType="com.fengchao.workorders.model.WorkOrderExample">
+    delete from work_order
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
     </if>
-    <if test="receiverPhone != null and receiverPhone.length() != 0">
-      AND receiver_phone = #{receiverPhone,jdbcType=VARCHAR}
-    </if>
-    <if test="receiverId != null and receiverId.length() != 0">
-      AND receiver_id = #{receiverId,jdbcType=VARCHAR}
-    </if>
-    <if test="orderId != null and orderId.length() != 0">
-      AND order_id = #{orderId,jdbcType=VARCHAR}
-    </if>
-    <if test="receiverName != null and receiverName.length() != 0">
-      AND receiver_name LIKE concat('%', #{receiverName,jdbcType=VARCHAR},'%')
-    </if>
-    <if test="typeId !=null ">
-      AND type_id = #{typeId,jdbcType=BIGINT}
-    </if>
-    <if test="merchantId !=null ">
-      AND merchant_id = #{merchantId,jdbcType=BIGINT}
-    </if>
-    <if test="status !=null ">
-      AND status = #{status,jdbcType=INTEGER}
-    </if>
-    <if test="finishTimeStart !=null ">
-      AND finish_time &gt;= #{finishTimeStart,jdbcType=TIMESTAMP}
-    </if>
-    <if test="finishTimeEnd !=null ">
-      AND finish_time &lt;= #{finishTimeEnd,jdbcType=TIMESTAMP}
-    </if>
-    <if test="createTimeStart !=null ">
-      AND create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
-    </if>
-    <if test="createTimeEnd !=null ">
-      AND create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
-    </if>
-    <if test="sort !=''">
-      ORDER BY ${sort}
-    </if>
-    <if test="order != ''">
-      ${order}
-    </if>
-  </select>
-  <select id="countType"  resultType="integer">
-    select count(id)
-    from work_order
-    where type_id = #{typeId,jdbcType=BIGINT}
-      and create_time &gt;= #{createTimeStart,jdbcType=TIMESTAMP}
-      and create_time &lt;= #{createTimeEnd,jdbcType=TIMESTAMP}
-  </select>
+  </delete>
   <insert id="insert" parameterType="com.fengchao.workorders.model.WorkOrder">
-    insert into work_order (id, order_id, merchant_id, title,
-      description, receiver_id, receiver_name,
-      type_id, receiver_phone, outcome,
-      finish_time, urgent_degree, status,
-      create_time, update_time, created_by,
-      updated_by)
-    values (#{id,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{merchantId,jdbcType=BIGINT}, #{title,jdbcType=VARCHAR},
-      #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR},
-      #{typeId,jdbcType=BIGINT}, #{receiverPhone,jdbcType=VARCHAR}, #{outcome,jdbcType=VARCHAR},
-      #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER},
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR},
-      #{updatedBy,jdbcType=VARCHAR})
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
       SELECT LAST_INSERT_ID()
     </selectKey>
+    insert into work_order (merchant_id, order_id, order_goods_num, 
+      trade_no, returned_num, title, 
+      description, receiver_id, receiver_name, 
+      receiver_phone, type_id, outcome, 
+      finish_time, urgent_degree, status, 
+      create_time, update_time, created_by, 
+      updated_by)
+    values (#{merchantId,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{orderGoodsNum,jdbcType=INTEGER}, 
+      #{tradeNo,jdbcType=VARCHAR}, #{returnedNum,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, 
+      #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR}, 
+      #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=BIGINT}, #{outcome,jdbcType=VARCHAR}, 
+      #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, 
+      #{updatedBy,jdbcType=VARCHAR})
   </insert>
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkOrder">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
     insert into work_order
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        id,
+      <if test="merchantId != null">
+        merchant_id,
       </if>
       <if test="orderId != null">
         order_id,
       </if>
-      <if test="merchantId != null">
-        merchant_id,
+      <if test="orderGoodsNum != null">
+        order_goods_num,
+      </if>
+      <if test="tradeNo != null">
+        trade_no,
+      </if>
+      <if test="returnedNum != null">
+        returned_num,
       </if>
       <if test="title != null">
         title,
@@ -132,16 +164,16 @@
         description,
       </if>
       <if test="receiverId != null">
-          receiver_id,
+        receiver_id,
       </if>
       <if test="receiverName != null">
-          receiver_name,
+        receiver_name,
+      </if>
+      <if test="receiverPhone != null">
+        receiver_phone,
       </if>
       <if test="typeId != null">
         type_id,
-      </if>
-      <if test="receiverPhone != null">
-          receiver_phone,
       </if>
       <if test="outcome != null">
         outcome,
@@ -169,14 +201,20 @@
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        #{id,jdbcType=BIGINT},
+      <if test="merchantId != null">
+        #{merchantId,jdbcType=BIGINT},
       </if>
       <if test="orderId != null">
         #{orderId,jdbcType=VARCHAR},
       </if>
-      <if test="merchantId != null">
-        #{merchantId,jdbcType=BIGINT},
+      <if test="orderGoodsNum != null">
+        #{orderGoodsNum,jdbcType=INTEGER},
+      </if>
+      <if test="tradeNo != null">
+        #{tradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="returnedNum != null">
+        #{returnedNum,jdbcType=INTEGER},
       </if>
       <if test="title != null">
         #{title,jdbcType=VARCHAR},
@@ -185,16 +223,16 @@
         #{description,jdbcType=VARCHAR},
       </if>
       <if test="receiverId != null">
-        #{receiver_id,jdbcType=VARCHAR},
+        #{receiverId,jdbcType=VARCHAR},
       </if>
       <if test="receiverName != null">
         #{receiverName,jdbcType=VARCHAR},
       </if>
+      <if test="receiverPhone != null">
+        #{receiverPhone,jdbcType=VARCHAR},
+      </if>
       <if test="typeId != null">
         #{typeId,jdbcType=BIGINT},
-      </if>
-      <if test="receiver_phone != null">
-        #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="outcome != null">
         #{outcome,jdbcType=VARCHAR},
@@ -221,18 +259,124 @@
         #{updatedBy,jdbcType=VARCHAR},
       </if>
     </trim>
-    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
-      SELECT LAST_INSERT_ID()
-    </selectKey>
   </insert>
+  <select id="countByExample" parameterType="com.fengchao.workorders.model.WorkOrderExample" resultType="java.lang.Long">
+    select count(*) from work_order
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update work_order
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.merchantId != null">
+        merchant_id = #{record.merchantId,jdbcType=BIGINT},
+      </if>
+      <if test="record.orderId != null">
+        order_id = #{record.orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderGoodsNum != null">
+        order_goods_num = #{record.orderGoodsNum,jdbcType=INTEGER},
+      </if>
+      <if test="record.tradeNo != null">
+        trade_no = #{record.tradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.returnedNum != null">
+        returned_num = #{record.returnedNum,jdbcType=INTEGER},
+      </if>
+      <if test="record.title != null">
+        title = #{record.title,jdbcType=VARCHAR},
+      </if>
+      <if test="record.description != null">
+        description = #{record.description,jdbcType=VARCHAR},
+      </if>
+      <if test="record.receiverId != null">
+        receiver_id = #{record.receiverId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.receiverName != null">
+        receiver_name = #{record.receiverName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.receiverPhone != null">
+        receiver_phone = #{record.receiverPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.typeId != null">
+        type_id = #{record.typeId,jdbcType=BIGINT},
+      </if>
+      <if test="record.outcome != null">
+        outcome = #{record.outcome,jdbcType=VARCHAR},
+      </if>
+      <if test="record.finishTime != null">
+        finish_time = #{record.finishTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.urgentDegree != null">
+        urgent_degree = #{record.urgentDegree,jdbcType=INTEGER},
+      </if>
+      <if test="record.status != null">
+        status = #{record.status,jdbcType=INTEGER},
+      </if>
+      <if test="record.createTime != null">
+        create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateTime != null">
+        update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.createdBy != null">
+        created_by = #{record.createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updatedBy != null">
+        updated_by = #{record.updatedBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update work_order
+    set id = #{record.id,jdbcType=BIGINT},
+      merchant_id = #{record.merchantId,jdbcType=BIGINT},
+      order_id = #{record.orderId,jdbcType=VARCHAR},
+      order_goods_num = #{record.orderGoodsNum,jdbcType=INTEGER},
+      trade_no = #{record.tradeNo,jdbcType=VARCHAR},
+      returned_num = #{record.returnedNum,jdbcType=INTEGER},
+      title = #{record.title,jdbcType=VARCHAR},
+      description = #{record.description,jdbcType=VARCHAR},
+      receiver_id = #{record.receiverId,jdbcType=VARCHAR},
+      receiver_name = #{record.receiverName,jdbcType=VARCHAR},
+      receiver_phone = #{record.receiverPhone,jdbcType=VARCHAR},
+      type_id = #{record.typeId,jdbcType=BIGINT},
+      outcome = #{record.outcome,jdbcType=VARCHAR},
+      finish_time = #{record.finishTime,jdbcType=TIMESTAMP},
+      urgent_degree = #{record.urgentDegree,jdbcType=INTEGER},
+      status = #{record.status,jdbcType=INTEGER},
+      create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      created_by = #{record.createdBy,jdbcType=VARCHAR},
+      updated_by = #{record.updatedBy,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
   <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.WorkOrder">
     update work_order
     <set>
+      <if test="merchantId != null">
+        merchant_id = #{merchantId,jdbcType=BIGINT},
+      </if>
       <if test="orderId != null">
         order_id = #{orderId,jdbcType=VARCHAR},
       </if>
-      <if test="merchantId != null">
-        merchant_id = #{merchantId,jdbcType=BIGINT},
+      <if test="orderGoodsNum != null">
+        order_goods_num = #{orderGoodsNum,jdbcType=INTEGER},
+      </if>
+      <if test="tradeNo != null">
+        trade_no = #{tradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="returnedNum != null">
+        returned_num = #{returnedNum,jdbcType=INTEGER},
       </if>
       <if test="title != null">
         title = #{title,jdbcType=VARCHAR},
@@ -241,16 +385,16 @@
         description = #{description,jdbcType=VARCHAR},
       </if>
       <if test="receiverId != null">
-          receiver_id = #{receiverId,jdbcType=VARCHAR},
+        receiver_id = #{receiverId,jdbcType=VARCHAR},
       </if>
       <if test="receiverName != null">
-          receiver_name = #{receiverName,jdbcType=VARCHAR},
+        receiver_name = #{receiverName,jdbcType=VARCHAR},
+      </if>
+      <if test="receiverPhone != null">
+        receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="typeId != null">
         type_id = #{typeId,jdbcType=BIGINT},
-      </if>
-      <if test="receiverPhone != null">
-          receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="outcome != null">
         outcome = #{outcome,jdbcType=VARCHAR},
@@ -281,14 +425,17 @@
   </update>
   <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.WorkOrder">
     update work_order
-    set order_id = #{orderId,jdbcType=VARCHAR},
-      merchant_id = #{merchantId,jdbcType=BIGINT},
+    set merchant_id = #{merchantId,jdbcType=BIGINT},
+      order_id = #{orderId,jdbcType=VARCHAR},
+      order_goods_num = #{orderGoodsNum,jdbcType=INTEGER},
+      trade_no = #{tradeNo,jdbcType=VARCHAR},
+      returned_num = #{returnedNum,jdbcType=INTEGER},
       title = #{title,jdbcType=VARCHAR},
       description = #{description,jdbcType=VARCHAR},
       receiver_id = #{receiverId,jdbcType=VARCHAR},
-      receiver_name= #{receiverName,jdbcType=VARCHAR},
-      type_id = #{typeId,jdbcType=BIGINT},
+      receiver_name = #{receiverName,jdbcType=VARCHAR},
       receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
+      type_id = #{typeId,jdbcType=BIGINT},
       outcome = #{outcome,jdbcType=VARCHAR},
       finish_time = #{finishTime,jdbcType=TIMESTAMP},
       urgent_degree = #{urgentDegree,jdbcType=INTEGER},

@@ -1,5 +1,6 @@
 package com.fengchao.workorders.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
 
@@ -24,8 +25,12 @@ public interface IWorkOrderService {
                                    Date finishTimeStart, Date finishTimeEnd,
                                    Date createTimeStart, Date createTimeEnd);
 
-    List<WorkOrder> selectByOrderId(Long orderId);
+    List<WorkOrder> selectByOrderId(String orderId);
 
     int countReturn(Date createTimeStart, Date createTimeEnd);
+
+    WorkOrder getValidNumOfOrder(String openId, String sbuOrderId);
+
+    JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId);
 
 }
