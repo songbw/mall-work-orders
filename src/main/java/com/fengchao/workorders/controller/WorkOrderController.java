@@ -1,5 +1,7 @@
 package com.fengchao.workorders.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
@@ -23,6 +25,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Api(tags="WorkOrderAPI", description = "工单管理相关", produces = "application/json;charset=UTF-8")
@@ -30,7 +33,7 @@ import java.util.List;
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class WorkOrderController {
 
-    //private static Logger log = LoggerFactory.getLogger(WorkOrderController.class);
+    //private static Logger = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
 
@@ -52,6 +55,13 @@ public class WorkOrderController {
     private class ReturnCount {
         @ApiModelProperty(value = "统计数", example = "100", required = true)
         public Integer count;
+
+    }
+
+    @ApiModel(value = "")
+    private class GuanAiTongNo {
+        @ApiModelProperty(value = "统计数", example = "100", required = true)
+        public String tradeNo;
 
     }
 
@@ -121,7 +131,9 @@ public class WorkOrderController {
         //String username = JwtTokenUtil.getUsername(authentication);
 
         if (null == merchantIdInHeader) {
-            log.warn("can not find username in header");
+            log.warn("can not find merchant in header");
+            StringUtil.throw400Exp(response, "400002:merchant  is wrong");
+            return new PageInfo<>(0, pageSize,pageIndex, null);
         }
 
         if (null == pageIndex || 0 >= pageIndex) {
@@ -164,10 +176,11 @@ public class WorkOrderController {
     @PostMapping("work_orders")
     public IdData createProfile(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @RequestBody WorkOrderBodyBean data) throws RuntimeException {
+                                            @RequestBody WorkOrderBodyBean data) {
 
         log.info("create WorkOrder enter");
         IdData result = new IdData();
+
         String username = JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
         String title = data.getTitle();
@@ -176,73 +189,91 @@ public class WorkOrderController {
         String receiverPhone = data.getReceiverPhone();
         String receiverName = data.getReceiverName();
         Long merchantId = data.getMerchantId();
-        Long typeId = data.getTypeId();
+        Integer typeId = (int)(long)data.getTypeId();
+        Integer num = data.getNum();
         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
+
+        if (null == orderId || orderId.isEmpty() ) {
+            StringUtil.throw400Exp(response, "400002:所属订单不能空缺");
+            return result;
+        }
+        if (null == receiverid || receiverid.isEmpty() ) {
+            StringUtil.throw400Exp(response, "400003:客户不能空缺");
+            return result;
+        }
+        if (null == merchantId) {
+            StringUtil.throw400Exp(response, "400004:merchantId不能空缺");
+            return result;
+        }
+
         if (null == typeId || 0 == typeId ||
-            null == title || title.isEmpty()
-            ) {
-            StringUtil.throw400Exp(response, "400002:工单标题, 工单类型不能空缺");
+                null == title || title.isEmpty()
+        ) {
+            StringUtil.throw400Exp(response, "400002:工单标题, 工单类型, 所属订单不能空缺");
+            return result;
+        }
+
+        if (WorkOrderType.Int2String(typeId).isEmpty()) {
+            StringUtil.throw400Exp(response, "400005:工单类型错误");
             return result;
         }
 
         WorkOrder workOrder = new WorkOrder();
 
-        if (null != finishTimeStr && !finishTimeStr.isEmpty()) {
-            try {
-                Date finishTime = StringUtil.String2Date(finishTimeStr);
-                workOrder.setFinishTime(finishTime);
-            } catch (ParseException ex) {
-                StringUtil.throw400Exp(response,"400002:dateTime format error");
-            }
-        }
-
-        if (null != typeId) {
-            if (WorkOrderType.Int2String((int)(long)typeId).isEmpty()) {
-                StringUtil.throw400Exp(response, "400002:工单类型错误");
+        WorkOrder selectedWO = workOrderService.getValidNumOfOrder(receiverid, orderId);
+        if (null == selectedWO) {//totally new order
+            log.info("there is not work order of this orderId: " + orderId);
+            JSONObject json = workOrderService.getOrderInfo(receiverid, orderId, merchantId);
+            if (null == json) {
+                StringUtil.throw400Exp(response, "400007:所属订单信息错误");
                 return result;
-            } else {
-                workOrder.setTypeId(typeId);
             }
+
+            workOrder.setTradeNo(json.getString("paymentNo"));
+            workOrder.setSalePrice(json.getFloat("salePrice"));
+            workOrder.setOrderGoodsNum(json.getInteger("num"));
+            workOrder.setReceiverPhone(json.getString("mobile"));
+            workOrder.setReceiverName(json.getString("receiverName"));
+        } else {
+            if (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum()) {
+                StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
+                return result;
+            }
+
+            workOrder.setTradeNo(selectedWO.getTradeNo());
+            workOrder.setSalePrice(selectedWO.getSalePrice());
+            workOrder.setOrderGoodsNum(selectedWO.getOrderGoodsNum());
+            workOrder.setReceiverPhone(selectedWO.getReceiverPhone());
+            workOrder.setReceiverName(selectedWO.getReceiverName());
+
         }
 
+        workOrder.setAppid(Constant.APPID_VALUE);
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
+        workOrder.setReturnedNum(num);
+        workOrder.setRefundAmount(num * workOrder.getSalePrice());
+        workOrder.setTypeId((long)typeId);
+        workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
-
-        if (null != receiverid && !receiverid.isEmpty()) {
-            workOrder.setReceiverId(receiverid);
-        }
-
-        if (null != receiverPhone && !receiverPhone.isEmpty()) {
-            workOrder.setReceiverPhone(receiverPhone);
-        }
-
-        if (null != receiverName && !receiverName.isEmpty()) {
-            workOrder.setReceiverName(receiverName);
-        }
-
-        if (null != merchantId) {
-            workOrder.setMerchantId(merchantId);
-        }
-
-        if (null != urgentDegree) {
-            workOrder.setUrgentDegree(urgentDegree);
-        }
-
+        workOrder.setReceiverId(receiverid);
+        workOrder.setUrgentDegree(urgentDegree);
         workOrder.setCreateTime(new Date());
         workOrder.setUpdateTime(new Date());
-        if (null != username) {
-            workOrder.setCreatedBy(username);
-            workOrder.setUpdatedBy(username);
+
+        try {
+            result.id = workOrderService.insert(workOrder);
+        } catch (RuntimeException ex) {
+            StringUtil.throw400Exp(response, ex.getMessage());
         }
 
-        result.id = workOrderService.insert(workOrder);
         if (0 == result.id) {
-            StringUtil.throw400Exp(response,"400003:Failed to create work_order");
+            StringUtil.throw400Exp(response, "400008:Failed to create work_order");
         }
+
         response.setStatus(MyErrorMap.e201.getCode());
 
         return result;
@@ -261,14 +292,14 @@ public class WorkOrderController {
         log.info("update WorkOrder");
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
-        String orderId = data.getOrderId();
+        //String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
-        String receiverid = data.getReceiverId();
+        //String receiverid = data.getReceiverId();
         String receiverPhone = data.getReceiverPhone();
         String receiverName = data.getReceiverName();
-        Long merchantId = data.getMerchantId();
-        Long typeId = data.getTypeId();
+        //Long merchantId = data.getMerchantId();
+        //Long typeId = data.getTypeId();
         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
@@ -295,7 +326,7 @@ public class WorkOrderController {
         if (null != title && !title.isEmpty() ) {
             workOrder.setTitle(title);
         }
-
+/*
         if (null != typeId) {
             if (WorkOrderType.Int2String((int)(long)typeId).isEmpty()) {
                 StringUtil.throw400Exp(response, "400002:工单类型错误");
@@ -307,14 +338,15 @@ public class WorkOrderController {
         if (null != orderId) {
             workOrder.setOrderId(orderId);
         }
+        */
         if (null != description && !description.isEmpty()) {
             workOrder.setDescription(description);
         }
-
+/*
         if (null != receiverid && !receiverid.isEmpty()) {
             workOrder.setReceiverId(receiverid);
         }
-
+*/
         if (null != receiverPhone && !receiverPhone.isEmpty()) {
             workOrder.setReceiverPhone(receiverPhone);
         }
@@ -322,11 +354,11 @@ public class WorkOrderController {
         if (null != receiverName && !receiverName.isEmpty()) {
             workOrder.setReceiverName(receiverName);
         }
-
+/*
         if (null != merchantId) {
             workOrder.setMerchantId(merchantId);
         }
-
+*/
         if (null != urgentDegree) {
             workOrder.setUrgentDegree(urgentDegree);
         }
@@ -384,8 +416,8 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/refunds")
-    public ResultObject<ReturnCount> countReturn(@ApiParam(value="开始日期",required=true)@RequestParam String timeStart,
-                                                 @ApiParam(value="结束日期",required=true)@RequestParam String timeEnd
+    public ResultObject<ReturnCount> countReturn(@ApiParam(value="开始日期",required=false)@RequestParam(required=false) String timeStart,
+                                                 @ApiParam(value="结束日期",required=false)@RequestParam(required=false) String timeEnd
                                                 ) {
 
         ReturnCount countNum = new ReturnCount();
@@ -395,31 +427,31 @@ public class WorkOrderController {
 
         if (null == timeStart || timeStart.isEmpty() ||
                 null == timeEnd || timeEnd.isEmpty()) {
-            return result;
-        }
+            log.info("count all return and refund work-orders");
+        } else {
+            log.info("count return and refund work-order between: " + timeStart + "--" + timeEnd);
+            timeStart = timeStart.trim();
+            timeEnd = timeEnd.trim();
+            if (10 > timeStart.length() || 10 > timeEnd.length()) {
+                return result;
+            }
 
-        timeStart = timeStart.trim();
-        timeEnd = timeEnd.trim();
-        if (10 > timeStart.length() || 10 > timeEnd.length()) {
-            return result;
-        }
+            if (10 == timeStart.length()) {
+                timeStart = timeStart + " 00:00:00";
+            }
+            if (10 == timeEnd.length()) {
+                timeEnd = timeEnd + " 23:59:59";
+            }
 
-        if (10 == timeStart.length()) {
-            timeStart = timeStart + " 00:00:00";
+            try {
+                dateCreateTimeStart = StringUtil.String2Date(timeStart);
+                dateCreateTimeEnd = StringUtil.String2Date(timeEnd);
+            } catch (ParseException ex) {
+                log.error("createTime string is wrong");
+                result.setMsg("createTime is wrong");
+                return result;
+            }
         }
-        if (10 == timeEnd.length()) {
-            timeEnd = timeEnd + " 23:59:59";
-        }
-
-        try {
-            dateCreateTimeStart = StringUtil.String2Date(timeStart);
-            dateCreateTimeEnd = StringUtil.String2Date(timeEnd);
-        } catch (ParseException ex) {
-            log.error("createTime string is wrong");
-            result.setMsg("createTime is wrong");
-            return result;
-        }
-
         int countReturn = workOrderService.countReturn(dateCreateTimeStart, dateCreateTimeEnd);
         countNum.count = countReturn;
         result.setCode(200);
@@ -427,6 +459,48 @@ public class WorkOrderController {
 
         return result;
     }
+
+    @ApiOperation(value = "关爱通支付回调", notes = "关爱通支付回调")
+    @ResponseStatus(code = HttpStatus.OK)
+    @PostMapping(value = "refund/notify", produces = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    private String gBack(GuanAiTongNotifyBean bean) {
+        log.info("关爱通back params is : " + JSON.toJSONString(bean));
+        return workOrderService.handleNotify(bean);
+    }
+
+    @ApiOperation(value = "发起关爱通退款", notes = "发起关爱通退款")
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @PostMapping("refund/guanaitong")
+    public GuanAiTongNo sendRefund(HttpServletResponse response,
+                                @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                @RequestBody Map<String, Long> data) {
+
+        GuanAiTongNo result = new GuanAiTongNo();
+        Long id = data.get("id");
+        if (null == id) {
+            log.error("send refund to GuanAiTong for work-order: id is null");
+            StringUtil.throw400Exp(response, "400002: id is wrong");
+            return result;
+        }
+        log.info("send refund for work-order: id = " + id.toString());
+
+        String guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id);
+        if (null == guanAiTongTradeNo) {
+            StringUtil.throw400Exp(response, "400003: failed to find work-order");
+            return result;
+        } else {
+            if (guanAiTongTradeNo.isEmpty()) {
+                StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
+                return result;
+            }
+        }
+
+        result.tradeNo = guanAiTongTradeNo;
+        response.setStatus(MyErrorMap.e201.getCode());
+
+        return result;
+    }
+
 
 /*
     @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")

@@ -15,6 +15,16 @@ public class WorkOrder {
 
     private Integer returnedNum;
 
+    private Float salePrice;
+
+    private String refundNo;
+
+    private Float refundAmount;
+
+    private String guanaitongTradeNo;
+
+    private String appid;
+
     private String title;
 
     private String description;
@@ -89,6 +99,46 @@ public class WorkOrder {
 
     public void setReturnedNum(Integer returnedNum) {
         this.returnedNum = returnedNum;
+    }
+
+    public Float getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(Float salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public String getRefundNo() {
+        return refundNo;
+    }
+
+    public void setRefundNo(String refundNo) {
+        this.refundNo = refundNo == null ? null : refundNo.trim();
+    }
+
+    public Float getRefundAmount() {
+        return refundAmount;
+    }
+
+    public void setRefundAmount(Float refundAmount) {
+        this.refundAmount = refundAmount;
+    }
+
+    public String getGuanaitongTradeNo() {
+        return guanaitongTradeNo;
+    }
+
+    public void setGuanaitongTradeNo(String guanaitongTradeNo) {
+        this.guanaitongTradeNo = guanaitongTradeNo == null ? null : guanaitongTradeNo.trim();
+    }
+
+    public String getAppid() {
+        return appid;
+    }
+
+    public void setAppid(String appid) {
+        this.appid = appid == null ? null : appid.trim();
     }
 
     public String getTitle() {

@@ -41,4 +41,7 @@ public class WorkOrderBodyBean {
     @ApiModelProperty(value="供货商ID", example="11",required=false)
     private Long merchantId;
 
+    @ApiModelProperty(value="退货数量", example="1",required=true)
+    private Integer num;
+
 }

@@ -8,6 +8,11 @@
     <result column="order_goods_num" jdbcType="INTEGER" property="orderGoodsNum" />
     <result column="trade_no" jdbcType="VARCHAR" property="tradeNo" />
     <result column="returned_num" jdbcType="INTEGER" property="returnedNum" />
+    <result column="sale_price" jdbcType="REAL" property="salePrice" />
+    <result column="refund_no" jdbcType="VARCHAR" property="refundNo" />
+    <result column="refund_amount" jdbcType="REAL" property="refundAmount" />
+    <result column="guanaitong_trade_no" jdbcType="VARCHAR" property="guanaitongTradeNo" />
+    <result column="appid" jdbcType="VARCHAR" property="appid" />
     <result column="title" jdbcType="VARCHAR" property="title" />
     <result column="description" jdbcType="VARCHAR" property="description" />
     <result column="receiver_id" jdbcType="VARCHAR" property="receiverId" />
@@ -82,9 +87,10 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, merchant_id, order_id, order_goods_num, trade_no, returned_num, title, description, 
-    receiver_id, receiver_name, receiver_phone, type_id, outcome, finish_time, urgent_degree, 
-    status, create_time, update_time, created_by, updated_by
+    id, merchant_id, order_id, order_goods_num, trade_no, returned_num, sale_price, refund_no, 
+    refund_amount, guanaitong_trade_no, appid, title, description, receiver_id, receiver_name, 
+    receiver_phone, type_id, outcome, finish_time, urgent_degree, status, create_time, 
+    update_time, created_by, updated_by
   </sql>
   <select id="selectByExample" parameterType="com.fengchao.workorders.model.WorkOrderExample" resultMap="BaseResultMap">
     select
@@ -122,19 +128,23 @@
       SELECT LAST_INSERT_ID()
     </selectKey>
     insert into work_order (merchant_id, order_id, order_goods_num, 
-      trade_no, returned_num, title, 
-      description, receiver_id, receiver_name, 
-      receiver_phone, type_id, outcome, 
-      finish_time, urgent_degree, status, 
-      create_time, update_time, created_by, 
-      updated_by)
+      trade_no, returned_num, sale_price, 
+      refund_no, refund_amount, guanaitong_trade_no, 
+      appid, title, description, 
+      receiver_id, receiver_name, receiver_phone, 
+      type_id, outcome, finish_time, 
+      urgent_degree, status, create_time, 
+      update_time, created_by, updated_by
+      )
     values (#{merchantId,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{orderGoodsNum,jdbcType=INTEGER}, 
-      #{tradeNo,jdbcType=VARCHAR}, #{returnedNum,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, 
-      #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR}, 
-      #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=BIGINT}, #{outcome,jdbcType=VARCHAR}, 
-      #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, 
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, 
-      #{updatedBy,jdbcType=VARCHAR})
+      #{tradeNo,jdbcType=VARCHAR}, #{returnedNum,jdbcType=INTEGER}, #{salePrice,jdbcType=REAL}, 
+      #{refundNo,jdbcType=VARCHAR}, #{refundAmount,jdbcType=REAL}, #{guanaitongTradeNo,jdbcType=VARCHAR}, 
+      #{appid,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, 
+      #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR}, #{receiverPhone,jdbcType=VARCHAR}, 
+      #{typeId,jdbcType=BIGINT}, #{outcome,jdbcType=VARCHAR}, #{finishTime,jdbcType=TIMESTAMP}, 
+      #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, #{updatedBy,jdbcType=VARCHAR}
+      )
   </insert>
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkOrder">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
@@ -156,6 +166,21 @@
       </if>
       <if test="returnedNum != null">
         returned_num,
+      </if>
+      <if test="salePrice != null">
+        sale_price,
+      </if>
+      <if test="refundNo != null">
+        refund_no,
+      </if>
+      <if test="refundAmount != null">
+        refund_amount,
+      </if>
+      <if test="guanaitongTradeNo != null">
+        guanaitong_trade_no,
+      </if>
+      <if test="appid != null">
+        appid,
       </if>
       <if test="title != null">
         title,
@@ -215,6 +240,21 @@
       </if>
       <if test="returnedNum != null">
         #{returnedNum,jdbcType=INTEGER},
+      </if>
+      <if test="salePrice != null">
+        #{salePrice,jdbcType=REAL},
+      </if>
+      <if test="refundNo != null">
+        #{refundNo,jdbcType=VARCHAR},
+      </if>
+      <if test="refundAmount != null">
+        #{refundAmount,jdbcType=REAL},
+      </if>
+      <if test="guanaitongTradeNo != null">
+        #{guanaitongTradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="appid != null">
+        #{appid,jdbcType=VARCHAR},
       </if>
       <if test="title != null">
         #{title,jdbcType=VARCHAR},
@@ -287,6 +327,21 @@
       <if test="record.returnedNum != null">
         returned_num = #{record.returnedNum,jdbcType=INTEGER},
       </if>
+      <if test="record.salePrice != null">
+        sale_price = #{record.salePrice,jdbcType=REAL},
+      </if>
+      <if test="record.refundNo != null">
+        refund_no = #{record.refundNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.refundAmount != null">
+        refund_amount = #{record.refundAmount,jdbcType=REAL},
+      </if>
+      <if test="record.guanaitongTradeNo != null">
+        guanaitong_trade_no = #{record.guanaitongTradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.appid != null">
+        appid = #{record.appid,jdbcType=VARCHAR},
+      </if>
       <if test="record.title != null">
         title = #{record.title,jdbcType=VARCHAR},
       </if>
@@ -342,6 +397,11 @@
       order_goods_num = #{record.orderGoodsNum,jdbcType=INTEGER},
       trade_no = #{record.tradeNo,jdbcType=VARCHAR},
       returned_num = #{record.returnedNum,jdbcType=INTEGER},
+      sale_price = #{record.salePrice,jdbcType=REAL},
+      refund_no = #{record.refundNo,jdbcType=VARCHAR},
+      refund_amount = #{record.refundAmount,jdbcType=REAL},
+      guanaitong_trade_no = #{record.guanaitongTradeNo,jdbcType=VARCHAR},
+      appid = #{record.appid,jdbcType=VARCHAR},
       title = #{record.title,jdbcType=VARCHAR},
       description = #{record.description,jdbcType=VARCHAR},
       receiver_id = #{record.receiverId,jdbcType=VARCHAR},
@@ -377,6 +437,21 @@
       </if>
       <if test="returnedNum != null">
         returned_num = #{returnedNum,jdbcType=INTEGER},
+      </if>
+      <if test="salePrice != null">
+        sale_price = #{salePrice,jdbcType=REAL},
+      </if>
+      <if test="refundNo != null">
+        refund_no = #{refundNo,jdbcType=VARCHAR},
+      </if>
+      <if test="refundAmount != null">
+        refund_amount = #{refundAmount,jdbcType=REAL},
+      </if>
+      <if test="guanaitongTradeNo != null">
+        guanaitong_trade_no = #{guanaitongTradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="appid != null">
+        appid = #{appid,jdbcType=VARCHAR},
       </if>
       <if test="title != null">
         title = #{title,jdbcType=VARCHAR},
@@ -430,6 +505,11 @@
       order_goods_num = #{orderGoodsNum,jdbcType=INTEGER},
       trade_no = #{tradeNo,jdbcType=VARCHAR},
       returned_num = #{returnedNum,jdbcType=INTEGER},
+      sale_price = #{salePrice,jdbcType=REAL},
+      refund_no = #{refundNo,jdbcType=VARCHAR},
+      refund_amount = #{refundAmount,jdbcType=REAL},
+      guanaitong_trade_no = #{guanaitongTradeNo,jdbcType=VARCHAR},
+      appid = #{appid,jdbcType=VARCHAR},
       title = #{title,jdbcType=VARCHAR},
       description = #{description,jdbcType=VARCHAR},
       receiver_id = #{receiverId,jdbcType=VARCHAR},

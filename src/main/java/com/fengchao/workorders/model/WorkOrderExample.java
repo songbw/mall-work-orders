@@ -485,6 +485,336 @@ public class WorkOrderExample {
             return (Criteria) this;
         }
 
+        public Criteria andSalePriceIsNull() {
+            addCriterion("sale_price is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceIsNotNull() {
+            addCriterion("sale_price is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceEqualTo(Float value) {
+            addCriterion("sale_price =", value, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceNotEqualTo(Float value) {
+            addCriterion("sale_price <>", value, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceGreaterThan(Float value) {
+            addCriterion("sale_price >", value, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceGreaterThanOrEqualTo(Float value) {
+            addCriterion("sale_price >=", value, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceLessThan(Float value) {
+            addCriterion("sale_price <", value, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceLessThanOrEqualTo(Float value) {
+            addCriterion("sale_price <=", value, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceIn(List<Float> values) {
+            addCriterion("sale_price in", values, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceNotIn(List<Float> values) {
+            addCriterion("sale_price not in", values, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceBetween(Float value1, Float value2) {
+            addCriterion("sale_price between", value1, value2, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andSalePriceNotBetween(Float value1, Float value2) {
+            addCriterion("sale_price not between", value1, value2, "salePrice");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoIsNull() {
+            addCriterion("refund_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoIsNotNull() {
+            addCriterion("refund_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoEqualTo(String value) {
+            addCriterion("refund_no =", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoNotEqualTo(String value) {
+            addCriterion("refund_no <>", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoGreaterThan(String value) {
+            addCriterion("refund_no >", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoGreaterThanOrEqualTo(String value) {
+            addCriterion("refund_no >=", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoLessThan(String value) {
+            addCriterion("refund_no <", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoLessThanOrEqualTo(String value) {
+            addCriterion("refund_no <=", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoLike(String value) {
+            addCriterion("refund_no like", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoNotLike(String value) {
+            addCriterion("refund_no not like", value, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoIn(List<String> values) {
+            addCriterion("refund_no in", values, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoNotIn(List<String> values) {
+            addCriterion("refund_no not in", values, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoBetween(String value1, String value2) {
+            addCriterion("refund_no between", value1, value2, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundNoNotBetween(String value1, String value2) {
+            addCriterion("refund_no not between", value1, value2, "refundNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountIsNull() {
+            addCriterion("refund_amount is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountIsNotNull() {
+            addCriterion("refund_amount is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountEqualTo(Float value) {
+            addCriterion("refund_amount =", value, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountNotEqualTo(Float value) {
+            addCriterion("refund_amount <>", value, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountGreaterThan(Float value) {
+            addCriterion("refund_amount >", value, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountGreaterThanOrEqualTo(Float value) {
+            addCriterion("refund_amount >=", value, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountLessThan(Float value) {
+            addCriterion("refund_amount <", value, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountLessThanOrEqualTo(Float value) {
+            addCriterion("refund_amount <=", value, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountIn(List<Float> values) {
+            addCriterion("refund_amount in", values, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountNotIn(List<Float> values) {
+            addCriterion("refund_amount not in", values, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountBetween(Float value1, Float value2) {
+            addCriterion("refund_amount between", value1, value2, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundAmountNotBetween(Float value1, Float value2) {
+            addCriterion("refund_amount not between", value1, value2, "refundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoIsNull() {
+            addCriterion("guanaitong_trade_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoIsNotNull() {
+            addCriterion("guanaitong_trade_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoEqualTo(String value) {
+            addCriterion("guanaitong_trade_no =", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoNotEqualTo(String value) {
+            addCriterion("guanaitong_trade_no <>", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoGreaterThan(String value) {
+            addCriterion("guanaitong_trade_no >", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoGreaterThanOrEqualTo(String value) {
+            addCriterion("guanaitong_trade_no >=", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoLessThan(String value) {
+            addCriterion("guanaitong_trade_no <", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoLessThanOrEqualTo(String value) {
+            addCriterion("guanaitong_trade_no <=", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoLike(String value) {
+            addCriterion("guanaitong_trade_no like", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoNotLike(String value) {
+            addCriterion("guanaitong_trade_no not like", value, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoIn(List<String> values) {
+            addCriterion("guanaitong_trade_no in", values, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoNotIn(List<String> values) {
+            addCriterion("guanaitong_trade_no not in", values, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoBetween(String value1, String value2) {
+            addCriterion("guanaitong_trade_no between", value1, value2, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongTradeNoNotBetween(String value1, String value2) {
+            addCriterion("guanaitong_trade_no not between", value1, value2, "guanaitongTradeNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidIsNull() {
+            addCriterion("appid is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidIsNotNull() {
+            addCriterion("appid is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidEqualTo(String value) {
+            addCriterion("appid =", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidNotEqualTo(String value) {
+            addCriterion("appid <>", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidGreaterThan(String value) {
+            addCriterion("appid >", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidGreaterThanOrEqualTo(String value) {
+            addCriterion("appid >=", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidLessThan(String value) {
+            addCriterion("appid <", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidLessThanOrEqualTo(String value) {
+            addCriterion("appid <=", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidLike(String value) {
+            addCriterion("appid like", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidNotLike(String value) {
+            addCriterion("appid not like", value, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidIn(List<String> values) {
+            addCriterion("appid in", values, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidNotIn(List<String> values) {
+            addCriterion("appid not in", values, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidBetween(String value1, String value2) {
+            addCriterion("appid between", value1, value2, "appid");
+            return (Criteria) this;
+        }
+
+        public Criteria andAppidNotBetween(String value1, String value2) {
+            addCriterion("appid not between", value1, value2, "appid");
+            return (Criteria) this;
+        }
+
         public Criteria andTitleIsNull() {
             addCriterion("title is null");
             return (Criteria) this;

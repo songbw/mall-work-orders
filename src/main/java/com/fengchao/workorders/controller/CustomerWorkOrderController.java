@@ -109,10 +109,38 @@ public class CustomerWorkOrderController {
                 return result;
             }
 
-            workOrder.setTradeNo(json.getString("tradeNo"));
-            workOrder.setOrderGoodsNum(json.getInteger("num"));
-            workOrder.setReceiverPhone(json.getString("mobile"));
-            workOrder.setReceiverName(json.getString("receiverName"));
+            String paymentNo = json.getString("paymentNo");
+            if (null == paymentNo) {
+                log.info("get order info err: paymentNo is null");
+                return result;
+            } else {
+                workOrder.setTradeNo(paymentNo);
+            }
+
+            Float salePrice = json.getFloat("salePrice");
+            if (null == salePrice) {
+                log.info("get order info err: salePrice is null");
+                return result;
+            } else {
+                workOrder.setSalePrice(salePrice);
+            }
+
+            Integer orderNum = json.getInteger("num");
+            if (null == orderNum) {
+                log.info("get order info err: num is null");
+                return result;
+            } else {
+                workOrder.setOrderGoodsNum(orderNum);
+            }
+
+            String mobile = json.getString("mobile");
+            if (null != mobile) {
+                workOrder.setReceiverPhone(mobile);
+            }
+            String receiverName = json.getString("receiverName");
+            if (null != receiverName) {
+                workOrder.setReceiverName(receiverName);
+            }
         } else {
             if (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum()) {
                 StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
@@ -120,16 +148,19 @@ public class CustomerWorkOrderController {
             }
 
             workOrder.setTradeNo(selectedWO.getTradeNo());
+            workOrder.setSalePrice(selectedWO.getSalePrice());
             workOrder.setOrderGoodsNum(selectedWO.getOrderGoodsNum());
             workOrder.setReceiverPhone(selectedWO.getReceiverPhone());
             workOrder.setReceiverName(selectedWO.getReceiverName());
 
         }
 
+        workOrder.setAppid(Constant.APPID_VALUE);
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setReturnedNum(num);
+        workOrder.setRefundAmount(num * workOrder.getSalePrice());
         workOrder.setTypeId((long)typeId);
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
@@ -152,7 +183,7 @@ public class CustomerWorkOrderController {
         }
 
         if (0 == result.id) {
-            StringUtil.throw400Exp(response, "400003:Failed to create work_order");
+            StringUtil.throw400Exp(response, "400008:Failed to create work_order");
         }
         response.setStatus(MyErrorMap.e201.getCode());
 
@@ -175,12 +206,12 @@ public class CustomerWorkOrderController {
         IdResponseData result = new IdResponseData();
         WorkOrder workOrder = null;
         String username = null; //JwtTokenUtil.getUsername(authentication);
-        String orderId = data.getOrderId();
+        //String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
-        String customer = data.getCustomer();
-        Integer typeId = data.getTypeId();
-        Long merchantId = data.getMerchantId();
+        //String customer = data.getCustomer();
+        //Integer typeId = data.getTypeId();
+        //Long merchantId = data.getMerchantId();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
@@ -194,7 +225,7 @@ public class CustomerWorkOrderController {
                 StringUtil.throw400Exp(response, "400003:工单不存在");
                 return result;
             }
-        } catch (RuntimeException ex) {
+        } catch (Exception ex) {
             StringUtil.throw400Exp(response, ex.getMessage());
             return result;
         }
@@ -202,7 +233,7 @@ public class CustomerWorkOrderController {
         if (null != title && !title.isEmpty() ) {
             workOrder.setTitle(title);
         }
-
+        /*
         if (null != typeId) {
                 if (WorkOrderType.Int2String(typeId).isEmpty()) {
                     StringUtil.throw400Exp(response, "400002:工单类型错误");
@@ -225,7 +256,7 @@ public class CustomerWorkOrderController {
         if (null != merchantId) {
             workOrder.setMerchantId(merchantId);
         }
-
+        */
         workOrder.setUpdateTime(new Date());
 
         if (null != username) {
@@ -301,20 +332,37 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("orders/validNum")
     public ValidNumResponseData queryOrderValidNum(HttpServletResponse response,
-                                                   @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
-                                                   @ApiParam(value="订单ID")@RequestParam(required=false) String orderId) {
+                                                   @ApiParam(value="订单所属客户",required=true)@RequestParam(required=true) String customer,
+                                                   @ApiParam(value="订单ID",required=true)@RequestParam(required=true) String orderId,
+                                                   @ApiParam(value="merchantId",required=true)@RequestParam(required=true) Long merchantId
+                                                   ) {
 
         ValidNumResponseData result = new ValidNumResponseData();
 
 
         WorkOrder workOrder = workOrderService.getValidNumOfOrder(customer, orderId);
-        if (null == workOrder || 0>= workOrder.getReturnedNum()) {
-            result.validNum = 0;
-        } else {
-            result.validNum = workOrder.getReturnedNum();
-        }
 
         response.setStatus(MyErrorMap.e200.getCode());
+        if (null != workOrder) {
+            result.validNum = (0>= workOrder.getReturnedNum()?0:workOrder.getReturnedNum());
+            return result;
+        }
+
+        log.info("there is not work order of this orderId: " + orderId);
+        JSONObject json = workOrderService.getOrderInfo(customer, orderId, merchantId);
+        if (null == json) {
+            StringUtil.throw400Exp(response, "400003:所属订单信息错误");
+            return result;
+        }
+
+        Integer orderNum = json.getInteger("num");
+        if (null == orderNum) {
+            log.info("get order info err: num is null");
+            StringUtil.throw400Exp(response, "400004:get order info err: num is null");
+            return result;
+        } else {
+            result.validNum = orderNum;
+        }
         return result;
 
     }

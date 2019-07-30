@@ -2,6 +2,8 @@ package com.fengchao.workorders.util;
 
 
 public class Constant {
+
+    public static final String APPID_VALUE = "20110843";
     /**
      * 版本号
      */

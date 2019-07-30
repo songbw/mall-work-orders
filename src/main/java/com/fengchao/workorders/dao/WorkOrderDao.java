@@ -37,4 +37,5 @@ public interface WorkOrderDao {
                   Date createTimeStart,
                   Date createTimeEnd);
 
+    WorkOrder selectByRefundNo(String refundNo);
 }

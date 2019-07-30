@@ -1,6 +1,8 @@
 package com.fengchao.workorders.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
+import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
 
@@ -33,4 +35,7 @@ public interface IWorkOrderService {
 
     JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId);
 
+    String handleNotify(GuanAiTongNotifyBean backBean);
+
+    String sendRefund2GuangAiTong(Long workOrderId);
 }

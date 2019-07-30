@@ -55,6 +55,9 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     @Override
     public List<WorkOrder> selectByOrderId(String orderId) {
         log.info("selectByOrderId: " + orderId);
+        if (null == orderId) {
+            return null;
+        }
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andOrderIdEqualTo(orderId);
@@ -90,17 +93,36 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample.Criteria criteria = example.createCriteria();
 
 
-        criteria.andTitleLike(title);
-        criteria.andReceiverIdEqualTo(receiverId);
-        criteria.andReceiverPhoneEqualTo(receiverPhone);
-        criteria.andReceiverNameLike(receiverName);
-        criteria.andOrderIdEqualTo(orderId);
-        criteria.andMerchantIdEqualTo(merchantId);
-        criteria.andTypeIdEqualTo(typeId);
-        criteria.andStatusEqualTo(status);
-        criteria.andFinishTimeBetween(finishTimeStart, finishTimeEnd);
-        criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
-
+        if (null != title) {
+            criteria.andTitleLike(title);
+        }
+        if (null != receiverId) {
+            criteria.andReceiverIdEqualTo(receiverId);
+        }
+        if (null != receiverPhone) {
+            criteria.andReceiverPhoneEqualTo(receiverPhone);
+        }
+        if (null != receiverName) {
+            criteria.andReceiverNameLike(receiverName);
+        }
+        if (null != orderId) {
+            criteria.andOrderIdEqualTo(orderId);
+        }
+        if (null != merchantId) {
+            criteria.andMerchantIdEqualTo(merchantId);
+        }
+        if (null != typeId) {
+            criteria.andTypeIdEqualTo(typeId);
+        }
+        if (null != status) {
+            criteria.andStatusEqualTo(status);
+        }
+        if (null != finishTimeStart && null != finishTimeEnd) {
+            criteria.andFinishTimeBetween(finishTimeStart, finishTimeEnd);
+        }
+        if (null != createTimeStart && null != createTimeEnd) {
+            criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+        }
         example.setOrderByClause(sort + " " + order);
         return mapper.selectByExample(example);
 
@@ -111,11 +133,42 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
 
-        criteria.andTypeIdEqualTo(typeId);
-        criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+        if (null != typeId) {
+            criteria.andTypeIdEqualTo(typeId);
+        }
+        if (null != createTimeStart && null != createTimeEnd) {
+            criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+        }
 
-        example.setOrderByClause("id DESC");
         return (int)mapper.countByExample(example);
 
+    }
+
+    @Override
+    public WorkOrder selectByRefundNo(String refundNo) {
+        log.info("selectByRefundNo: " + refundNo);
+        if (null == refundNo) {
+            return null;
+        }
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andRefundNoEqualTo(refundNo);
+
+        try {
+            List<WorkOrder> list = mapper.selectByExample(example);
+            if (null == list) {
+                log.warn(" Not found record by example");
+            } else {
+                return list.get(0);
+            }
+            return null;
+        } catch (Exception ex) {
+            if (null != ex || null != ex.getMessage()) {
+                log.warn(" sql failed: {}", ex.getMessage() );
+            } else {
+                log.warn(" sql failed");
+            }
+        }
+        return null;
     }
 }

@@ -3,9 +3,13 @@ package com.fengchao.workorders.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
+import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.bean.QueryOrderBodyBean;
+import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.util.OperaResult;
+import com.fengchao.workorders.util.WorkOrderStatusType;
 import com.fengchao.workorders.util.WorkOrderType;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
@@ -29,9 +33,12 @@ import org.springframework.web.client.RestTemplate;
 
 //import java.io.IOException;
 //import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @Slf4j
 @Service(value="WorkOrderServiceImpl")
@@ -40,6 +47,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
 
     private OrderService orderService;
+    private IGuanAiTongClient guanAiTongClient;
     private WorkOrderDaoImpl workOrderDao;
     private RestTemplate restTemplate;
 
@@ -49,11 +57,13 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Autowired
     public WorkOrderServiceImpl(WorkOrderDaoImpl workOrderDao,
                                 RestTemplate restTemplate,
+                                IGuanAiTongClient guanAiTongClient,
                                 OrderService orderService
                               ) {
         this.workOrderDao = workOrderDao;
         this.restTemplate = restTemplate;
         this.orderService = orderService;
+        this.guanAiTongClient = guanAiTongClient;
     }
 
     @Override
@@ -217,6 +227,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             if (null == jsonString) {
                 return null;
             }
+
             JSONObject theJson = JSON.parseObject(jsonString);
             if (null == theJson) {
                 return null;
@@ -225,7 +236,9 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             if (null == theList || 0 == theList.size()) {
                 return null;
             }
+
             List<JSONObject> list = JSONObject.parseArray(JSON.toJSONString(theList), JSONObject.class);
+            log.info("getOrderInfo, orderInfo: " + list.get(0).toString());
             return list.get(0);
 
         }
@@ -273,5 +286,122 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         return list.getJSONObject(0);
         */
+    }
+
+    @Override
+    public String handleNotify(GuanAiTongNotifyBean bean) {
+        String result = "fail";
+        String outer_refund_no = bean.getOuter_refund_no();
+        if (null == outer_refund_no || outer_refund_no.isEmpty()) {
+            return result;
+        }
+        WorkOrder wo = workOrderDao.selectByRefundNo(outer_refund_no);
+        if (null == wo) {
+            log.warn("handle notify, but not found work-order by refundNo: "+outer_refund_no);
+            return result;
+        }
+        String appid = bean.getAppid();
+        String outer_trade_no = bean.getOuter_trade_no();
+        String trade_no = bean.getTrade_no();
+        Float refund_amount = bean.getRefund_amount();
+
+        if (null == appid || null == outer_trade_no ||
+                null == trade_no || null == refund_amount
+            ) {
+            log.warn("missing notify parameters");
+            return result;
+        }
+        if (!appid.equals(wo.getAppid()) ||
+                !outer_trade_no.equals(wo.getTradeNo()) ||
+                !trade_no.equals(wo.getGuanaitongTradeNo()) ||
+                refund_amount > wo.getRefundAmount()) {
+            log.warn("notify parameters do not match work-order");
+            return result;
+        }
+
+        wo.setStatus(WorkOrderStatusType.REFUNDED.getCode());
+
+        try {
+            workOrderDao.updateByPrimaryKey(wo);
+        } catch (Exception ex) {
+            log.error("sql error when insert work-order " + ex.getMessage());
+            return result;
+        }
+
+        return "success";
+    }
+
+    @Override
+    public String sendRefund2GuangAiTong(Long workOrderId) {
+
+        WorkOrder wo = workOrderDao.selectByPrimaryKey(workOrderId);
+        if (null == wo) {
+            log.info("failed to find work-order record by id : " + workOrderId);
+            return null;
+        }
+
+        String result = "";
+        log.info("find work-order: " + wo.toString());
+        String tradeNo = wo.getTradeNo();
+        String appId = wo.getAppid();
+        Float refundAmount = wo.getRefundAmount();
+        String reason = wo.getTitle();
+        if (null == tradeNo || null == appId || null == refundAmount || null == reason) {
+            log.warn("find wrong value in work-order ");
+            return result;
+        }
+
+        String notifyUrl = "http://api.weesharing.com/v2/workorders/refund/notify";
+
+        Long timeStampMs = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
+        Long timeStampS = timeStampMs/1000;
+        String timeStamp = timeStampS.toString();
+        Random random = new Random();
+        String triRandom = random.nextInt(1000) + "";
+        int randLength = triRandom.length();
+        if (randLength < 3) {
+            for (int i = 1; i <= 3 - randLength; i++)
+                triRandom = "0" + triRandom;
+        }
+        String refundNo = appId + timeStamp + triRandom;
+
+        GuanAiTongRefundBean bean = new GuanAiTongRefundBean();
+        bean.setNotify_url(notifyUrl);
+        bean.setOuter_refund_no(refundNo);
+        bean.setOuter_trade_no(appId+tradeNo);
+        bean.setReason(reason);
+        bean.setRefund_amount(refundAmount);
+
+        OperaResult gResult = guanAiTongClient.postRefund(bean);
+        if (null == gResult) {
+            log.info("post to GuanAiTong refund failed");
+            return result;
+        }
+
+        Integer code = gResult.getCode();
+        Map<String, Object> map = gResult.getData();
+        if (null == code || null == map ||200 != code || null == map.get("data")) {
+            log.info("post to GuanAiTong refund failed");
+            if (null != code) {
+                log.info("guanaitong error: " + code.toString());
+            }
+            return result;
+        }
+
+
+        String guanAiTongNo = map.get("data").toString();
+        if (null == guanAiTongNo) {
+            log.info("post to GuanAiTong refund failed");
+            return result;
+        }
+
+        wo.setGuanaitongTradeNo(guanAiTongNo);
+        try {
+            workOrderDao.updateByPrimaryKey(wo);
+        } catch (Exception ex) {
+            log.error("update work-order sql error: " + ex.getMessage());
+        }
+
+        return guanAiTongNo;
     }
 }
