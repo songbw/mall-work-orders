@@ -258,7 +258,7 @@ public class WorkOrderController {
         workOrder.setRefundAmount(num * workOrder.getSalePrice());
         workOrder.setTypeId((long)typeId);
         workOrder.setMerchantId(merchantId);
-        workOrder.setStatus(WorkOrderStatusType.PENDING.getCode());
+        workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
         workOrder.setReceiverId(receiverid);
         workOrder.setUrgentDegree(urgentDegree);
         workOrder.setCreateTime(new Date());

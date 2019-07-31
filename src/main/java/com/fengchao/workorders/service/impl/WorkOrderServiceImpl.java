@@ -319,7 +319,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
-        wo.setStatus(WorkOrderStatusType.REFUNDED.getCode());
+        wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
 
         try {
             workOrderDao.updateByPrimaryKey(wo);
