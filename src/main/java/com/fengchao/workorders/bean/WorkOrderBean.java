@@ -18,6 +18,12 @@ public class WorkOrderBean {
     @ApiModelProperty(value="所属订单ID", example="111",required=false)
     private String orderId;
 
+    @ApiModelProperty(value="退货商品数", example="1",required=false)
+    private Integer returnedNum;
+
+    @ApiModelProperty(value="退款金额", example="1.1",required=false)
+    private Float refundAmount;
+
     @ApiModelProperty(value="商户ID", example="111",required=false)
     private Long merchantId;
 
