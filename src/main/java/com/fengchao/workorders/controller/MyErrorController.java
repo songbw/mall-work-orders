@@ -22,12 +22,12 @@ public class MyErrorController {
             if (null != codeMsg) {
                 String[] errInfor = codeMsg.split(":");
                 if (1 < errInfor.length) {
-                    map.put("error", errInfor[1]);
+                    map.put("error", errInfor[1].trim());
                 } else {
                     map.put("error", "500");
                 }
                 if (2 < errInfor.length) {
-                    map.put("message", errInfor[2]);
+                    map.put("message", errInfor[2].trim());
                 } else {
                     map.put("message", "exception");
                 }

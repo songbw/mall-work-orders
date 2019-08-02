@@ -21,6 +21,8 @@ public class WorkOrder {
 
     private Float refundAmount;
 
+    private Float guanaitongRefundAmount;
+
     private String guanaitongTradeNo;
 
     private String appid;
@@ -123,6 +125,14 @@ public class WorkOrder {
 
     public void setRefundAmount(Float refundAmount) {
         this.refundAmount = refundAmount;
+    }
+
+    public Float getGuanaitongRefundAmount() {
+        return guanaitongRefundAmount;
+    }
+
+    public void setGuanaitongRefundAmount(Float guanaitongRefundAmount) {
+        this.guanaitongRefundAmount = guanaitongRefundAmount;
     }
 
     public String getGuanaitongTradeNo() {

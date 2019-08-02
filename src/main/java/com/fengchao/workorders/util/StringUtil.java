@@ -23,7 +23,7 @@ public class StringUtil {
             throws RuntimeException {
         response.setStatus(MyErrorMap.e400.getCode());
         response.setContentType("application/json;charset=UTF-8");
-        throw new RuntimeException(msg);
+        throw new RuntimeException(msg.trim());
     }
 
     public static String formatJson(String jsonStr) {

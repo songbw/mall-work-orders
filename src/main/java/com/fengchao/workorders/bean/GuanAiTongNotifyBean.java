@@ -4,9 +4,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 @ApiModel(value="关爱通退款notify信息")
 public class GuanAiTongNotifyBean {
     @ApiModelProperty(value="应用appid", example="20110843",required=true)

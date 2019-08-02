@@ -187,6 +187,7 @@ public class CustomerWorkOrderController {
         }
         response.setStatus(MyErrorMap.e201.getCode());
 
+        log.info("createWorkOrder success, id = " +result.id.toString());
         return result;
 
     }

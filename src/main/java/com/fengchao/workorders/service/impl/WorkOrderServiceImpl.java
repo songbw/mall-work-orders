@@ -8,14 +8,11 @@ import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.bean.QueryOrderBodyBean;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
-import com.fengchao.workorders.util.OperaResult;
-import com.fengchao.workorders.util.WorkOrderStatusType;
-import com.fengchao.workorders.util.WorkOrderType;
+import com.fengchao.workorders.util.*;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.dao.impl.WorkOrderDaoImpl;
 import com.fengchao.workorders.service.IWorkOrderService;
-import com.fengchao.workorders.util.PageInfo;
 //import org.joda.time.DateTime;
 //import org.springframework.beans.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -290,9 +287,19 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public String handleNotify(GuanAiTongNotifyBean bean) {
+
         String result = "fail";
         String outer_refund_no = bean.getOuter_refund_no();
-        if (null == outer_refund_no || outer_refund_no.isEmpty()) {
+        String trade_no = bean.getTrade_no();
+        String appid = bean.getAppid();
+        String outer_trade_no = bean.getOuter_trade_no();
+        Float refund_amount = bean.getRefund_amount();
+
+        if (null == outer_refund_no || outer_refund_no.isEmpty() ||
+               null == trade_no || trade_no.isEmpty() ||
+            null == appid || appid.isEmpty() ||
+            null == outer_trade_no || outer_trade_no.isEmpty() ||
+            null == refund_amount) {
             return result;
         }
         WorkOrder wo = workOrderDao.selectByRefundNo(outer_refund_no);
@@ -300,25 +307,20 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             log.warn("handle notify, but not found work-order by refundNo: "+outer_refund_no);
             return result;
         }
-        String appid = bean.getAppid();
-        String outer_trade_no = bean.getOuter_trade_no();
-        String trade_no = bean.getTrade_no();
-        Float refund_amount = bean.getRefund_amount();
 
-        if (null == appid || null == outer_trade_no ||
-                null == trade_no || null == refund_amount
-            ) {
-            log.warn("missing notify parameters");
-            return result;
-        }
         if (!appid.equals(wo.getAppid()) ||
-                !outer_trade_no.equals(wo.getTradeNo()) ||
-                !trade_no.equals(wo.getGuanaitongTradeNo()) ||
-                refund_amount > wo.getRefundAmount()) {
+                !outer_trade_no.equals(wo.getTradeNo()) ) {
             log.warn("notify parameters do not match work-order");
             return result;
         }
 
+        if (0 >= refund_amount) {
+            log.warn("notify parameters refund_amount abnormal");
+            return result;
+        }
+
+        wo.setGuanaitongRefundAmount(refund_amount);
+        wo.setGuanaitongTradeNo(trade_no);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
 
         try {
@@ -327,6 +329,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             log.error("sql error when insert work-order " + ex.getMessage());
             return result;
         }
+        log.info("关爱通 refund notify handle success");
 
         return "success";
     }
@@ -368,33 +371,37 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         GuanAiTongRefundBean bean = new GuanAiTongRefundBean();
         bean.setNotify_url(notifyUrl);
         bean.setOuter_refund_no(refundNo);
-        bean.setOuter_trade_no(appId+tradeNo);
+        bean.setOuter_trade_no(tradeNo);
         bean.setReason(reason);
         bean.setRefund_amount(refundAmount);
 
-        OperaResult gResult = guanAiTongClient.postRefund(bean);
+        ResultObject<String> gResult = guanAiTongClient.postRefund(bean);
         if (null == gResult) {
-            log.info("post to GuanAiTong refund failed");
+            log.warn("post to GuanAiTong refund failed");
             return result;
         }
 
         Integer code = gResult.getCode();
-        Map<String, Object> map = gResult.getData();
-        if (null == code || null == map ||200 != code || null == map.get("data")) {
-            log.info("post to GuanAiTong refund failed");
+        String data = gResult.getData();
+        if (null == code || null == data ||200 != code || data.isEmpty()) {
+            log.info("post to GuanAiTong refund failed : {}", gResult.getMsg());
+
             if (null != code) {
-                log.info("guanaitong error: " + code.toString());
+                result = "Error: guanAiTong error: " + code.toString() + " : "+gResult.getMsg();
+                log.info(result);
             }
             return result;
         }
 
 
-        String guanAiTongNo = map.get("data").toString();
+        String guanAiTongNo = data;
         if (null == guanAiTongNo) {
-            log.info("post to GuanAiTong refund failed");
+            log.info("post to GuanAiTong refund failed to got data : {}",gResult.getMsg());
+            result = "Error: guanAiTong error: " + code.toString() + " : "+gResult.getMsg();
             return result;
         }
 
+        wo.setRefundNo(refundNo);
         wo.setGuanaitongTradeNo(guanAiTongNo);
         try {
             workOrderDao.updateByPrimaryKey(wo);

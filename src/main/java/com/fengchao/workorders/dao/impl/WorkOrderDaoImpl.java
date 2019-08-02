@@ -49,7 +49,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     @Override
     public int updateByPrimaryKey(WorkOrder record) {
-        return mapper.updateByPrimaryKey(record);
+        return mapper.updateByPrimaryKeySelective(record);
     }
 
     @Override

@@ -463,8 +463,9 @@ public class WorkOrderController {
     @ApiOperation(value = "关爱通支付回调", notes = "关爱通支付回调")
     @ResponseStatus(code = HttpStatus.OK)
     @PostMapping(value = "refund/notify", produces = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    private String gBack(GuanAiTongNotifyBean bean) {
-        log.info("关爱通back params is : " + JSON.toJSONString(bean));
+    public String gBack(GuanAiTongNotifyBean bean) {
+        String param = JSON.toJSONString(bean);
+        log.info("关爱通 refund notify: params : " + param);
         return workOrderService.handleNotify(bean);
     }
 
@@ -492,6 +493,12 @@ public class WorkOrderController {
             if (guanAiTongTradeNo.isEmpty()) {
                 StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
                 return result;
+            } else {
+                if (guanAiTongTradeNo.contains("Error:")) {
+                    String errMsg = guanAiTongTradeNo.replace(':','-');
+                    StringUtil.throw400Exp(response, "400006: " + errMsg);
+                    return result;
+                }
             }
         }
 

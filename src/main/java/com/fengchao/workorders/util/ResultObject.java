@@ -1,8 +1,14 @@
 package com.fengchao.workorders.util;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 //import lombok.AllArgsConstructor;
 
+@Getter
+@Setter
+@ToString
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 //@AllArgsConstructor
 public class ResultObject<T>{
@@ -16,15 +22,4 @@ public class ResultObject<T>{
         this.data = data;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
-    public void setMsg(String message) {
-        this.msg = message;
-    }
-
-    public void setData(T data) {
-        this.data= data;
-    }
 }

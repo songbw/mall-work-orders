@@ -675,6 +675,66 @@ public class WorkOrderExample {
             return (Criteria) this;
         }
 
+        public Criteria andGuanaitongRefundAmountIsNull() {
+            addCriterion("guanaitong_refund_amount is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountIsNotNull() {
+            addCriterion("guanaitong_refund_amount is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountEqualTo(Float value) {
+            addCriterion("guanaitong_refund_amount =", value, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountNotEqualTo(Float value) {
+            addCriterion("guanaitong_refund_amount <>", value, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountGreaterThan(Float value) {
+            addCriterion("guanaitong_refund_amount >", value, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountGreaterThanOrEqualTo(Float value) {
+            addCriterion("guanaitong_refund_amount >=", value, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountLessThan(Float value) {
+            addCriterion("guanaitong_refund_amount <", value, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountLessThanOrEqualTo(Float value) {
+            addCriterion("guanaitong_refund_amount <=", value, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountIn(List<Float> values) {
+            addCriterion("guanaitong_refund_amount in", values, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountNotIn(List<Float> values) {
+            addCriterion("guanaitong_refund_amount not in", values, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountBetween(Float value1, Float value2) {
+            addCriterion("guanaitong_refund_amount between", value1, value2, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
+        public Criteria andGuanaitongRefundAmountNotBetween(Float value1, Float value2) {
+            addCriterion("guanaitong_refund_amount not between", value1, value2, "guanaitongRefundAmount");
+            return (Criteria) this;
+        }
+
         public Criteria andGuanaitongTradeNoIsNull() {
             addCriterion("guanaitong_trade_no is null");
             return (Criteria) this;
