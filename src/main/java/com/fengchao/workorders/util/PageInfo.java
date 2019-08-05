@@ -21,8 +21,8 @@ public class PageInfo<T> {
     public String toString() {
         return "PageInfo{" +
                 "total=" + total +
-                "pageIndex=" + pageIndex +
-                "pageSize=" + pageSize +
+                ", pageIndex=" + pageIndex +
+                ", pageSize=" + pageSize +
                 ", rows=" + rows +
                 '}';
     }

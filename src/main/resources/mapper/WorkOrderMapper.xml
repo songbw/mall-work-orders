@@ -19,7 +19,7 @@
     <result column="receiver_id" jdbcType="VARCHAR" property="receiverId" />
     <result column="receiver_name" jdbcType="VARCHAR" property="receiverName" />
     <result column="receiver_phone" jdbcType="VARCHAR" property="receiverPhone" />
-    <result column="type_id" jdbcType="BIGINT" property="typeId" />
+    <result column="type_id" jdbcType="INTEGER" property="typeId" />
     <result column="outcome" jdbcType="VARCHAR" property="outcome" />
     <result column="finish_time" jdbcType="TIMESTAMP" property="finishTime" />
     <result column="urgent_degree" jdbcType="INTEGER" property="urgentDegree" />
@@ -142,7 +142,7 @@
       #{refundNo,jdbcType=VARCHAR}, #{refundAmount,jdbcType=REAL}, #{guanaitongRefundAmount,jdbcType=REAL}, 
       #{guanaitongTradeNo,jdbcType=VARCHAR}, #{appid,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR}, 
       #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR}, 
-      #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=BIGINT}, #{outcome,jdbcType=VARCHAR}, 
+      #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=INTEGER}, #{outcome,jdbcType=VARCHAR}, 
       #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, 
       #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, 
       #{updatedBy,jdbcType=VARCHAR})
@@ -279,7 +279,7 @@
         #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="typeId != null">
-        #{typeId,jdbcType=BIGINT},
+        #{typeId,jdbcType=INTEGER},
       </if>
       <if test="outcome != null">
         #{outcome,jdbcType=VARCHAR},
@@ -368,7 +368,7 @@
         receiver_phone = #{record.receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="record.typeId != null">
-        type_id = #{record.typeId,jdbcType=BIGINT},
+        type_id = #{record.typeId,jdbcType=INTEGER},
       </if>
       <if test="record.outcome != null">
         outcome = #{record.outcome,jdbcType=VARCHAR},
@@ -418,7 +418,7 @@
       receiver_id = #{record.receiverId,jdbcType=VARCHAR},
       receiver_name = #{record.receiverName,jdbcType=VARCHAR},
       receiver_phone = #{record.receiverPhone,jdbcType=VARCHAR},
-      type_id = #{record.typeId,jdbcType=BIGINT},
+      type_id = #{record.typeId,jdbcType=INTEGER},
       outcome = #{record.outcome,jdbcType=VARCHAR},
       finish_time = #{record.finishTime,jdbcType=TIMESTAMP},
       urgent_degree = #{record.urgentDegree,jdbcType=INTEGER},
@@ -483,7 +483,7 @@
         receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
       </if>
       <if test="typeId != null">
-        type_id = #{typeId,jdbcType=BIGINT},
+        type_id = #{typeId,jdbcType=INTEGER},
       </if>
       <if test="outcome != null">
         outcome = #{outcome,jdbcType=VARCHAR},
@@ -530,7 +530,7 @@
       receiver_id = #{receiverId,jdbcType=VARCHAR},
       receiver_name = #{receiverName,jdbcType=VARCHAR},
       receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
-      type_id = #{typeId,jdbcType=BIGINT},
+      type_id = #{typeId,jdbcType=INTEGER},
       outcome = #{outcome,jdbcType=VARCHAR},
       finish_time = #{finishTime,jdbcType=TIMESTAMP},
       urgent_degree = #{urgentDegree,jdbcType=INTEGER},

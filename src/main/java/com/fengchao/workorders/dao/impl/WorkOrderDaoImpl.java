@@ -84,7 +84,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
                                 String title, String receiverId,
                                 String receiverPhone, String receiverName,
                                 String orderId, Long merchantId,
-                                Long typeId, Integer status,
+                                Integer typeId, Integer status,
                                 Date finishTimeStart, Date finishTimeEnd,
                                 Date createTimeStart, Date createTimeEnd
                                 ) {
@@ -129,7 +129,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public int countType(Long typeId, Date createTimeStart, Date createTimeEnd) {
+    public int countType(Integer typeId, Date createTimeStart, Date createTimeEnd) {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
 

@@ -161,7 +161,7 @@ public class CustomerWorkOrderController {
         workOrder.setOrderId(orderId);
         workOrder.setReturnedNum(num);
         workOrder.setRefundAmount(num * workOrder.getSalePrice());
-        workOrder.setTypeId((long)typeId);
+        workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
         workOrder.setReceiverId(customer);

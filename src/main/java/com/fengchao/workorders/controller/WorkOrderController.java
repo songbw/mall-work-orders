@@ -118,7 +118,7 @@ public class WorkOrderController {
                                                    @ApiParam(value="客户ID")@RequestParam(required=false) String receiverId,
                                                    @ApiParam(value="客户电话")@RequestParam(required=false) String receiverPhone,
                                                    @ApiParam(value="客户名称")@RequestParam(required=false) String receiverName,
-                                                   @ApiParam(value="工单类型ID")@RequestParam(required=false) Long typeId,
+                                                   @ApiParam(value="工单类型ID")@RequestParam(required=false) Integer typeId,
                                                    @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
                                                    @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status
                                                      ) {
@@ -256,7 +256,7 @@ public class WorkOrderController {
         workOrder.setOrderId(orderId);
         workOrder.setReturnedNum(num);
         workOrder.setRefundAmount(num * workOrder.getSalePrice());
-        workOrder.setTypeId((long)typeId);
+        workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
         workOrder.setReceiverId(receiverid);
@@ -387,7 +387,7 @@ public class WorkOrderController {
                                           @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
                                           ) throws RuntimeException {
 
-        log.info("delete WorkOrder");
+        log.info("delete WorkOrders param : {}",id);
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
@@ -400,12 +400,27 @@ public class WorkOrderController {
             log.warn("can not find username in token");
         }
 
-        WorkOrder workOrder = workOrderService.selectById(id);
-        if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400002: failed to find record");
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(id);
+        } catch (Exception e) {
+            log.warn("workOrderService selectById : {}, exception : {}",id, e.getMessage());
+            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            return;
         }
 
-        workOrderService.deleteById(id);
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400002: failed to find record");
+            return;
+        }
+
+        try {
+            workOrderService.deleteById(id);
+        } catch (Exception e) {
+            log.warn("workOrderService deleteById : {}, exception : {}",id, e.getMessage());
+            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            return;
+        }
         response.setStatus(MyErrorMap.e204.getCode());
 
         log.info("delete WorkOrder profile");

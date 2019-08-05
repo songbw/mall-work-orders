@@ -1,5 +1,7 @@
 package com.fengchao.workorders.service.impl;
 
+import com.fengchao.workorders.util.WorkOrderStatusType;
+import com.fengchao.workorders.util.WorkOrderType;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.mapper.*;
@@ -39,14 +41,6 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
     public Long insert(WorkFlow workFlow) {
         int rst = workFlowMapper.insertSelective(workFlow);
         if (0 < rst) {
-            WorkOrder workOrder = workOrderMapper.selectByPrimaryKey(1L);
-            if (null != workOrder && null != workOrder.getStatus()) {
-                if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-                    workOrder.setStatus(workFlow.getStatus());
-                    workOrderMapper.updateByPrimaryKey(workOrder);
-                }
-            }
-
             return workFlow.getId();
         } else {
             return 0L;

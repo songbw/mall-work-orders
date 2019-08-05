@@ -26,14 +26,14 @@ public interface WorkOrderDao {
                                 String receiverName,
                                 String orderId,
                                 Long merchantId,
-                                Long typeId,
+                                Integer typeId,
                                 Integer status,
                                 Date finishTimeStart,
                                 Date finishTimeEnd,
                                 Date createTimeStart,
                                 Date createTimeEnd);
 
-    int countType(Long typeId,
+    int countType(Integer typeId,
                   Date createTimeStart,
                   Date createTimeEnd);
 

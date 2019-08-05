@@ -23,7 +23,7 @@ public interface IWorkOrderService {
 
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,
                                    String title, String receiverId, String receiverName, String receiverPhone,
-                                   String orderId, Long typeId, Long merchantId,Integer status,
+                                   String orderId, Integer typeId, Long merchantId,Integer status,
                                    Date finishTimeStart, Date finishTimeEnd,
                                    Date createTimeStart, Date createTimeEnd);
 

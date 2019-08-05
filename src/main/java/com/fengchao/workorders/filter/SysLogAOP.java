@@ -78,6 +78,10 @@ public class SysLogAOP {
         logger.info("request param : {}", log.getParam());
         logger.info("reuest method : {}", request.getMethod());
         logger.info("request url : {}", log.getUrl());
+        logger.info("request IP : {}",log.getIp());
+        logger.info("user-agent : {}",log.getUserAgent());
+        logger.info("request duration : {}ms",log.getDuration());
+        logger.info("request result : {}",log.getResult());
         return httpData;
     }
 

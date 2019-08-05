@@ -37,7 +37,7 @@ public class WorkOrder {
 
     private String receiverPhone;
 
-    private Long typeId;
+    private Integer typeId;
 
     private String outcome;
 
@@ -191,11 +191,11 @@ public class WorkOrder {
         this.receiverPhone = receiverPhone == null ? null : receiverPhone.trim();
     }
 
-    public Long getTypeId() {
+    public Integer getTypeId() {
         return typeId;
     }
 
-    public void setTypeId(Long typeId) {
+    public void setTypeId(Integer typeId) {
         this.typeId = typeId;
     }
 

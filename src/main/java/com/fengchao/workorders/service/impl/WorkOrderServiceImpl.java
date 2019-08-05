@@ -96,7 +96,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Override
     public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,
                                           String title, String receiverId, String receiverName, String receiverPhone,
-                                          String orderId, Long typeId, Long merchantId,Integer status,
+                                          String orderId, Integer typeId, Long merchantId,Integer status,
                                           Date finishTimeStart, Date finishTimeEnd,
                                          Date createTimeStart, Date createTimeEnd) {
 
@@ -137,12 +137,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public int countReturn(Date createTimeStart, Date createTimeEnd) {
-        long typeId;
+        int typeId;
 
-        typeId = (long)WorkOrderType.RETURN.getCode();
+        typeId = WorkOrderType.RETURN.getCode();
         int c1 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
 
-        typeId = (long)WorkOrderType.REFUND.getCode();
+        typeId = WorkOrderType.REFUND.getCode();
         int c2 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
 
         return c1 + c2;
@@ -337,6 +337,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Override
     public String sendRefund2GuangAiTong(Long workOrderId) {
 
+        log.info("sendRefund2GuangAiTong enter : workOrderId = ", workOrderId);
         WorkOrder wo = workOrderDao.selectByPrimaryKey(workOrderId);
         if (null == wo) {
             log.info("failed to find work-order record by id : " + workOrderId);
@@ -408,7 +409,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         } catch (Exception ex) {
             log.error("update work-order sql error: " + ex.getMessage());
         }
-
+        log.info("sendRefund2GuangAiTong success ");
         return guanAiTongNo;
     }
 }

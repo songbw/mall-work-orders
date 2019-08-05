@@ -1,5 +1,6 @@
 package com.fengchao.workorders.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
@@ -39,13 +40,6 @@ public class WorkFlowController {
     private class IdData implements Serializable {
         @ApiModelProperty(value = "ID", example = "1", required = true)
         public Long id;
-
-    }
-
-    @ApiModel(value = "工单流程List")
-    private class ListData implements Serializable {
-
-        public List<WorkFlowBean> list;
 
     }
 
@@ -95,6 +89,7 @@ public class WorkFlowController {
                                  @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                  @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
+        log.info("getWorkFlowById enter ");
         WorkFlowBean bean = new WorkFlowBean();
 
         if (null == id || 0 == id) {
@@ -103,7 +98,7 @@ public class WorkFlowController {
         }
         String username = JwtTokenUtil.getUsername(authentication);
 
-        if (null == username) {
+        if (username.isEmpty()) {
             log.warn("can not find username in token");
         }
         WorkFlow workFlow = workFlowService.selectById(id);
@@ -113,8 +108,10 @@ public class WorkFlowController {
         }
 
         BeanUtils.copyProperties(workFlow, bean);
+        bean.setOperator(workFlow.getUpdatedBy());
 
         response.setStatus(MyErrorMap.e200.getCode());
+        log.info("getWorkFlowById exit success");
         return bean;
 
     }
@@ -125,18 +122,19 @@ public class WorkFlowController {
     @GetMapping("work_flows/pages")
     public PageInfo<WorkFlowBean> queryWorkFlows(HttpServletResponse response,
                                                      @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                     @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
-                                                     @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
+                                                     @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
+                                                     @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
                                                      @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
                                                      @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
                                                      @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
 
+        log.info("queryWorkFlows enter");
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
 
         String username = JwtTokenUtil.getUsername(authentication);
 
-        if (null == username) {
+        if (username.isEmpty()) {
             log.warn("can not find username in token");
         }
 
@@ -167,6 +165,7 @@ public class WorkFlowController {
             for (WorkFlow a : pages.getRows()) {
                 WorkFlowBean b = new WorkFlowBean();
                 BeanUtils.copyProperties(a, b);
+                b.setOperator(a.getUpdatedBy());
                 list.add(b);
             }
         }
@@ -174,6 +173,7 @@ public class WorkFlowController {
         PageInfo<WorkFlowBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
+        log.info("queryWorkFlows exit");
         return result;
 
     }
@@ -186,12 +186,13 @@ public class WorkFlowController {
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                             @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
-        log.info("create WorkFlow enter");
+        log.info("create WorkFlow enter : param {}", JSON.toJSONString(data));
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();
         Integer status = data.getStatus();
         String comments = data.getComments();
+        String operator = data.getOperator();
 
         if (null == workOrderId || 0 == workOrderId
             ) {
@@ -199,48 +200,94 @@ public class WorkFlowController {
             return result;
         }
 
+        if (null == operator || operator.isEmpty()) {
+            StringUtil.throw400Exp(response, "400003: 操作员不能为空");
+            return result;
+        }
+
         WorkOrder workOrder = workOrderService.selectById(workOrderId);
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400002:工单号不存在");
+            StringUtil.throw400Exp(response, "400004:工单号不存在");
+            return result;
+        }
+        Integer orderStatus = workOrder.getStatus();
+        if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
+            StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
+            return result;
+        }
+
+        if (null == status || WorkOrderStatusType.Int2String(status).isEmpty()) {
+            StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
         }
 
         WorkFlow workFlow = new WorkFlow();
 
         workFlow.setWorkOrderId(workOrderId);
+        workFlow.setUpdatedBy(operator);
 
-        if (null != status && !WorkOrderStatusType.Int2String(status).isEmpty()) {
-            workFlow.setStatus(status);
-            workOrder.setStatus(status);
-        }
+        workFlow.setStatus(status);
+
 
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
         }
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(new Date());
-        if (null != username && !username.isEmpty()) {
+        if (!username.isEmpty()) {
             workFlow.setCreatedBy(username);
-            workFlow.setUpdatedBy(username);
         }
 
-        try {
-            workOrderService.update(workOrder);
-        } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response, ex.getMessage());
+        Integer workTypeId = workOrder.getTypeId();
+
+        if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
+             (WorkOrderStatusType.CLOSED.getCode().equals(workFlow.getStatus()) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
+               WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
+
+            String guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId);
+            if (null == guanAiTongTradeNo) {
+                StringUtil.throw400Exp(response, "400004: failed to find work-order");
+                return result;
+            } else {
+                if (guanAiTongTradeNo.isEmpty()) {
+                    StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
+                    return result;
+                } else {
+                    if (guanAiTongTradeNo.contains("Error:")) {
+                        String errMsg = guanAiTongTradeNo.replace(':','-');
+                        StringUtil.throw400Exp(response, "400006: " + errMsg);
+                        return result;
+                    }
+                }
+            }
+
+        } else {
+            if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+                workOrder.setStatus(workFlow.getStatus());
+
+                try {
+                    workOrderService.update(workOrder);
+                } catch (RuntimeException ex) {
+                    StringUtil.throw400Exp(response, ex.getMessage());
+                }
+            }
         }
+
 
         try {
             result.id = workFlowService.insert(workFlow);
-        }  catch (RuntimeException ex) {
+            log.info("create WorkFlow success, id = {}", result.id );
+        }  catch (Exception ex) {
             StringUtil.throw400Exp(response, ex.getMessage());
+            return result;
         }
 
         if (0 == result.id) {
             StringUtil.throw400Exp(response, "400003:Failed to create work_flow");
+            return result;
         }
         response.setStatus(MyErrorMap.e201.getCode());
-
+        log.info("create WorkFlow exit ");
         return result;
     }
 
@@ -253,10 +300,11 @@ public class WorkFlowController {
                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id,
                                 @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
-        log.info("update WorkFlow");
+        log.info("update WorkFlow param : {}", JSON.toJSONString(data));
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         String comments = data.getComments();
+        String operator = data.getOperator();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
@@ -271,8 +319,12 @@ public class WorkFlowController {
 
         workFlow.setUpdateTime(new Date());
 
-        if (null != username && !username.isEmpty()) {
+        if (!username.isEmpty()) {
             workFlow.setUpdatedBy(username);
+        } else {
+            if (null != operator && !operator.isEmpty()) {
+                workFlow.setUpdatedBy(operator);
+            }
         }
 
         if (null != comments && !comments.isEmpty()) {
@@ -295,7 +347,7 @@ public class WorkFlowController {
                                           @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
                                           ) throws RuntimeException {
 
-        log.info("delete WorkFlow");
+        log.info("delete WorkFlow id = {}",id);
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002: ID is wrong");
@@ -304,16 +356,31 @@ public class WorkFlowController {
 
         String username = JwtTokenUtil.getUsername(authentication);
 
-        if (null == username) {
+        if (username.isEmpty()) {
             log.warn("can not find username in token");
         }
 
-        WorkFlow workFlow = workFlowService.selectById(id);
+
+        WorkFlow workFlow;
+        try {
+            workFlow = workFlowService.selectById(id);
+        } catch (Exception e) {
+            log.warn("workFlow selectById : {}, exception : {}",id, e.getMessage());
+            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            return;
+        }
         if (null == workFlow) {
             StringUtil.throw400Exp(response, "400003: failed to find record");
+            return;
         }
 
-        workFlowService.deleteById(id);
+        try {
+            workFlowService.deleteById(id);
+        } catch (Exception e) {
+            log.warn("workFlow deleteById : {}, exception : {}",id, e.getMessage());
+            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            return;
+        }
         response.setStatus(MyErrorMap.e204.getCode());
 
         log.info("delete WorkFlow profile");
