@@ -40,7 +40,7 @@ public class WorkOrderBean {
     private String receiverName;
 
     @ApiModelProperty(value="工单类型ID", example="123",required=true)
-    private Long typeId;
+    private Integer typeId;
 
     @ApiModelProperty(value="客户电话", example="13345678901",required=false)
     private String receiverPhone;

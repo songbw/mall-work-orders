@@ -8,6 +8,7 @@ import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.bean.QueryOrderBodyBean;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
+import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.util.*;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
@@ -47,6 +48,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     private IGuanAiTongClient guanAiTongClient;
     private WorkOrderDaoImpl workOrderDao;
     private RestTemplate restTemplate;
+    private WorkOrderMapper mapper;
 
     // @Autowired
     // private RedisTemplate<Object, Object> redisTemplate;
@@ -54,6 +56,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Autowired
     public WorkOrderServiceImpl(WorkOrderDaoImpl workOrderDao,
                                 RestTemplate restTemplate,
+                                WorkOrderMapper mapper,
                                 IGuanAiTongClient guanAiTongClient,
                                 OrderService orderService
                               ) {
@@ -61,6 +64,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         this.restTemplate = restTemplate;
         this.orderService = orderService;
         this.guanAiTongClient = guanAiTongClient;
+        this.mapper = mapper;
     }
 
     @Override
@@ -146,6 +150,16 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         int c2 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
 
         return c1 + c2;
+    }
+
+    @Override
+    public List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd) {
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+
+        criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+
+        return mapper.selectByExample(example);
     }
 
     @Override

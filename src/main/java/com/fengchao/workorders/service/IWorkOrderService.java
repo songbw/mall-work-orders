@@ -29,6 +29,8 @@ public interface IWorkOrderService {
 
     List<WorkOrder> selectByOrderId(String orderId);
 
+    List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd);
+
     int countReturn(Date createTimeStart, Date createTimeEnd);
 
     WorkOrder getValidNumOfOrder(String openId, String sbuOrderId);

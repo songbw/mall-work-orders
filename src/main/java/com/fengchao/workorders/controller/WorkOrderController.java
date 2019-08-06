@@ -189,7 +189,7 @@ public class WorkOrderController {
         String receiverPhone = data.getReceiverPhone();
         String receiverName = data.getReceiverName();
         Long merchantId = data.getMerchantId();
-        Integer typeId = (int)(long)data.getTypeId();
+        Integer typeId = data.getTypeId();
         Integer num = data.getNum();
         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
@@ -299,8 +299,7 @@ public class WorkOrderController {
         String receiverPhone = data.getReceiverPhone();
         String receiverName = data.getReceiverName();
         //Long merchantId = data.getMerchantId();
-        //Long typeId = data.getTypeId();
-        String finishTimeStr = data.getFinishTime();
+         String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
         if (null == id || 0 == id) {
@@ -328,11 +327,11 @@ public class WorkOrderController {
         }
 /*
         if (null != typeId) {
-            if (WorkOrderType.Int2String((int)(long)typeId).isEmpty()) {
+            if (WorkOrderType.Int2String(typeId).isEmpty()) {
                 StringUtil.throw400Exp(response, "400002:工单类型错误");
             }
 
-            workOrder.setTypeId((long)typeId);
+            workOrder.setTypeId(typeId);
         }
 
         if (null != orderId) {
@@ -472,6 +471,72 @@ public class WorkOrderController {
         result.setCode(200);
         result.setMsg("success");
 
+        return result;
+    }
+
+    @ApiOperation(value = "退款时间段列表", notes = "退款时间段列表")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("work_orders/refunds/list")
+    public ResultObject<List<WorkOrder>> getRefundList(@ApiParam(value="开始日期",required=false)@RequestParam(required=false) String timeStart,
+                                                 @ApiParam(value="结束日期",required=false)@RequestParam(required=false) String timeEnd
+                                            ) {
+
+
+        ResultObject<List<WorkOrder>> result = new ResultObject<>(400, "failed: parameter missing", null);
+        java.util.Date dateCreateTimeStart = null;
+        java.util.Date dateCreateTimeEnd = null;
+
+        if (null == timeStart || timeStart.isEmpty() ||
+                null == timeEnd || timeEnd.isEmpty()) {
+            String dataNow = new Date().toString().trim();
+            String todayStr = dataNow.substring(0,10);
+            String todayBegin = todayStr+" 00:00:00";
+            String todayEnd = todayStr+" 23:59:59";
+            try {
+                dateCreateTimeStart = StringUtil.String2Date(todayBegin);
+                dateCreateTimeEnd = StringUtil.String2Date(todayEnd);
+            } catch (ParseException ex) {
+                log.error("exception: {}",ex.getMessage());
+                result.setMsg("createTime is wrong");
+                return result;
+            }
+
+            log.info("will find records of "+todayStr);
+        } else {
+            log.info("count return and refund work-order between: " + timeStart + "--" + timeEnd);
+            timeStart = timeStart.trim();
+            timeEnd = timeEnd.trim();
+            if (10 > timeStart.length() || 10 > timeEnd.length()) {
+                return result;
+            }
+
+            if (10 == timeStart.length()) {
+                timeStart = timeStart + " 00:00:00";
+            }
+            if (10 == timeEnd.length()) {
+                timeEnd = timeEnd + " 23:59:59";
+            }
+
+            try {
+                dateCreateTimeStart = StringUtil.String2Date(timeStart);
+                dateCreateTimeEnd = StringUtil.String2Date(timeEnd);
+            } catch (ParseException ex) {
+                log.error("createTime string is wrong");
+                result.setMsg("createTime is wrong");
+                return result;
+            }
+        }
+        try {
+            List<WorkOrder> list = workOrderService.selectByTimeRange(dateCreateTimeStart, dateCreateTimeEnd);
+            if (null != list) {
+                result.setData(list);
+                result.setCode(200);
+                result.setMsg("success");
+            }
+        } catch (Exception e) {
+            log.warn("selectByTimeRange exception : {}",e.getMessage());
+        }
         return result;
     }
 
