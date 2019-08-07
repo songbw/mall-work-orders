@@ -2,6 +2,7 @@ package com.fengchao.workorders.dao.impl;
 
 import com.fengchao.workorders.dao.WorkOrderDao;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
+import com.fengchao.workorders.mapper.WorkOrderXMapper;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.model.WorkOrderExample;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +18,12 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     private WorkOrderMapper mapper;
 
+    private WorkOrderXMapper workOrderXMapper;
+
     @Autowired
-    public WorkOrderDaoImpl(WorkOrderMapper mapper) {
+    public WorkOrderDaoImpl(WorkOrderMapper mapper, WorkOrderXMapper workOrderXMapper) {
         this.mapper = mapper;
+        this.workOrderXMapper = workOrderXMapper;
     }
 
     @Override
@@ -170,5 +174,11 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             }
         }
         return null;
+    }
+
+    @Override
+    public Integer selectRefundUserCountByMerchantId(Long merchantId) {
+        Integer refundUserCount = workOrderXMapper.selectRefundUserCountByMerchantId(merchantId);
+        return refundUserCount;
     }
 }

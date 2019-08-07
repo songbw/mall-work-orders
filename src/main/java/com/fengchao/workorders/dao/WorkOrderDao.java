@@ -1,6 +1,8 @@
 package com.fengchao.workorders.dao;
 
 import com.fengchao.workorders.model.WorkOrder;
+import org.apache.ibatis.annotations.Param;
+
 import java.util.Date;
 import java.util.List;
 
@@ -38,4 +40,12 @@ public interface WorkOrderDao {
                   Date createTimeEnd);
 
     WorkOrder selectByRefundNo(String refundNo);
+
+    /**
+     * 获取商户的退货人数
+     *
+     * @param merchantId
+     * @return
+     */
+    Integer selectRefundUserCountByMerchantId(@Param("merchantId") Long merchantId);
 }

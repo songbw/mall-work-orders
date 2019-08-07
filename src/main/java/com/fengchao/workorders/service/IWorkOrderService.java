@@ -31,6 +31,14 @@ public interface IWorkOrderService {
 
     List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd);
 
+    /**
+     * 获取商户的退货人数
+     *
+     * @param merchantId
+     * @return
+     */
+    Integer queryRefundUserCount(Long merchantId);
+
     int countReturn(Date createTimeStart, Date createTimeEnd);
 
     WorkOrder getValidNumOfOrder(String openId, String sbuOrderId);

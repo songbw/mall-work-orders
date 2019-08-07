@@ -540,6 +540,32 @@ public class WorkOrderController {
         return result;
     }
 
+    @ApiOperation(value = "获取商户退货人数", notes = "获取商户退货人数")
+    @ApiResponses({@ApiResponse(code = 400, message = "failed to find record")})
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("work_orders/refund/user/count")
+    public ResultObject<Integer> getRefundUserCount(@ApiParam(value = "商户id", required = true) @RequestParam Long merchantId) {
+        log.info("获取商户的退货人数 入参 merchantId:{}", merchantId);
+
+        ResultObject<Integer> resultObject = new ResultObject<>(500, "获取商户的退货人数错误", null);
+
+        try {
+            Integer count = workOrderService.queryRefundUserCount(merchantId);
+
+            resultObject.setCode(200);
+            resultObject.setData(count);
+            resultObject.setMsg("succcess");
+        } catch (Exception e) {
+            log.error("获取商户的退货人数 异常:{}", e.getMessage(), e);
+
+            resultObject = new ResultObject<>(500, "获取商户的退货人数异常", null);
+        }
+
+        log.info("获取商户的退货人数 返回:{}", resultObject.toString());
+
+        return resultObject;
+    }
+
     @ApiOperation(value = "关爱通支付回调", notes = "关爱通支付回调")
     @ResponseStatus(code = HttpStatus.OK)
     @PostMapping(value = "refund/notify", produces = MediaType.APPLICATION_FORM_URLENCODED_VALUE)

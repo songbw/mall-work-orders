@@ -163,6 +163,15 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
+    public Integer queryRefundUserCount(Long merchantId) {
+        log.info("获取商户的退货人数 数据库入参:{}", merchantId);
+        Integer count = workOrderDao.selectRefundUserCountByMerchantId(merchantId);
+        log.info("获取商户的退货人数 数据库返回:{}", count);
+
+        return count;
+    }
+
+    @Override
     public WorkOrder getValidNumOfOrder(String openId, String orderId) {
         int validNum = 0;
 
