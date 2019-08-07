@@ -544,7 +544,8 @@ public class WorkOrderController {
     @ApiResponses({@ApiResponse(code = 400, message = "failed to find record")})
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/refund/user/count")
-    public ResultObject<Integer> getRefundUserCount(@ApiParam(value = "商户id", required = true) @RequestParam Long merchantId) {
+    public ResultObject<Integer> getRefundUserCount(@ApiParam(value = "商户id", required = true)
+                                                        @RequestParam("merchantId") Long merchantId) {
         log.info("获取商户的退货人数 入参 merchantId:{}", merchantId);
 
         ResultObject<Integer> resultObject = new ResultObject<>(500, "获取商户的退货人数错误", null);
