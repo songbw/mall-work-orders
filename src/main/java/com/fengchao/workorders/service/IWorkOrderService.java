@@ -25,7 +25,7 @@ public interface IWorkOrderService {
                                    String title, String receiverId, String receiverName, String receiverPhone,
                                    String orderId, Integer typeId, Long merchantId,Integer status,
                                    Date finishTimeStart, Date finishTimeEnd,
-                                   Date createTimeStart, Date createTimeEnd);
+                                   Date createTimeStart, Date createTimeEnd) throws Exception;
 
     List<WorkOrder> selectByOrderId(String orderId);
 

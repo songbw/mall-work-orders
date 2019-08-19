@@ -10,6 +10,7 @@ import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.util.*;
+import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.dao.impl.WorkOrderDaoImpl;
@@ -102,22 +103,20 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                                           String title, String receiverId, String receiverName, String receiverPhone,
                                           String orderId, Integer typeId, Long merchantId,Integer status,
                                           Date finishTimeStart, Date finishTimeEnd,
-                                         Date createTimeStart, Date createTimeEnd) {
+                                         Date createTimeStart, Date createTimeEnd) throws Exception{
 
-        int counts = workOrderDao.selectRange(sort, order,
-                                                    title, receiverId, receiverPhone, receiverName,
-                                                    orderId, merchantId,typeId,status,
-                                                    finishTimeStart, finishTimeEnd,
-                                                    createTimeStart, createTimeEnd).size();
+        PageInfo<WorkOrder> pageInfo;
+        try {
 
-        PageHelper.startPage(pageIndex, pageSize);
-        List<WorkOrder> workOrders = workOrderDao.selectRange(sort, order,
-                title, receiverId, receiverPhone, receiverName,
-                orderId, merchantId,typeId,status,
-                finishTimeStart, finishTimeEnd,
-                createTimeStart, createTimeEnd);
-
-        return new PageInfo<>(counts, pageSize, pageIndex,workOrders);
+            pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,
+                    title, receiverId, receiverPhone, receiverName,
+                    orderId, merchantId, typeId, status,
+                    finishTimeStart, finishTimeEnd,
+                    createTimeStart, createTimeEnd);
+        }catch (Exception e) {
+            throw new Exception(e);
+        }
+        return pageInfo;
     }
 
     @Override

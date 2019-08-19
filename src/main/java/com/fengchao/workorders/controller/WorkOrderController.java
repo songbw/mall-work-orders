@@ -91,7 +91,14 @@ public class WorkOrderController {
             return bean;
         }
 
-        WorkOrder workOrder = workOrderService.selectById(id);
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(id);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:Failed to find work_order");
             return bean;
@@ -111,8 +118,8 @@ public class WorkOrderController {
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                    @RequestHeader(value = "merchant") Long merchantIdInHeader,
-                                                   @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
-                                                   @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
+                                                   @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
+                                                   @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="标题")@RequestParam(required=false) String title,
                                                    @ApiParam(value="订单ID")@RequestParam(required=false) String orderId,
                                                    @ApiParam(value="客户ID")@RequestParam(required=false) String receiverId,
@@ -127,20 +134,16 @@ public class WorkOrderController {
         java.util.Date dateCreateTimeEnd = null;
         java.util.Date dateFinishTimeStart = null;
         java.util.Date dateFinishTimeEnd = null;
-
+        int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
+        int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
         //String username = JwtTokenUtil.getUsername(authentication);
-
+        if (null == authentication) {
+            log.info("can not get authentication");
+        }
         if (null == merchantIdInHeader) {
             log.warn("can not find merchant in header");
             StringUtil.throw400Exp(response, "400002:merchant  is wrong");
-            return new PageInfo<>(0, pageSize,pageIndex, null);
-        }
-
-        if (null == pageIndex || 0 >= pageIndex) {
-            pageIndex = 1;
-        }
-        if (null == pageSize || 0>= pageSize) {
-            pageSize = 10;
+            return new PageInfo<>(0, index,limit, null);
         }
 
         Long merchant;
@@ -150,20 +153,25 @@ public class WorkOrderController {
             merchant = merchantId;
         }
 
-        PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,"id", "DESC",
-                                title,receiverId,receiverName,receiverPhone,orderId,typeId,merchant,
-                                status,dateFinishTimeStart,dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
-
+        PageInfo<WorkOrder> pages;
+        try {
+            pages = workOrderService.selectPage(index, limit, "id", "DESC",
+                    title, receiverId, receiverName, receiverPhone, orderId, typeId, merchant,
+                    status, dateFinishTimeStart, dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
         List<WorkOrderBean> list = new ArrayList<>();
 
-        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
+        if ((index -1) * pages.getPageSize() <= pages.getTotal()) {
             for (WorkOrder a : pages.getRows()) {
                 WorkOrderBean b = new WorkOrderBean();
                 BeanUtils.copyProperties(a, b);
                 list.add(b);
             }
         }
-        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
+        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
         return result;
@@ -178,20 +186,23 @@ public class WorkOrderController {
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                             @RequestBody WorkOrderBodyBean data) {
 
-        log.info("create WorkOrder enter");
+        log.info("create WorkOrder param: {}",JSON.toJSONString(data));
+        if (null == authentication) {
+            log.info("can not get authentication");
+        }
         IdData result = new IdData();
 
-        String username = JwtTokenUtil.getUsername(authentication);
+        //String username = JwtTokenUtil.getUsername(authentication);
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
         String receiverid = data.getReceiverId();
-        String receiverPhone = data.getReceiverPhone();
-        String receiverName = data.getReceiverName();
+        //String receiverPhone = data.getReceiverPhone();
+        //String receiverName = data.getReceiverName();
         Long merchantId = data.getMerchantId();
         Integer typeId = data.getTypeId();
         Integer num = data.getNum();
-        String finishTimeStr = data.getFinishTime();
+        //String finishTimeStr = data.getFinishTime();
         Integer urgentDegree = data.getUrgentDegree();
 
 
@@ -222,10 +233,24 @@ public class WorkOrderController {
 
         WorkOrder workOrder = new WorkOrder();
 
-        WorkOrder selectedWO = workOrderService.getValidNumOfOrder(receiverid, orderId);
+        WorkOrder selectedWO;
+        try {
+            selectedWO = workOrderService.getValidNumOfOrder(receiverid, orderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
         if (null == selectedWO) {//totally new order
             log.info("there is not work order of this orderId: " + orderId);
-            JSONObject json = workOrderService.getOrderInfo(receiverid, orderId, merchantId);
+            JSONObject json;
+            try {
+                json = workOrderService.getOrderInfo(receiverid, orderId, merchantId);
+            }catch (Exception e) {
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
+
             if (null == json) {
                 StringUtil.throw400Exp(response, "400007:所属订单信息错误");
                 return result;
@@ -286,10 +311,10 @@ public class WorkOrderController {
     public IdData updateProfile(HttpServletResponse response,
                                 @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                @RequestBody WorkOrderBodyBean data) throws RuntimeException {
+                                @RequestBody WorkOrderBodyBean data) {
 
 
-        log.info("update WorkOrder");
+        log.info("update WorkOrder param: {}",JSON.toJSONString(data));
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         //String orderId = data.getOrderId();
@@ -307,7 +332,14 @@ public class WorkOrderController {
             return result;
         }
 
-        WorkOrder workOrder = workOrderService.selectById(id);
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(id);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:工单不存在");
             return result;
@@ -368,7 +400,12 @@ public class WorkOrderController {
             workOrder.setUpdatedBy(username);
         }
 
-        workOrderService.update(workOrder);
+        try {
+            workOrderService.update(workOrder);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
 
         result.id = id;
         response.setStatus(MyErrorMap.e201.getCode());
@@ -403,8 +440,7 @@ public class WorkOrderController {
         try {
             workOrder = workOrderService.selectById(id);
         } catch (Exception e) {
-            log.warn("workOrderService selectById : {}, exception : {}",id, e.getMessage());
-            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return;
         }
 
@@ -416,8 +452,7 @@ public class WorkOrderController {
         try {
             workOrderService.deleteById(id);
         } catch (Exception e) {
-            log.warn("workOrderService deleteById : {}, exception : {}",id, e.getMessage());
-            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return;
         }
         response.setStatus(MyErrorMap.e204.getCode());
@@ -430,12 +465,12 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/refunds")
-    public ResultObject<ReturnCount> countReturn(@ApiParam(value="开始日期",required=false)@RequestParam(required=false) String timeStart,
-                                                 @ApiParam(value="结束日期",required=false)@RequestParam(required=false) String timeEnd
+    public ResultObject<ReturnCount> countReturn(@ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
+                                                 @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd
                                                 ) {
 
         ReturnCount countNum = new ReturnCount();
-        ResultObject<ReturnCount> result = new ResultObject<ReturnCount>(400, "failed: parameter missing", countNum);
+        ResultObject<ReturnCount> result = new ResultObject<>(400, "failed: parameter missing", countNum);
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
 
@@ -466,7 +501,14 @@ public class WorkOrderController {
                 return result;
             }
         }
-        int countReturn = workOrderService.countReturn(dateCreateTimeStart, dateCreateTimeEnd);
+        int countReturn;
+        try {
+            countReturn = workOrderService.countReturn(dateCreateTimeStart, dateCreateTimeEnd);
+        }catch (Exception e) {
+            result.setCode(400);
+            result.setMsg("400006:"+e.getMessage());
+            return result;
+        }
         countNum.count = countReturn;
         result.setCode(200);
         result.setMsg("success");
@@ -478,14 +520,14 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/refunds/list")
-    public ResultObject<List<WorkOrder>> getRefundList(@ApiParam(value="开始日期",required=false)@RequestParam(required=false) String timeStart,
-                                                 @ApiParam(value="结束日期",required=false)@RequestParam(required=false) String timeEnd
+    public ResultObject<List<WorkOrder>> getRefundList(@ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
+                                                 @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd
                                             ) {
 
 
         ResultObject<List<WorkOrder>> result = new ResultObject<>(400, "failed: parameter missing", null);
-        java.util.Date dateCreateTimeStart = null;
-        java.util.Date dateCreateTimeEnd = null;
+        java.util.Date dateCreateTimeStart;
+        java.util.Date dateCreateTimeEnd;
 
         if (null == timeStart || timeStart.isEmpty() ||
                 null == timeEnd || timeEnd.isEmpty()) {
@@ -545,7 +587,8 @@ public class WorkOrderController {
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/refund/user/count")
     public ResultObject<Integer> getRefundUserCount(@ApiParam(value = "商户id", required = true)
-                                                        @RequestParam("merchantId") Long merchantId) {
+                                                        @RequestParam("merchantId") Long merchantId)
+    {
         log.info("获取商户的退货人数 入参 merchantId:{}", merchantId);
 
         ResultObject<Integer> resultObject = new ResultObject<>(500, "获取商户的退货人数错误", null);
@@ -573,7 +616,11 @@ public class WorkOrderController {
     public String gBack(GuanAiTongNotifyBean bean) {
         String param = JSON.toJSONString(bean);
         log.info("关爱通 refund notify: params : " + param);
-        return workOrderService.handleNotify(bean);
+        try {
+            return workOrderService.handleNotify(bean);
+        }catch (Exception e) {
+            return "fail";
+        }
     }
 
     @ApiOperation(value = "发起关爱通退款", notes = "发起关爱通退款")
@@ -583,6 +630,9 @@ public class WorkOrderController {
                                 @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                 @RequestBody Map<String, Long> data) {
 
+        if (null == authentication) {
+            log.info("can not get authentication");
+        }
         GuanAiTongNo result = new GuanAiTongNo();
         Long id = data.get("id");
         if (null == id) {
@@ -592,7 +642,13 @@ public class WorkOrderController {
         }
         log.info("send refund for work-order: id = " + id.toString());
 
-        String guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id);
+        String guanAiTongTradeNo;
+        try {
+            guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
         if (null == guanAiTongTradeNo) {
             StringUtil.throw400Exp(response, "400003: failed to find work-order");
             return result;

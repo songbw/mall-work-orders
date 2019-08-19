@@ -1,5 +1,6 @@
 package com.fengchao.workorders.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.model.*;
@@ -9,7 +10,7 @@ import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
-import io.swagger.models.auth.In;
+//import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,7 @@ public class CustomerWorkOrderController {
                                           //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                           @RequestBody CustomerWorkOrderBean data) {
 
-        log.info("app side createWorkOrder: " + data.toString());
+        log.info("app side createWorkOrder: {}" , JSON.toJSONString(data));
         IdResponseData result = new IdResponseData();
 
         String orderId = data.getOrderId();
@@ -87,8 +88,7 @@ public class CustomerWorkOrderController {
         }
 
         if (null == typeId || 0 == typeId ||
-                null == title || title.isEmpty()
-        ) {
+                null == title || title.isEmpty()) {
             StringUtil.throw400Exp(response, "400002:工单标题, 工单类型, 所属订单不能空缺");
             return result;
         }
@@ -100,7 +100,12 @@ public class CustomerWorkOrderController {
 
         WorkOrder workOrder = new WorkOrder();
 
-        WorkOrder selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
+        WorkOrder selectedWO = null;
+        try {
+            selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
+        }catch (Exception e) {
+            log.info("workOrderService.getValidNumOfOrder not find work-order for customer:{}, orderId: {}",customer,orderId);
+        }
         if (null == selectedWO) {//totally new order
             log.info("there is not work order of this orderId: " + orderId);
             JSONObject json = workOrderService.getOrderInfo(customer, orderId, merchantId);
@@ -179,7 +184,7 @@ public class CustomerWorkOrderController {
         try {
             result.id = workOrderService.insert(workOrder);
         } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response, ex.getMessage());
+            StringUtil.throw400Exp(response,"40006:"+ ex.getMessage());
         }
 
         if (0 == result.id) {
@@ -201,15 +206,14 @@ public class CustomerWorkOrderController {
                                                     @ApiParam(value="id",required=true)@PathVariable("id") Long id,
                                                     @RequestBody CustomerWorkOrderBean data) {
 
-        log.info("app side updateWorkOrder: id = " + id);
-        log.info("app side updateWorkOrder: " + data.toString());
+        log.info("app side updateWorkOrder: id={}, param: {}",id, JSON.toJSONString(data));
 
         IdResponseData result = new IdResponseData();
-        WorkOrder workOrder = null;
+        WorkOrder workOrder;
         String username = null; //JwtTokenUtil.getUsername(authentication);
         //String orderId = data.getOrderId();
         String title = data.getTitle();
-        String description = data.getDescription();
+        //String description = data.getDescription();
         //String customer = data.getCustomer();
         //Integer typeId = data.getTypeId();
         //Long merchantId = data.getMerchantId();
@@ -221,16 +225,14 @@ public class CustomerWorkOrderController {
 
         try {
             workOrder = workOrderService.selectById(id);
-
-            if (null == workOrder) {
-                StringUtil.throw400Exp(response, "400003:工单不存在");
-                return result;
-            }
         } catch (Exception ex) {
-            StringUtil.throw400Exp(response, ex.getMessage());
+            StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
             return result;
         }
-
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400003:工单不存在");
+            return result;
+        }
         if (null != title && !title.isEmpty() ) {
             workOrder.setTitle(title);
         }
@@ -267,7 +269,7 @@ public class CustomerWorkOrderController {
         try {
             workOrderService.update(workOrder);
         } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response, ex.getMessage());
+            StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
         }
 
         result.id = id;
@@ -282,8 +284,8 @@ public class CustomerWorkOrderController {
     @GetMapping("work_orders")
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    //@RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                   @ApiParam(value="页码",required=false)@RequestParam(required=false) Integer pageIndex,
-                                                   @ApiParam(value="每页记录数",required=false)@RequestParam(required=false) Integer pageSize,
+                                                   @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
+                                                   @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
                                                    @ApiParam(value="订单ID")@RequestParam(required=false) String orderId) {
 
@@ -294,12 +296,9 @@ public class CustomerWorkOrderController {
             log.warn("can not find username in token");
         }
 */
-        if (null == pageIndex || 0 >= pageIndex) {
-            pageIndex = 1;
-        }
-        if (null == pageSize || 0>= pageSize) {
-            pageSize = 10;
-        }
+
+        int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
+        int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
 
         if (null != customer) {
             customer = customer.trim();
@@ -308,19 +307,25 @@ public class CustomerWorkOrderController {
             orderId = orderId.trim();
         }
 
-        PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex,pageSize,
-                "id", "DESC",null,customer,null,null,orderId,null,null,null,null, null, null,null);
+        PageInfo<WorkOrder> pages;
+        try {
+            pages = workOrderService.selectPage(index, limit,
+                    "id", "DESC", null, customer, null, null, orderId, null, null, null, null, null, null, null);
+        }catch(Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
 
         List<WorkOrderBean> list = new ArrayList<>();
 
-        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
+        if ((index -1) * limit <= pages.getTotal()) {
             for (WorkOrder a : pages.getRows()) {
                 WorkOrderBean b = new WorkOrderBean();
                 BeanUtils.copyProperties(a, b);
                 list.add(b);
             }
         }
-        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
+        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
         return result;
@@ -333,16 +338,20 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("orders/validNum")
     public ValidNumResponseData queryOrderValidNum(HttpServletResponse response,
-                                                   @ApiParam(value="订单所属客户",required=true)@RequestParam(required=true) String customer,
-                                                   @ApiParam(value="订单ID",required=true)@RequestParam(required=true) String orderId,
-                                                   @ApiParam(value="merchantId",required=true)@RequestParam(required=true) Long merchantId
+                                                   @ApiParam(value="订单所属客户",required=true)@RequestParam String customer,
+                                                   @ApiParam(value="订单ID",required=true)@RequestParam String orderId,
+                                                   @ApiParam(value="merchantId",required=true)@RequestParam Long merchantId
                                                    ) {
 
         ValidNumResponseData result = new ValidNumResponseData();
 
-
-        WorkOrder workOrder = workOrderService.getValidNumOfOrder(customer, orderId);
-
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.getValidNumOfOrder(customer, orderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return result;
+        }
         response.setStatus(MyErrorMap.e200.getCode());
         if (null != workOrder) {
             result.validNum = (0>= workOrder.getReturnedNum()?0:workOrder.getReturnedNum());
@@ -350,7 +359,13 @@ public class CustomerWorkOrderController {
         }
 
         log.info("there is not work order of this orderId: " + orderId);
-        JSONObject json = workOrderService.getOrderInfo(customer, orderId, merchantId);
+        JSONObject json;
+        try {
+            json = workOrderService.getOrderInfo(customer, orderId, merchantId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return result;
+        }
         if (null == json) {
             StringUtil.throw400Exp(response, "400003:所属订单信息错误");
             return result;

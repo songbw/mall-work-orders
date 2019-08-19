@@ -1,6 +1,7 @@
 package com.fengchao.workorders.dao;
 
 import com.fengchao.workorders.model.WorkOrder;
+import com.fengchao.workorders.util.PageInfo;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
@@ -21,19 +22,19 @@ public interface WorkOrderDao {
 
     List<WorkOrder> selectByOrderId(String orderId);
 
-    List<WorkOrder> selectRange(String sort, String order,
-                                String title,
-                                String receiverId,
-                                String receiverPhone,
-                                String receiverName,
-                                String orderId,
-                                Long merchantId,
-                                Integer typeId,
-                                Integer status,
-                                Date finishTimeStart,
-                                Date finishTimeEnd,
-                                Date createTimeStart,
-                                Date createTimeEnd);
+    PageInfo<WorkOrder> selectRange(int pageIndex, int pageSize,String sort, String order,
+                                    String title,
+                                    String receiverId,
+                                    String receiverPhone,
+                                    String receiverName,
+                                    String orderId,
+                                    Long merchantId,
+                                    Integer typeId,
+                                    Integer status,
+                                    Date finishTimeStart,
+                                    Date finishTimeEnd,
+                                    Date createTimeStart,
+                                    Date createTimeEnd) throws Exception;
 
     int countType(Integer typeId,
                   Date createTimeStart,

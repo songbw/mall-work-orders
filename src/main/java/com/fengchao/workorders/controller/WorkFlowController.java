@@ -89,7 +89,7 @@ public class WorkFlowController {
                                  @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                  @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
-        log.info("getWorkFlowById enter ");
+        log.info("getWorkFlowById param : {}",id.toString());
         WorkFlowBean bean = new WorkFlowBean();
 
         if (null == id || 0 == id) {
@@ -101,7 +101,12 @@ public class WorkFlowController {
         if (username.isEmpty()) {
             log.warn("can not find username in token");
         }
-        WorkFlow workFlow = workFlowService.selectById(id);
+        WorkFlow workFlow =null;
+        try {
+            workFlow = workFlowService.selectById(id);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+        }
         if (null == workFlow) {
             StringUtil.throw400Exp(response, "400003:Failed to find work_flow");
             return bean;
@@ -128,21 +133,16 @@ public class WorkFlowController {
                                                      @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
                                                      @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
 
-        log.info("queryWorkFlows enter");
+        log.info("queryWorkFlows workOrderId ={}",workOrderId);
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
 
         String username = JwtTokenUtil.getUsername(authentication);
 
+        int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
+        int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
         if (username.isEmpty()) {
             log.warn("can not find username in token");
-        }
-
-        if (null == pageIndex || 0 >= pageIndex) {
-            pageIndex = 1;
-        }
-        if (null == pageSize || 0>= pageSize) {
-            pageSize = 10;
         }
 
         try {
@@ -156,12 +156,18 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response,"400002:createTime format is wrong");
         }
 
-        PageInfo<WorkFlow> pages = workFlowService.selectPage(pageIndex,pageSize,
-                "id", "DESC",workOrderId,dateCreateTimeStart, dateCreateTimeEnd);
+        PageInfo<WorkFlow> pages;
+        try {
+            pages = workFlowService.selectPage(index, limit,
+                    "id", "DESC", workOrderId, dateCreateTimeStart, dateCreateTimeEnd);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
 
         List<WorkFlowBean> list = new ArrayList<>();
 
-        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
+        if ((index -1) * pages.getPageSize() <= pages.getTotal()) {
             for (WorkFlow a : pages.getRows()) {
                 WorkFlowBean b = new WorkFlowBean();
                 BeanUtils.copyProperties(a, b);
@@ -170,10 +176,10 @@ public class WorkFlowController {
             }
         }
 
-        PageInfo<WorkFlowBean> result = new PageInfo<>(pages.getTotal(), pageSize,pageIndex, list);
+        PageInfo<WorkFlowBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
-        log.info("queryWorkFlows exit");
+        log.info("queryWorkFlows success");
         return result;
 
     }
@@ -205,7 +211,14 @@ public class WorkFlowController {
             return result;
         }
 
-        WorkOrder workOrder = workOrderService.selectById(workOrderId);
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(workOrderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
@@ -244,7 +257,13 @@ public class WorkFlowController {
              (WorkOrderStatusType.CLOSED.getCode().equals(workFlow.getStatus()) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
-            String guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId);
+            String guanAiTongTradeNo;
+            try {
+                guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId);
+            }catch (Exception e) {
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
             if (null == guanAiTongTradeNo) {
                 StringUtil.throw400Exp(response, "400004: failed to find work-order");
                 return result;
@@ -267,8 +286,9 @@ public class WorkFlowController {
 
                 try {
                     workOrderService.update(workOrder);
-                } catch (RuntimeException ex) {
-                    StringUtil.throw400Exp(response, ex.getMessage());
+                }catch (Exception e) {
+                    StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                    return null;
                 }
             }
         }
@@ -277,9 +297,9 @@ public class WorkFlowController {
         try {
             result.id = workFlowService.insert(workFlow);
             log.info("create WorkFlow success, id = {}", result.id );
-        }  catch (Exception ex) {
-            StringUtil.throw400Exp(response, ex.getMessage());
-            return result;
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
         }
 
         if (0 == result.id) {
@@ -311,7 +331,14 @@ public class WorkFlowController {
             return result;
         }
 
-        WorkFlow workFlow = workFlowService.selectById(id);
+        WorkFlow workFlow;
+        try {
+            workFlow = workFlowService.selectById(id);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
         if (null == workFlow) {
             StringUtil.throw400Exp(response, "400003:工单流程不存在");
             return result;
@@ -365,8 +392,7 @@ public class WorkFlowController {
         try {
             workFlow = workFlowService.selectById(id);
         } catch (Exception e) {
-            log.warn("workFlow selectById : {}, exception : {}",id, e.getMessage());
-            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            StringUtil.throw400Exp(response, "400006: "+e.getMessage());
             return;
         }
         if (null == workFlow) {
@@ -377,13 +403,12 @@ public class WorkFlowController {
         try {
             workFlowService.deleteById(id);
         } catch (Exception e) {
-            log.warn("workFlow deleteById : {}, exception : {}",id, e.getMessage());
-            StringUtil.throw400Exp(response, "400006:sql exception "+e.getMessage());
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return;
         }
         response.setStatus(MyErrorMap.e204.getCode());
 
-        log.info("delete WorkFlow profile");
+        log.info("delete WorkFlow success");
 
     }
 

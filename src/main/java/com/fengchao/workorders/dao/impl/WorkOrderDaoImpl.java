@@ -5,6 +5,9 @@ import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.mapper.WorkOrderXMapper;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.model.WorkOrderExample;
+import com.fengchao.workorders.util.PageInfo;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -84,14 +87,14 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public List<WorkOrder> selectRange(String sort, String order,
-                                String title, String receiverId,
-                                String receiverPhone, String receiverName,
-                                String orderId, Long merchantId,
-                                Integer typeId, Integer status,
-                                Date finishTimeStart, Date finishTimeEnd,
-                                Date createTimeStart, Date createTimeEnd
-                                ) {
+    public PageInfo<WorkOrder> selectRange(int pageIndex, int pageSize,String sort, String order,
+                                           String title, String receiverId,
+                                           String receiverPhone, String receiverName,
+                                           String orderId, Long merchantId,
+                                           Integer typeId, Integer status,
+                                           Date finishTimeStart, Date finishTimeEnd,
+                                           Date createTimeStart, Date createTimeEnd
+                                ) throws Exception{
 
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
@@ -128,8 +131,18 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
         }
         example.setOrderByClause(sort + " " + order);
-        return mapper.selectByExample(example);
 
+        Page pages;
+        List<WorkOrder> list;
+
+        try {
+            pages = PageHelper.startPage(pageIndex, pageSize, true);
+            list = mapper.selectByExample(example);
+        }catch (Exception e) {
+            log.warn("work-order map selectByExample exception {}",e.getMessage());
+            throw new Exception(e);
+        }
+        return new PageInfo<>((int)pages.getTotal(), pages.getPageSize(),pageIndex,list);
     }
 
     @Override
