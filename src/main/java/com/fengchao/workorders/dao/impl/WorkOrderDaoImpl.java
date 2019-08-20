@@ -97,35 +97,45 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
-
-
+        WorkOrderExample.Criteria orCriteria = example.createCriteria();
         if (null != title) {
             criteria.andTitleLike(title);
+            orCriteria.andTitleLike(title);
         }
         if (null != receiverId) {
             criteria.andReceiverIdEqualTo(receiverId);
+            orCriteria.andReceiverIdEqualTo(receiverId);
         }
         if (null != receiverPhone) {
             criteria.andReceiverPhoneEqualTo(receiverPhone);
+            orCriteria.andReceiverPhoneEqualTo(receiverPhone);
         }
         if (null != receiverName) {
             criteria.andReceiverNameLike(receiverName);
+            orCriteria.andReceiverNameLike(receiverName);
         }
         if (null != orderId) {
             criteria.andOrderIdEqualTo(orderId);
+            orCriteria.andOrderIdEqualTo(orderId);
         }
         if (null != merchantId) {
             criteria.andMerchantIdEqualTo(merchantId);
+            orCriteria.andMerchantIdEqualTo(merchantId);
         }
         if (null != typeId) {
             criteria.andTypeIdEqualTo(typeId);
+            orCriteria.andTypeIdEqualTo(typeId);
         }
         if (null != status) {
             criteria.andStatusEqualTo(status);
+            orCriteria.andStatusEqualTo(status);
         }
 
         if (null != createTimeStart && null != createTimeEnd) {
             criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+            orCriteria.andCreateTimeEqualTo(createTimeEnd);
+            example.or(orCriteria);
+            example.or(criteria);
         }
         example.setOrderByClause(sort + " " + order);
 
@@ -146,12 +156,17 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     public int countType(Integer typeId, Date createTimeStart, Date createTimeEnd) {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
+        WorkOrderExample.Criteria orCriteria = example.createCriteria();
 
         if (null != typeId) {
             criteria.andTypeIdEqualTo(typeId);
+            orCriteria.andTypeIdEqualTo(typeId);
         }
         if (null != createTimeStart && null != createTimeEnd) {
             criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+            orCriteria.andCreateTimeEqualTo(createTimeEnd);
+            example.or(criteria);
+            example.or(orCriteria);
         }
 
         return (int)mapper.countByExample(example);

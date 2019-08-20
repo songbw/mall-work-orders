@@ -144,7 +144,9 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
 
-        criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+        if (null != createTimeStart && null != createTimeEnd) {
+            criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+        }
 
         return mapper.selectByExample(example);
     }

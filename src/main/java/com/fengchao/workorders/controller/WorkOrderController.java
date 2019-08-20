@@ -58,7 +58,7 @@ public class WorkOrderController {
 
     }
 
-    @ApiModel(value = "")
+    @ApiModel(value = "GuanAiTongNo")
     private class GuanAiTongNo {
         @ApiModelProperty(value = "统计数", example = "100", required = true)
         public String tradeNo;
@@ -70,6 +70,41 @@ public class WorkOrderController {
                              ) {
         this.workOrderService = workOrderService;
     }
+
+    private Date getDateType(String timeStr, boolean isEnd) throws Exception{
+
+        if (null == timeStr) {
+            return null;
+        }
+        if (timeStr.isEmpty()) {
+            return null;
+        }
+
+        String timeString = timeStr.trim();
+        Date dateTime;
+
+       if (10 > timeString.length()) {
+                return null;
+       }
+
+       if (10 == timeString.length()) {
+           if (isEnd) {
+               timeString += " 23:59:59";
+           }else {
+               timeString += " 00:00:00";
+           }
+       }
+
+       try {
+           dateTime = StringUtil.String2Date(timeString);
+       } catch (ParseException ex) {
+           log.error("timeString is wrong {}",ex.getMessage());
+           throw new Exception(ex);
+       }
+
+       return dateTime;
+    }
+
 
     @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -127,11 +162,13 @@ public class WorkOrderController {
                                                    @ApiParam(value="客户名称")@RequestParam(required=false) String receiverName,
                                                    @ApiParam(value="工单类型ID")@RequestParam(required=false) Integer typeId,
                                                    @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
+                                                   @ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
+                                                   @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd,
                                                    @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status
                                                      ) {
 
-        java.util.Date dateCreateTimeStart = null;
-        java.util.Date dateCreateTimeEnd = null;
+        java.util.Date dateCreateTimeStart ;
+        java.util.Date dateCreateTimeEnd ;
         int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
         int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
         //String username = JwtTokenUtil.getUsername(authentication);
@@ -141,7 +178,15 @@ public class WorkOrderController {
         if (null == merchantIdInHeader) {
             log.warn("can not find merchant in header");
             StringUtil.throw400Exp(response, "400002:merchant  is wrong");
-            return new PageInfo<>(0, index,limit, null);
+            return null;
+        }
+
+        try {
+            dateCreateTimeStart = getDateType(timeStart,false);
+            dateCreateTimeEnd = getDateType(timeEnd,true);
+        } catch (Exception e) {
+            StringUtil.throw400Exp(response, "400005:"+e.getMessage());
+            return null;
         }
 
         Long merchant;
@@ -468,25 +513,11 @@ public class WorkOrderController {
             log.info("count all return and refund work-orders");
         } else {
             log.info("count return and refund work-order between: " + timeStart + "--" + timeEnd);
-            timeStart = timeStart.trim();
-            timeEnd = timeEnd.trim();
-            if (10 > timeStart.length() || 10 > timeEnd.length()) {
-                return result;
-            }
-
-            if (10 == timeStart.length()) {
-                timeStart = timeStart + " 00:00:00";
-            }
-            if (10 == timeEnd.length()) {
-                timeEnd = timeEnd + " 23:59:59";
-            }
-
             try {
-                dateCreateTimeStart = StringUtil.String2Date(timeStart);
-                dateCreateTimeEnd = StringUtil.String2Date(timeEnd);
-            } catch (ParseException ex) {
-                log.error("createTime string is wrong");
-                result.setMsg("createTime is wrong");
+                dateCreateTimeStart = getDateType(timeStart,false);
+                dateCreateTimeEnd = getDateType(timeEnd,true);
+            } catch (Exception ex) {
+                result.setMsg("createTime is wrong "+ex.getMessage());
                 return result;
             }
         }
@@ -536,25 +567,13 @@ public class WorkOrderController {
             log.info("will find records of "+todayStr);
         } else {
             log.info("count return and refund work-order between: " + timeStart + "--" + timeEnd);
-            timeStart = timeStart.trim();
-            timeEnd = timeEnd.trim();
-            if (10 > timeStart.length() || 10 > timeEnd.length()) {
-                return result;
-            }
-
-            if (10 == timeStart.length()) {
-                timeStart = timeStart + " 00:00:00";
-            }
-            if (10 == timeEnd.length()) {
-                timeEnd = timeEnd + " 23:59:59";
-            }
 
             try {
-                dateCreateTimeStart = StringUtil.String2Date(timeStart);
-                dateCreateTimeEnd = StringUtil.String2Date(timeEnd);
-            } catch (ParseException ex) {
-                log.error("createTime string is wrong");
-                result.setMsg("createTime is wrong");
+                dateCreateTimeStart = getDateType(timeStart,false);
+                dateCreateTimeEnd = getDateType(timeEnd,true);
+            } catch (Exception ex) {
+                log.error("createTime string is wrong exception {}",ex.getMessage());
+                result.setMsg("createTime is wrong "+ex.getMessage());
                 return result;
             }
         }
@@ -644,7 +663,7 @@ public class WorkOrderController {
         } else {
             if (guanAiTongTradeNo.isEmpty()) {
                 StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
-                return result;
+                return null;
             } else {
                 if (guanAiTongTradeNo.contains("Error:")) {
                     String errMsg = guanAiTongTradeNo.replace(':','-');
