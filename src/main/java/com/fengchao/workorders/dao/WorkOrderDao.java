@@ -31,8 +31,6 @@ public interface WorkOrderDao {
                                     Long merchantId,
                                     Integer typeId,
                                     Integer status,
-                                    Date finishTimeStart,
-                                    Date finishTimeEnd,
                                     Date createTimeStart,
                                     Date createTimeEnd) throws Exception;
 
@@ -48,5 +46,5 @@ public interface WorkOrderDao {
      * @param merchantId
      * @return
      */
-    Integer selectRefundUserCountByMerchantId(@Param("merchantId") Long merchantId);
+    Integer selectRefundUserCountByMerchantId(@Param("merchantId") Long merchantId) throws Exception;
 }

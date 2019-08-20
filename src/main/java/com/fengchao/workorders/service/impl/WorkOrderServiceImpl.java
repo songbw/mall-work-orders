@@ -10,8 +10,6 @@ import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.util.*;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.dao.impl.WorkOrderDaoImpl;
 import com.fengchao.workorders.service.IWorkOrderService;
@@ -20,18 +18,11 @@ import com.fengchao.workorders.service.IWorkOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-//import org.springframework.util.StringUtils;
+//import org.springframework.web.client.RestTemplate;
 
-//import java.io.IOException;
-//import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -48,7 +39,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     private OrderService orderService;
     private IGuanAiTongClient guanAiTongClient;
     private WorkOrderDaoImpl workOrderDao;
-    private RestTemplate restTemplate;
+    //private RestTemplate restTemplate;
     private WorkOrderMapper mapper;
 
     // @Autowired
@@ -56,13 +47,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Autowired
     public WorkOrderServiceImpl(WorkOrderDaoImpl workOrderDao,
-                                RestTemplate restTemplate,
                                 WorkOrderMapper mapper,
                                 IGuanAiTongClient guanAiTongClient,
                                 OrderService orderService
                               ) {
         this.workOrderDao = workOrderDao;
-        this.restTemplate = restTemplate;
+        //this.restTemplate = restTemplate;
         this.orderService = orderService;
         this.guanAiTongClient = guanAiTongClient;
         this.mapper = mapper;
@@ -102,7 +92,6 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,
                                           String title, String receiverId, String receiverName, String receiverPhone,
                                           String orderId, Integer typeId, Long merchantId,Integer status,
-                                          Date finishTimeStart, Date finishTimeEnd,
                                          Date createTimeStart, Date createTimeEnd) throws Exception{
 
         PageInfo<WorkOrder> pageInfo;
@@ -111,7 +100,6 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,
                     title, receiverId, receiverPhone, receiverName,
                     orderId, merchantId, typeId, status,
-                    finishTimeStart, finishTimeEnd,
                     createTimeStart, createTimeEnd);
         }catch (Exception e) {
             throw new Exception(e);
@@ -162,9 +150,15 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public Integer queryRefundUserCount(Long merchantId) {
+    public Integer queryRefundUserCount(Long merchantId) throws Exception{
         log.info("获取商户的退货人数 数据库入参:{}", merchantId);
-        Integer count = workOrderDao.selectRefundUserCountByMerchantId(merchantId);
+
+        Integer count;
+        try {
+            count = workOrderDao.selectRefundUserCountByMerchantId(merchantId);
+        }catch (Exception e) {
+            throw new Exception(e);
+        }
         log.info("获取商户的退货人数 数据库返回:{}", count);
 
         return count;
@@ -172,7 +166,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public WorkOrder getValidNumOfOrder(String openId, String orderId) {
-        int validNum = 0;
+        int validNum ;
 
         if (null == openId || null == orderId) {
             WorkOrder w = new WorkOrder();
@@ -191,7 +185,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                 int usedNum = 0;
                 int goodsNum= 0;
                 String open_id = baseWO.getReceiverId();
-                if (null != open_id && openId.equals(open_id) && null != baseWO.getOrderGoodsNum()) {
+                if (openId.equals(open_id) && null != baseWO.getOrderGoodsNum()) {
                     goodsNum = baseWO.getOrderGoodsNum();
                 }
                 for (WorkOrder wo : list) {
@@ -221,6 +215,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public JSONObject getOrderInfo(String openId, String subOrderId, Long merchantId) {
         QueryOrderBodyBean body = new QueryOrderBodyBean();
         body.setOpenId(openId);
@@ -243,10 +238,6 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
 
             String jsonString = JSON.toJSONString(objectResult);
-            if (null == jsonString) {
-                return null;
-            }
-
             JSONObject theJson = JSON.parseObject(jsonString);
             if (null == theJson) {
                 return null;
@@ -330,7 +321,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
-        if (!appid.equals(wo.getAppid()) ||
+        if (!appid.equals(wo.gettAppId()) ||
                 !outer_trade_no.equals(wo.getTradeNo()) ) {
             log.warn("notify parameters do not match work-order");
             return result;
@@ -369,7 +360,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         String result = "";
         log.info("find work-order: " + wo.toString());
         String tradeNo = wo.getTradeNo();
-        String appId = wo.getAppid();
+        String appId = wo.gettAppId();
         Float refundAmount = wo.getRefundAmount();
         String reason = wo.getTitle();
         if (null == tradeNo || null == appId || null == refundAmount || null == reason) {
@@ -383,13 +374,16 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         Long timeStampS = timeStampMs/1000;
         String timeStamp = timeStampS.toString();
         Random random = new Random();
+
         String triRandom = random.nextInt(1000) + "";
+        StringBuilder sb = new StringBuilder();
         int randLength = triRandom.length();
         if (randLength < 3) {
             for (int i = 1; i <= 3 - randLength; i++)
-                triRandom = "0" + triRandom;
+                sb.append("0");
         }
-        String refundNo = appId + timeStamp + triRandom;
+        sb.append(triRandom);
+        String refundNo = appId + timeStamp + sb.toString();
 
         GuanAiTongRefundBean bean = new GuanAiTongRefundBean();
         bean.setNotify_url(notifyUrl);
@@ -405,22 +399,14 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         Integer code = gResult.getCode();
-        String data = gResult.getData();
-        if (null == code || null == data ||200 != code || data.isEmpty()) {
+        String guanAiTongNo = gResult.getData();
+        if (null == code || null == guanAiTongNo ||200 != code || guanAiTongNo.isEmpty()) {
             log.info("post to GuanAiTong refund failed : {}", gResult.getMsg());
 
             if (null != code) {
                 result = "Error: guanAiTong error: " + code.toString() + " : "+gResult.getMsg();
                 log.info(result);
             }
-            return result;
-        }
-
-
-        String guanAiTongNo = data;
-        if (null == guanAiTongNo) {
-            log.info("post to GuanAiTong refund failed to got data : {}",gResult.getMsg());
-            result = "Error: guanAiTong error: " + code.toString() + " : "+gResult.getMsg();
             return result;
         }
 

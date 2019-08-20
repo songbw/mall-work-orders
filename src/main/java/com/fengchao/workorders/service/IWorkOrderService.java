@@ -2,50 +2,47 @@ package com.fengchao.workorders.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
-import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
 
 //import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-//import java.util.Map;
 
 public interface IWorkOrderService {
 
-    Long insert(WorkOrder workOrder);
+    Long insert(WorkOrder workOrder) throws Exception;
 
-    void deleteById(Long id);
+    void deleteById(Long id) throws Exception;
 
-    WorkOrder selectById(Long id);
+    WorkOrder selectById(Long id) throws Exception;
 
-    void update(WorkOrder workOrder);
+    void update(WorkOrder workOrder) throws Exception;
 
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,
                                    String title, String receiverId, String receiverName, String receiverPhone,
                                    String orderId, Integer typeId, Long merchantId,Integer status,
-                                   Date finishTimeStart, Date finishTimeEnd,
                                    Date createTimeStart, Date createTimeEnd) throws Exception;
 
-    List<WorkOrder> selectByOrderId(String orderId);
+    List<WorkOrder> selectByOrderId(String orderId) throws Exception;
 
-    List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd);
+    List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd) throws Exception;
 
     /**
      * 获取商户的退货人数
      *
-     * @param merchantId
-     * @return
+     * @param merchantId 商户ID
+     * @return count
      */
-    Integer queryRefundUserCount(Long merchantId);
+    Integer queryRefundUserCount(Long merchantId) throws Exception;
 
-    int countReturn(Date createTimeStart, Date createTimeEnd);
+    int countReturn(Date createTimeStart, Date createTimeEnd) throws Exception;
 
-    WorkOrder getValidNumOfOrder(String openId, String sbuOrderId);
+    WorkOrder getValidNumOfOrder(String openId, String sbuOrderId) throws Exception;
 
-    JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId);
+    JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId) throws Exception;
 
-    String handleNotify(GuanAiTongNotifyBean backBean);
+    String handleNotify(GuanAiTongNotifyBean backBean) throws Exception;
 
-    String sendRefund2GuangAiTong(Long workOrderId);
+    String sendRefund2GuangAiTong(Long workOrderId) throws Exception;
 }

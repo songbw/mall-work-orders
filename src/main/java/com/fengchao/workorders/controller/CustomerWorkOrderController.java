@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
-//import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -73,10 +72,22 @@ public class CustomerWorkOrderController {
         Integer typeId = data.getTypeId();
         Long merchantId = data.getMerchantId();
         Integer num = data.getNum();
+        String iAppId = data.getiAppId();
+        String tAppId = data.gettAppId();
 
         if (null == orderId || orderId.isEmpty() ) {
             StringUtil.throw400Exp(response, "400002:所属订单不能空缺");
             return result;
+        }
+        if (null == iAppId || iAppId.isEmpty() ) {
+            StringUtil.throw400Exp(response, "400007:iAppId不能空缺");
+            return result;
+        }
+        if ("10".equals(iAppId)) {//GuanAiTong order
+            if (null == tAppId || tAppId.isEmpty() ) {
+                StringUtil.throw400Exp(response, "400007: 关爱通AppId不能空缺");
+                return result;
+            }
         }
         if (null == customer || customer.isEmpty() ) {
             StringUtil.throw400Exp(response, "400003:客户不能空缺");
@@ -160,7 +171,10 @@ public class CustomerWorkOrderController {
 
         }
 
-        workOrder.setAppid(Constant.APPID_VALUE);
+        workOrder.setiAppId(iAppId);
+        if (null != tAppId && !tAppId.isEmpty()) {
+            workOrder.settAppId(tAppId);
+        }
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
@@ -170,7 +184,6 @@ public class CustomerWorkOrderController {
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
         workOrder.setReceiverId(customer);
-        workOrder.setUrgentDegree(1);
         workOrder.setCreateTime(new Date());
         workOrder.setUpdateTime(new Date());
 
@@ -210,7 +223,7 @@ public class CustomerWorkOrderController {
 
         IdResponseData result = new IdResponseData();
         WorkOrder workOrder;
-        String username = null; //JwtTokenUtil.getUsername(authentication);
+        //String username = null; //JwtTokenUtil.getUsername(authentication);
         //String orderId = data.getOrderId();
         String title = data.getTitle();
         //String description = data.getDescription();
@@ -262,10 +275,6 @@ public class CustomerWorkOrderController {
         */
         workOrder.setUpdateTime(new Date());
 
-        if (null != username) {
-            workOrder.setUpdatedBy(username);
-        }
-
         try {
             workOrderService.update(workOrder);
         } catch (RuntimeException ex) {
@@ -310,7 +319,7 @@ public class CustomerWorkOrderController {
         PageInfo<WorkOrder> pages;
         try {
             pages = workOrderService.selectPage(index, limit,
-                    "id", "DESC", null, customer, null, null, orderId, null, null, null, null, null, null, null);
+                    "id", "DESC", null, customer, null, null, orderId, null, null, null, null, null);
         }catch(Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

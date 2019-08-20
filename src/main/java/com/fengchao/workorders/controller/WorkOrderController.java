@@ -43,14 +43,14 @@ public class WorkOrderController {
         public Long id;
 
     }
-
+/*
     @ApiModel(value = "工作流程信息列表")
     private class WorkFlowListData implements Serializable {
         @ApiModelProperty(value = "流程信息列表", example = "", required = true)
         public List<WorkFlowBean> list;
 
     }
-
+*/
     @ApiModel(value = "退货统计")
     private class ReturnCount {
         @ApiModelProperty(value = "统计数", example = "100", required = true)
@@ -82,7 +82,7 @@ public class WorkOrderController {
         WorkOrderBean bean = new WorkOrderBean();
         String username = JwtTokenUtil.getUsername(authentication);
 
-        if (null == username) {
+        if (username.isEmpty()) {
             log.warn("can not find username in token");
         }
 
@@ -132,8 +132,6 @@ public class WorkOrderController {
 
         java.util.Date dateCreateTimeStart = null;
         java.util.Date dateCreateTimeEnd = null;
-        java.util.Date dateFinishTimeStart = null;
-        java.util.Date dateFinishTimeEnd = null;
         int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
         int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
         //String username = JwtTokenUtil.getUsername(authentication);
@@ -157,7 +155,7 @@ public class WorkOrderController {
         try {
             pages = workOrderService.selectPage(index, limit, "id", "DESC",
                     title, receiverId, receiverName, receiverPhone, orderId, typeId, merchant,
-                    status, dateFinishTimeStart, dateFinishTimeEnd, dateCreateTimeStart, dateCreateTimeEnd);
+                    status, dateCreateTimeStart, dateCreateTimeEnd);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
@@ -196,21 +194,25 @@ public class WorkOrderController {
         String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
-        String receiverid = data.getReceiverId();
+        String receiverId = data.getReceiverId();
         //String receiverPhone = data.getReceiverPhone();
         //String receiverName = data.getReceiverName();
         Long merchantId = data.getMerchantId();
         Integer typeId = data.getTypeId();
         Integer num = data.getNum();
-        //String finishTimeStr = data.getFinishTime();
-        Integer urgentDegree = data.getUrgentDegree();
+        String iAppId = data.getiAppId();
+        String tAppId = data.gettAppId();
 
 
         if (null == orderId || orderId.isEmpty() ) {
             StringUtil.throw400Exp(response, "400002:所属订单不能空缺");
             return result;
         }
-        if (null == receiverid || receiverid.isEmpty() ) {
+        if (null == iAppId || iAppId.isEmpty() ) {
+            StringUtil.throw400Exp(response, "400007:iAppId不能空缺");
+            return result;
+        }
+        if (null == receiverId || receiverId.isEmpty() ) {
             StringUtil.throw400Exp(response, "400003:客户不能空缺");
             return result;
         }
@@ -235,7 +237,7 @@ public class WorkOrderController {
 
         WorkOrder selectedWO;
         try {
-            selectedWO = workOrderService.getValidNumOfOrder(receiverid, orderId);
+            selectedWO = workOrderService.getValidNumOfOrder(receiverId, orderId);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
@@ -245,7 +247,7 @@ public class WorkOrderController {
             log.info("there is not work order of this orderId: " + orderId);
             JSONObject json;
             try {
-                json = workOrderService.getOrderInfo(receiverid, orderId, merchantId);
+                json = workOrderService.getOrderInfo(receiverId, orderId, merchantId);
             }catch (Exception e) {
                 StringUtil.throw400Exp(response, "400006:"+e.getMessage());
                 return null;
@@ -275,7 +277,6 @@ public class WorkOrderController {
 
         }
 
-        workOrder.setAppid(Constant.APPID_VALUE);
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
@@ -284,8 +285,11 @@ public class WorkOrderController {
         workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
-        workOrder.setReceiverId(receiverid);
-        workOrder.setUrgentDegree(urgentDegree);
+        workOrder.setReceiverId(receiverId);
+        workOrder.setiAppId(iAppId);
+        if (null != tAppId && !tAppId.isEmpty()) {
+            workOrder.settAppId(tAppId);
+        }
         workOrder.setCreateTime(new Date());
         workOrder.setUpdateTime(new Date());
 
@@ -315,17 +319,18 @@ public class WorkOrderController {
 
 
         log.info("update WorkOrder param: {}",JSON.toJSONString(data));
+        if (null == authentication) {
+            log.info("updateProfile: there is not authentication");
+        }
         IdData result = new IdData();
-        String username = JwtTokenUtil.getUsername(authentication);
+        //String username = JwtTokenUtil.getUsername(authentication);
         //String orderId = data.getOrderId();
         String title = data.getTitle();
         String description = data.getDescription();
-        //String receiverid = data.getReceiverId();
+        //String receiverId = data.getReceiverId();
         String receiverPhone = data.getReceiverPhone();
         String receiverName = data.getReceiverName();
         //Long merchantId = data.getMerchantId();
-         String finishTimeStr = data.getFinishTime();
-        Integer urgentDegree = data.getUrgentDegree();
 
         if (null == id || 0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
@@ -343,15 +348,6 @@ public class WorkOrderController {
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:工单不存在");
             return result;
-        }
-
-        if (null != finishTimeStr && !finishTimeStr.isEmpty()) {
-            try {
-                Date finishTime = StringUtil.String2Date(finishTimeStr);
-                workOrder.setFinishTime(finishTime);
-            } catch (ParseException ex) {
-                StringUtil.throw400Exp(response,"400002:dateTime format error");
-            }
         }
 
         if (null != title && !title.isEmpty() ) {
@@ -390,15 +386,8 @@ public class WorkOrderController {
             workOrder.setMerchantId(merchantId);
         }
 */
-        if (null != urgentDegree) {
-            workOrder.setUrgentDegree(urgentDegree);
-        }
 
         workOrder.setUpdateTime(new Date());
-
-        if (null != username) {
-            workOrder.setUpdatedBy(username);
-        }
 
         try {
             workOrderService.update(workOrder);
@@ -432,7 +421,7 @@ public class WorkOrderController {
 
         String username = JwtTokenUtil.getUsername(authentication);
 
-        if (null == username) {
+        if (username.isEmpty()) {
             log.warn("can not find username in token");
         }
 

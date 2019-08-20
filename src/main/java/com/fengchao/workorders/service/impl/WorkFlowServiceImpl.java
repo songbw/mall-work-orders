@@ -1,7 +1,5 @@
 package com.fengchao.workorders.service.impl;
 
-import com.fengchao.workorders.util.WorkOrderStatusType;
-import com.fengchao.workorders.util.WorkOrderType;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.mapper.*;
@@ -25,16 +23,16 @@ import java.util.List;
 public class WorkFlowServiceImpl implements IWorkFlowService {
 
     private WorkFlowMapper workFlowMapper;
-    private WorkOrderMapper workOrderMapper;
+    //private WorkOrderMapper workOrderMapper;
 
     // @Autowired
     // private RedisTemplate<Object, Object> redisTemplate;
 
     @Autowired
-    public WorkFlowServiceImpl(WorkFlowMapper workFlowMapper,WorkOrderMapper workOrderMapper
+    public WorkFlowServiceImpl(WorkFlowMapper workFlowMapper
                               ) {
         this.workFlowMapper = workFlowMapper;
-        this.workOrderMapper = workOrderMapper;
+        //this.workOrderMapper = workOrderMapper;
     }
 
     @Override

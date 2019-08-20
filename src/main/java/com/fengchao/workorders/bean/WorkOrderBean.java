@@ -7,18 +7,22 @@ import lombok.Setter;
 
 import java.util.Date;
 
-@Getter
-@Setter
 @ApiModel(value="工单内容信息")
 public class WorkOrderBean {
 
     @ApiModelProperty(value="ID", example="111",required=false)
     private Long id;
 
-    @ApiModelProperty(value="所属订单ID", example="111",required=false)
+    @ApiModelProperty(value="所属订单ID", example="111",required=true)
     private String orderId;
 
-    @ApiModelProperty(value="退货商品数", example="1",required=false)
+    @ApiModelProperty(value="凤巢appID", example="10",required=true)
+    private String iAppId;
+
+    @ApiModelProperty(value="第三方appID", example="20110843",required=true)
+    private String tAppId;
+
+    @ApiModelProperty(value="退货商品数", example="1",required=true)
     private Integer returnedNum;
 
     @ApiModelProperty(value="退款金额", example="1.1",required=false)
@@ -45,15 +49,6 @@ public class WorkOrderBean {
     @ApiModelProperty(value="客户电话", example="13345678901",required=false)
     private String receiverPhone;
 
-    @ApiModelProperty(value="工单处理结果", example="退货完成",required=false)
-    private String outcome;
-
-    @ApiModelProperty(value="预计完成时间", example="2019-06-18 11:11:11",required=false)
-    private Date finishTime;
-
-    @ApiModelProperty(value="工单紧急程度, 数字越大级别越高", example="11",required=false)
-    private Integer urgentDegree;
-
     @ApiModelProperty(value="工单状态码", example="1",required=false)
     private Integer status;
 
@@ -63,4 +58,131 @@ public class WorkOrderBean {
     @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
     private Date updateTime;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getiAppId() {
+        return iAppId;
+    }
+
+    public void setiAppId(String iAppId) {
+        this.iAppId = iAppId;
+    }
+
+    public String gettAppId() {
+        return tAppId;
+    }
+
+    public void settAppId(String tAppId) {
+        this.tAppId = tAppId;
+    }
+
+    public Integer getReturnedNum() {
+        return returnedNum;
+    }
+
+    public void setReturnedNum(Integer returnedNum) {
+        this.returnedNum = returnedNum;
+    }
+
+    public Float getRefundAmount() {
+        return refundAmount;
+    }
+
+    public void setRefundAmount(Float refundAmount) {
+        this.refundAmount = refundAmount;
+    }
+
+    public Long getMerchantId() {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId) {
+        this.merchantId = merchantId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getReceiverId() {
+        return receiverId;
+    }
+
+    public void setReceiverId(String receiverId) {
+        this.receiverId = receiverId;
+    }
+
+    public String getReceiverName() {
+        return receiverName;
+    }
+
+    public void setReceiverName(String receiverName) {
+        this.receiverName = receiverName;
+    }
+
+    public Integer getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(Integer typeId) {
+        this.typeId = typeId;
+    }
+
+    public String getReceiverPhone() {
+        return receiverPhone;
+    }
+
+    public void setReceiverPhone(String receiverPhone) {
+        this.receiverPhone = receiverPhone;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
 }

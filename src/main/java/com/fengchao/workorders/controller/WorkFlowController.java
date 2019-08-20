@@ -92,7 +92,7 @@ public class WorkFlowController {
         log.info("getWorkFlowById param : {}",id.toString());
         WorkFlowBean bean = new WorkFlowBean();
 
-        if (null == id || 0 == id) {
+        if (0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
             return bean;
         }
@@ -241,7 +241,6 @@ public class WorkFlowController {
 
         workFlow.setStatus(status);
 
-
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
         }
@@ -257,42 +256,33 @@ public class WorkFlowController {
              (WorkOrderStatusType.CLOSED.getCode().equals(workFlow.getStatus()) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
-            String guanAiTongTradeNo;
-            try {
-                guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId);
-            }catch (Exception e) {
-                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                return null;
-            }
-            if (null == guanAiTongTradeNo) {
-                StringUtil.throw400Exp(response, "400004: failed to find work-order");
-                return result;
-            } else {
-                if (guanAiTongTradeNo.isEmpty()) {
-                    StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
+            String iAppId = workOrder.getiAppId();
+            String tAppId = workOrder.gettAppId();
+            if ("10".equals(iAppId) && null != tAppId) {
+                String guanAiTongTradeNo;
+                try {
+                    guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId);
+                } catch (Exception e) {
+                    StringUtil.throw400Exp(response, "400006:" + e.getMessage());
+                    return null;
+                }
+                if (null == guanAiTongTradeNo) {
+                    StringUtil.throw400Exp(response, "400004: failed to find work-order");
                     return result;
                 } else {
-                    if (guanAiTongTradeNo.contains("Error:")) {
-                        String errMsg = guanAiTongTradeNo.replace(':','-');
-                        StringUtil.throw400Exp(response, "400006: " + errMsg);
+                    if (guanAiTongTradeNo.isEmpty()) {
+                        StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
                         return result;
+                    } else {
+                        if (guanAiTongTradeNo.contains("Error:")) {
+                            String errMsg = guanAiTongTradeNo.replace(':', '-');
+                            StringUtil.throw400Exp(response, "400006: " + errMsg);
+                            return result;
+                        }
                     }
                 }
             }
-
-        } else {
-            if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-                workOrder.setStatus(workFlow.getStatus());
-
-                try {
-                    workOrderService.update(workOrder);
-                }catch (Exception e) {
-                    StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                    return null;
-                }
-            }
         }
-
 
         try {
             result.id = workFlowService.insert(workFlow);
@@ -306,8 +296,20 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response, "400003:Failed to create work_flow");
             return result;
         }
+
+        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+            workOrder.setStatus(workFlow.getStatus());
+
+            try {
+                workOrderService.update(workOrder);
+            }catch (Exception e) {
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
+        }
+
         response.setStatus(MyErrorMap.e201.getCode());
-        log.info("create WorkFlow exit ");
+        log.info("create WorkFlow and update workOrder {} success ",workOrder.getId().toString());
         return result;
     }
 

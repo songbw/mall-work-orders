@@ -77,7 +77,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             }
             return list;
         } catch (Exception ex) {
-            if (null != ex || null != ex.getMessage()) {
+            if (null != ex.getMessage()) {
                 log.warn(" sql failed: {}", ex.getMessage() );
             } else {
                 log.warn(" sql failed");
@@ -92,7 +92,6 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
                                            String receiverPhone, String receiverName,
                                            String orderId, Long merchantId,
                                            Integer typeId, Integer status,
-                                           Date finishTimeStart, Date finishTimeEnd,
                                            Date createTimeStart, Date createTimeEnd
                                 ) throws Exception{
 
@@ -124,9 +123,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         if (null != status) {
             criteria.andStatusEqualTo(status);
         }
-        if (null != finishTimeStart && null != finishTimeEnd) {
-            criteria.andFinishTimeBetween(finishTimeStart, finishTimeEnd);
-        }
+
         if (null != createTimeStart && null != createTimeEnd) {
             criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
         }
@@ -180,7 +177,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             }
             return null;
         } catch (Exception ex) {
-            if (null != ex || null != ex.getMessage()) {
+            if (null != ex.getMessage()) {
                 log.warn(" sql failed: {}", ex.getMessage() );
             } else {
                 log.warn(" sql failed");
@@ -190,8 +187,12 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public Integer selectRefundUserCountByMerchantId(Long merchantId) {
-        Integer refundUserCount = workOrderXMapper.selectRefundUserCountByMerchantId(merchantId);
-        return refundUserCount;
+    public Integer selectRefundUserCountByMerchantId(Long merchantId) throws Exception{
+        try {
+            return workOrderXMapper.selectRefundUserCountByMerchantId(merchantId);
+        }catch (Exception e) {
+            log.warn("workOrderXMapper.selectRefundUserCountByMerchantId exception  {}",e.getMessage());
+            throw new Exception(e);
+        }
     }
 }

@@ -25,7 +25,9 @@ public class WorkOrder {
 
     private String guanaitongTradeNo;
 
-    private String appid;
+    private String iAppId;
+
+    private String tAppId;
 
     private String title;
 
@@ -39,21 +41,11 @@ public class WorkOrder {
 
     private Integer typeId;
 
-    private String outcome;
-
-    private Date finishTime;
-
-    private Integer urgentDegree;
-
     private Integer status;
 
     private Date createTime;
 
     private Date updateTime;
-
-    private String createdBy;
-
-    private String updatedBy;
 
     public Long getId() {
         return id;
@@ -143,12 +135,20 @@ public class WorkOrder {
         this.guanaitongTradeNo = guanaitongTradeNo == null ? null : guanaitongTradeNo.trim();
     }
 
-    public String getAppid() {
-        return appid;
+    public String getiAppId() {
+        return iAppId;
     }
 
-    public void setAppid(String appid) {
-        this.appid = appid == null ? null : appid.trim();
+    public void setiAppId(String iAppId) {
+        this.iAppId = iAppId == null ? null : iAppId.trim();
+    }
+
+    public String gettAppId() {
+        return tAppId;
+    }
+
+    public void settAppId(String tAppId) {
+        this.tAppId = tAppId == null ? null : tAppId.trim();
     }
 
     public String getTitle() {
@@ -199,30 +199,6 @@ public class WorkOrder {
         this.typeId = typeId;
     }
 
-    public String getOutcome() {
-        return outcome;
-    }
-
-    public void setOutcome(String outcome) {
-        this.outcome = outcome == null ? null : outcome.trim();
-    }
-
-    public Date getFinishTime() {
-        return finishTime;
-    }
-
-    public void setFinishTime(Date finishTime) {
-        this.finishTime = finishTime;
-    }
-
-    public Integer getUrgentDegree() {
-        return urgentDegree;
-    }
-
-    public void setUrgentDegree(Integer urgentDegree) {
-        this.urgentDegree = urgentDegree;
-    }
-
     public Integer getStatus() {
         return status;
     }
@@ -245,21 +221,5 @@ public class WorkOrder {
 
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy == null ? null : createdBy.trim();
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy == null ? null : updatedBy.trim();
     }
 }

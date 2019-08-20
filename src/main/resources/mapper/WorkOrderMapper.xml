@@ -13,21 +13,17 @@
     <result column="refund_amount" jdbcType="REAL" property="refundAmount" />
     <result column="guanaitong_refund_amount" jdbcType="REAL" property="guanaitongRefundAmount" />
     <result column="guanaitong_trade_no" jdbcType="VARCHAR" property="guanaitongTradeNo" />
-    <result column="appid" jdbcType="VARCHAR" property="appid" />
+    <result column="i_app_id" jdbcType="VARCHAR" property="iAppId" />
+    <result column="t_app_id" jdbcType="VARCHAR" property="tAppId" />
     <result column="title" jdbcType="VARCHAR" property="title" />
     <result column="description" jdbcType="VARCHAR" property="description" />
     <result column="receiver_id" jdbcType="VARCHAR" property="receiverId" />
     <result column="receiver_name" jdbcType="VARCHAR" property="receiverName" />
     <result column="receiver_phone" jdbcType="VARCHAR" property="receiverPhone" />
     <result column="type_id" jdbcType="INTEGER" property="typeId" />
-    <result column="outcome" jdbcType="VARCHAR" property="outcome" />
-    <result column="finish_time" jdbcType="TIMESTAMP" property="finishTime" />
-    <result column="urgent_degree" jdbcType="INTEGER" property="urgentDegree" />
     <result column="status" jdbcType="INTEGER" property="status" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
-    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -89,9 +85,9 @@
   </sql>
   <sql id="Base_Column_List">
     id, merchant_id, order_id, order_goods_num, trade_no, returned_num, sale_price, refund_no, 
-    refund_amount, guanaitong_refund_amount, guanaitong_trade_no, appid, title, description, 
-    receiver_id, receiver_name, receiver_phone, type_id, outcome, finish_time, urgent_degree, 
-    status, create_time, update_time, created_by, updated_by
+    refund_amount, guanaitong_refund_amount, guanaitong_trade_no, i_app_id, t_app_id, 
+    title, description, receiver_id, receiver_name, receiver_phone, type_id, status, 
+    create_time, update_time
   </sql>
   <select id="selectByExample" parameterType="com.fengchao.workorders.model.WorkOrderExample" resultMap="BaseResultMap">
     select
@@ -131,21 +127,19 @@
     insert into work_order (merchant_id, order_id, order_goods_num, 
       trade_no, returned_num, sale_price, 
       refund_no, refund_amount, guanaitong_refund_amount, 
-      guanaitong_trade_no, appid, title, 
-      description, receiver_id, receiver_name, 
-      receiver_phone, type_id, outcome, 
-      finish_time, urgent_degree, status, 
-      create_time, update_time, created_by, 
-      updated_by)
+      guanaitong_trade_no, i_app_id, t_app_id, 
+      title, description, receiver_id, 
+      receiver_name, receiver_phone, type_id, 
+      status, create_time, update_time
+      )
     values (#{merchantId,jdbcType=BIGINT}, #{orderId,jdbcType=VARCHAR}, #{orderGoodsNum,jdbcType=INTEGER}, 
       #{tradeNo,jdbcType=VARCHAR}, #{returnedNum,jdbcType=INTEGER}, #{salePrice,jdbcType=REAL}, 
       #{refundNo,jdbcType=VARCHAR}, #{refundAmount,jdbcType=REAL}, #{guanaitongRefundAmount,jdbcType=REAL}, 
-      #{guanaitongTradeNo,jdbcType=VARCHAR}, #{appid,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR}, 
-      #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR}, 
-      #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=INTEGER}, #{outcome,jdbcType=VARCHAR}, 
-      #{finishTime,jdbcType=TIMESTAMP}, #{urgentDegree,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, 
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, 
-      #{updatedBy,jdbcType=VARCHAR})
+      #{guanaitongTradeNo,jdbcType=VARCHAR}, #{iAppId,jdbcType=VARCHAR}, #{tAppId,jdbcType=VARCHAR}, 
+      #{title,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, 
+      #{receiverName,jdbcType=VARCHAR}, #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=INTEGER}, 
+      #{status,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+      )
   </insert>
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkOrder">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
@@ -183,8 +177,11 @@
       <if test="guanaitongTradeNo != null">
         guanaitong_trade_no,
       </if>
-      <if test="appid != null">
-        appid,
+      <if test="iAppId != null">
+        i_app_id,
+      </if>
+      <if test="tAppId != null">
+        t_app_id,
       </if>
       <if test="title != null">
         title,
@@ -204,15 +201,6 @@
       <if test="typeId != null">
         type_id,
       </if>
-      <if test="outcome != null">
-        outcome,
-      </if>
-      <if test="finishTime != null">
-        finish_time,
-      </if>
-      <if test="urgentDegree != null">
-        urgent_degree,
-      </if>
       <if test="status != null">
         status,
       </if>
@@ -221,12 +209,6 @@
       </if>
       <if test="updateTime != null">
         update_time,
-      </if>
-      <if test="createdBy != null">
-        created_by,
-      </if>
-      <if test="updatedBy != null">
-        updated_by,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -260,8 +242,11 @@
       <if test="guanaitongTradeNo != null">
         #{guanaitongTradeNo,jdbcType=VARCHAR},
       </if>
-      <if test="appid != null">
-        #{appid,jdbcType=VARCHAR},
+      <if test="iAppId != null">
+        #{iAppId,jdbcType=VARCHAR},
+      </if>
+      <if test="tAppId != null">
+        #{tAppId,jdbcType=VARCHAR},
       </if>
       <if test="title != null">
         #{title,jdbcType=VARCHAR},
@@ -281,15 +266,6 @@
       <if test="typeId != null">
         #{typeId,jdbcType=INTEGER},
       </if>
-      <if test="outcome != null">
-        #{outcome,jdbcType=VARCHAR},
-      </if>
-      <if test="finishTime != null">
-        #{finishTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="urgentDegree != null">
-        #{urgentDegree,jdbcType=INTEGER},
-      </if>
       <if test="status != null">
         #{status,jdbcType=INTEGER},
       </if>
@@ -298,12 +274,6 @@
       </if>
       <if test="updateTime != null">
         #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="createdBy != null">
-        #{createdBy,jdbcType=VARCHAR},
-      </if>
-      <if test="updatedBy != null">
-        #{updatedBy,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -349,8 +319,11 @@
       <if test="record.guanaitongTradeNo != null">
         guanaitong_trade_no = #{record.guanaitongTradeNo,jdbcType=VARCHAR},
       </if>
-      <if test="record.appid != null">
-        appid = #{record.appid,jdbcType=VARCHAR},
+      <if test="record.iAppId != null">
+        i_app_id = #{record.iAppId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tAppId != null">
+        t_app_id = #{record.tAppId,jdbcType=VARCHAR},
       </if>
       <if test="record.title != null">
         title = #{record.title,jdbcType=VARCHAR},
@@ -370,15 +343,6 @@
       <if test="record.typeId != null">
         type_id = #{record.typeId,jdbcType=INTEGER},
       </if>
-      <if test="record.outcome != null">
-        outcome = #{record.outcome,jdbcType=VARCHAR},
-      </if>
-      <if test="record.finishTime != null">
-        finish_time = #{record.finishTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="record.urgentDegree != null">
-        urgent_degree = #{record.urgentDegree,jdbcType=INTEGER},
-      </if>
       <if test="record.status != null">
         status = #{record.status,jdbcType=INTEGER},
       </if>
@@ -387,12 +351,6 @@
       </if>
       <if test="record.updateTime != null">
         update_time = #{record.updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="record.createdBy != null">
-        created_by = #{record.createdBy,jdbcType=VARCHAR},
-      </if>
-      <if test="record.updatedBy != null">
-        updated_by = #{record.updatedBy,jdbcType=VARCHAR},
       </if>
     </set>
     <if test="_parameter != null">
@@ -412,21 +370,17 @@
       refund_amount = #{record.refundAmount,jdbcType=REAL},
       guanaitong_refund_amount = #{record.guanaitongRefundAmount,jdbcType=REAL},
       guanaitong_trade_no = #{record.guanaitongTradeNo,jdbcType=VARCHAR},
-      appid = #{record.appid,jdbcType=VARCHAR},
+      i_app_id = #{record.iAppId,jdbcType=VARCHAR},
+      t_app_id = #{record.tAppId,jdbcType=VARCHAR},
       title = #{record.title,jdbcType=VARCHAR},
       description = #{record.description,jdbcType=VARCHAR},
       receiver_id = #{record.receiverId,jdbcType=VARCHAR},
       receiver_name = #{record.receiverName,jdbcType=VARCHAR},
       receiver_phone = #{record.receiverPhone,jdbcType=VARCHAR},
       type_id = #{record.typeId,jdbcType=INTEGER},
-      outcome = #{record.outcome,jdbcType=VARCHAR},
-      finish_time = #{record.finishTime,jdbcType=TIMESTAMP},
-      urgent_degree = #{record.urgentDegree,jdbcType=INTEGER},
       status = #{record.status,jdbcType=INTEGER},
       create_time = #{record.createTime,jdbcType=TIMESTAMP},
-      update_time = #{record.updateTime,jdbcType=TIMESTAMP},
-      created_by = #{record.createdBy,jdbcType=VARCHAR},
-      updated_by = #{record.updatedBy,jdbcType=VARCHAR}
+      update_time = #{record.updateTime,jdbcType=TIMESTAMP}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -464,8 +418,11 @@
       <if test="guanaitongTradeNo != null">
         guanaitong_trade_no = #{guanaitongTradeNo,jdbcType=VARCHAR},
       </if>
-      <if test="appid != null">
-        appid = #{appid,jdbcType=VARCHAR},
+      <if test="iAppId != null">
+        i_app_id = #{iAppId,jdbcType=VARCHAR},
+      </if>
+      <if test="tAppId != null">
+        t_app_id = #{tAppId,jdbcType=VARCHAR},
       </if>
       <if test="title != null">
         title = #{title,jdbcType=VARCHAR},
@@ -485,15 +442,6 @@
       <if test="typeId != null">
         type_id = #{typeId,jdbcType=INTEGER},
       </if>
-      <if test="outcome != null">
-        outcome = #{outcome,jdbcType=VARCHAR},
-      </if>
-      <if test="finishTime != null">
-        finish_time = #{finishTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="urgentDegree != null">
-        urgent_degree = #{urgentDegree,jdbcType=INTEGER},
-      </if>
       <if test="status != null">
         status = #{status,jdbcType=INTEGER},
       </if>
@@ -502,12 +450,6 @@
       </if>
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="createdBy != null">
-        created_by = #{createdBy,jdbcType=VARCHAR},
-      </if>
-      <if test="updatedBy != null">
-        updated_by = #{updatedBy,jdbcType=VARCHAR},
       </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
@@ -524,21 +466,17 @@
       refund_amount = #{refundAmount,jdbcType=REAL},
       guanaitong_refund_amount = #{guanaitongRefundAmount,jdbcType=REAL},
       guanaitong_trade_no = #{guanaitongTradeNo,jdbcType=VARCHAR},
-      appid = #{appid,jdbcType=VARCHAR},
+      i_app_id = #{iAppId,jdbcType=VARCHAR},
+      t_app_id = #{tAppId,jdbcType=VARCHAR},
       title = #{title,jdbcType=VARCHAR},
       description = #{description,jdbcType=VARCHAR},
       receiver_id = #{receiverId,jdbcType=VARCHAR},
       receiver_name = #{receiverName,jdbcType=VARCHAR},
       receiver_phone = #{receiverPhone,jdbcType=VARCHAR},
       type_id = #{typeId,jdbcType=INTEGER},
-      outcome = #{outcome,jdbcType=VARCHAR},
-      finish_time = #{finishTime,jdbcType=TIMESTAMP},
-      urgent_degree = #{urgentDegree,jdbcType=INTEGER},
       status = #{status,jdbcType=INTEGER},
       create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP},
-      created_by = #{createdBy,jdbcType=VARCHAR},
-      updated_by = #{updatedBy,jdbcType=VARCHAR}
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=BIGINT}
   </update>
 </mapper>
