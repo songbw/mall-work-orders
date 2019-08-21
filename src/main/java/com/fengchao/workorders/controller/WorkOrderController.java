@@ -606,7 +606,7 @@ public class WorkOrderController {
 
             resultObject.setCode(200);
             resultObject.setData(count);
-            resultObject.setMsg("succcess");
+            resultObject.setMsg("success");
         } catch (Exception e) {
             log.error("获取商户的退货人数 异常:{}", e.getMessage(), e);
 

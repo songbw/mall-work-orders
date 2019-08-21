@@ -136,7 +136,10 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         typeId = WorkOrderType.REFUND.getCode();
         int c2 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
 
-        return c1 + c2;
+        typeId = WorkOrderType.EXCHANGE.getCode();
+        int c3 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
+
+        return c1 + c2 + c3;
     }
 
     @Override
