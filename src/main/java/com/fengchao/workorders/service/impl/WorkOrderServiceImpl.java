@@ -419,13 +419,6 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
 
             refundAmount += wo.getFare();
-
-            //if (0 < wo.getPaymentAmount()) {
-            //    if (refundAmount*100 > wo.getPaymentAmount()) {
-            //        refundAmount = (float)wo.getPaymentAmount()/100.00f;
-            //    }
-            //}
-
         }
 
         String notifyUrl = GuanAiTongConfig.getConfigGatNotifyUrl();//"http://api.weesharing.com/v2/workorders/refund/notify";
@@ -455,19 +448,25 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         ResultObject<String> gResult = guanAiTongClient.postRefund(bean);
         if (null == gResult) {
             log.warn("post to GuanAiTong refund failed");
-            return result;
+            throw new Exception("post to GuanAiTong refund failed");
         }
 
         Integer code = gResult.getCode();
         String guanAiTongNo = gResult.getData();
         if (null == code || null == guanAiTongNo ||200 != code || guanAiTongNo.isEmpty()) {
             log.info("post to GuanAiTong refund failed : {}", gResult.getMsg());
-
+            StringBuilder errMsgSb = new StringBuilder();
+            errMsgSb.append("got error from Guan Ai Tong ");
             if (null != code) {
-                result = "Error: guanAiTong error: " + code.toString() + " : "+gResult.getMsg();
-                log.info(result);
+                errMsgSb.append("Error code = ");
+                errMsgSb.append(code.toString());
             }
-            return result;
+            if (null != gResult && null != gResult.getMsg()) {
+                errMsgSb.append(" message = ");
+                errMsgSb.append(gResult.getMsg());
+            }
+
+            throw new Exception(errMsgSb.toString());
         }
 
         wo.setRefundNo(refundNo);

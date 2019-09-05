@@ -260,8 +260,6 @@ public class WorkFlowController {
             String iAppId = workOrder.getiAppId();
             String tAppId = workOrder.gettAppId();
 
-
-
             if ("10".equals(iAppId) && null != tAppId) {
                 String guanAiTongTradeNo;
                 try {
