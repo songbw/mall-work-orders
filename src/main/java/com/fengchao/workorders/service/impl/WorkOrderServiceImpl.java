@@ -195,7 +195,11 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                     goodsNum = baseWO.getOrderGoodsNum();
                 }
                 for (WorkOrder wo : list) {
-                    if (null != wo.getReceiverId() && wo.getReceiverId().equals(openId) && null != wo.getReturnedNum()) {
+                    if (null != wo.getReceiverId()
+                            && wo.getReceiverId().equals(openId)
+                            && null != wo.getReturnedNum()
+                            && null != wo.getStatus()
+                            && !WorkOrderStatusType.REJECT.getCode().equals(wo.getStatus())) {
                         usedNum += wo.getReturnedNum();
                     }
                 }
