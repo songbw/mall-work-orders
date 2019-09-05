@@ -20,7 +20,7 @@ public interface WorkOrderDao {
 
     int updateByPrimaryKey(WorkOrder record);
 
-    List<WorkOrder> selectByOrderId(String orderId);
+    List<WorkOrder> selectByOrderId(String orderId) throws Exception;
 
     PageInfo<WorkOrder> selectRange(int pageIndex, int pageSize,String sort, String order,
                                     String title,

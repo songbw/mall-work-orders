@@ -7,6 +7,8 @@ public class WorkOrder {
 
     private Long merchantId;
 
+    private Integer parentOrderId;
+
     private String orderId;
 
     private Integer orderGoodsNum;
@@ -65,6 +67,14 @@ public class WorkOrder {
 
     public void setMerchantId(Long merchantId) {
         this.merchantId = merchantId;
+    }
+
+    public Integer getParentOrderId() {
+        return parentOrderId;
+    }
+
+    public void setParentOrderId(Integer parentOrderId) {
+        this.parentOrderId = parentOrderId;
     }
 
     public String getOrderId() {

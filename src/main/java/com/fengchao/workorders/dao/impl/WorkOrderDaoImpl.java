@@ -60,7 +60,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public List<WorkOrder> selectByOrderId(String orderId) {
+    public List<WorkOrder> selectByOrderId(String orderId) throws Exception{
         log.info("selectByOrderId: " + orderId);
         if (null == orderId) {
             return null;
@@ -69,21 +69,14 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andOrderIdEqualTo(orderId);
         example.setOrderByClause("id DESC");
-
+        List<WorkOrder> list = null;
         try {
-            List<WorkOrder> list = mapper.selectByExample(example);
-            if (null == list) {
-                log.warn(" Not found record by example");
-            }
-            return list;
+            list = mapper.selectByExample(example);
         } catch (Exception ex) {
-            if (null != ex.getMessage()) {
-                log.warn(" sql failed: {}", ex.getMessage() );
-            } else {
-                log.warn(" sql failed");
-            }
+            log.error("workOrderMapper exception {}",ex.getMessage());
+            throw new Exception(ex);
         }
-        return null;
+        return list;
     }
 
     @Override

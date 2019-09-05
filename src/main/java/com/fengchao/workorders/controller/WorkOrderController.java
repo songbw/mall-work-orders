@@ -140,7 +140,9 @@ public class WorkOrderController {
         }
 
         BeanUtils.copyProperties(workOrder, bean);
-
+        if (null != workOrder.getGuanaitongRefundAmount()) {
+            bean.setRealRefundAmount(workOrder.getGuanaitongRefundAmount());
+        }
         response.setStatus(MyErrorMap.e200.getCode());
         return bean;
 
@@ -211,6 +213,9 @@ public class WorkOrderController {
             for (WorkOrder a : pages.getRows()) {
                 WorkOrderBean b = new WorkOrderBean();
                 BeanUtils.copyProperties(a, b);
+                if (null != a.getGuanaitongRefundAmount()) {
+                    b.setRealRefundAmount(a.getGuanaitongRefundAmount());
+                }
                 list.add(b);
             }
         }
@@ -299,8 +304,16 @@ public class WorkOrderController {
             }
 
             if (null == json) {
-                StringUtil.throw400Exp(response, "400007:所属订单信息错误");
+                StringUtil.throw400Exp(response, "400007:找不到订单信息");
                 return result;
+            }
+
+            Integer parentOrderId = json.getInteger("id");
+            if (null == parentOrderId) {
+                StringUtil.throw400Exp(response, "400008: searchOrder, 获取id失败");
+                return result;
+            } else {
+                workOrder.setParentOrderId(parentOrderId);
             }
 
             Float fare = json.getFloat("servFee");
@@ -325,6 +338,9 @@ public class WorkOrderController {
                 return result;
             }
 
+            workOrder.setFare(selectedWO.getFare());
+            workOrder.setParentOrderId(selectedWO.getParentOrderId());
+            workOrder.setPaymentAmount(selectedWO.getPaymentAmount());
             workOrder.setTradeNo(selectedWO.getTradeNo());
             workOrder.setSalePrice(selectedWO.getSalePrice());
             workOrder.setOrderGoodsNum(selectedWO.getOrderGoodsNum());

@@ -20,3 +20,5 @@ pagehelper:
 
 
 GAT_NOTIFY_URL: refund/notify
+GAT_I_APP_ID: 10
+

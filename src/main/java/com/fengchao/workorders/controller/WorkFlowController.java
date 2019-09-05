@@ -2,6 +2,7 @@ package com.fengchao.workorders.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.fengchao.workorders.bean.*;
+import com.fengchao.workorders.config.GuanAiTongConfig;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
 import com.fengchao.workorders.service.impl.*;
@@ -224,6 +225,8 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
         }
+        String iAppId = workOrder.getiAppId();
+        String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
         if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
@@ -253,14 +256,17 @@ public class WorkFlowController {
 
         Integer workTypeId = workOrder.getTypeId();
 
+        String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
+        boolean isGat = false;
+        if (null != configIAppIds && !configIAppIds.isEmpty() && configIAppIds.equals(iAppId)) {
+            isGat = true;
+        }
+
         if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
              (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
-            String iAppId = workOrder.getiAppId();
-            String tAppId = workOrder.gettAppId();
-
-            if ("10".equals(iAppId) && null != tAppId) {
+            if (isGat && null != tAppId) {
                 String guanAiTongTradeNo;
                 try {
                     guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare);
@@ -269,11 +275,11 @@ public class WorkFlowController {
                     return null;
                 }
                 if (null == guanAiTongTradeNo) {
-                    StringUtil.throw400Exp(response, "400004: failed to find work-order");
+                    StringUtil.throw400Exp(response, "400004: failed to get guanAiTongTradeNo in result of response");
                     return result;
                 } else {
                     if (guanAiTongTradeNo.isEmpty()) {
-                        StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
+                        StringUtil.throw400Exp(response, "400004: failed to get guanAiTongTradeNo in result of response");
                         return result;
                     } else {
                         if (guanAiTongTradeNo.contains("Error:")) {
@@ -301,7 +307,7 @@ public class WorkFlowController {
 
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
             workOrder.setStatus(workFlow.getStatus());
-
+            workOrder.setUpdateTime(new Date());
             try {
                 workOrderService.update(workOrder);
             }catch (Exception e) {

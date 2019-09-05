@@ -109,22 +109,15 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public List<WorkOrder> selectByOrderId(String orderId) {
+    public List<WorkOrder> selectByOrderId(String orderId) throws Exception{
         orderId = orderId.trim();
-
+        List<WorkOrder> list = null;
         try {
-            List<WorkOrder> list = workOrderDao.selectByOrderId(orderId);
-            if (null == list || 0 == list.size()) {
-                log.info(" not found record by orderId: " + orderId);
-                return null;
-            } else {
-                log.info("=== find: " + list);
-                return list;
-            }
+            list = workOrderDao.selectByOrderId(orderId);
         } catch (Exception ex) {
-            log.error("selectByOrderId sql error: " + ex.getMessage());
+            throw new Exception(ex);
         }
-        return null;
+        return list;
     }
 
     @Override
@@ -171,72 +164,68 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public WorkOrder getValidNumOfOrder(String openId, String orderId) {
-        int validNum ;
-
-        if (null == openId || null == orderId) {
-            WorkOrder w = new WorkOrder();
-            w.setReturnedNum(0);
-            return w;
-        }
+    public WorkOrder getValidNumOfOrder(String openId, String orderId) throws Exception {
+        int validNum;
 
         openId = openId.trim();
         orderId = orderId.trim();
-
+        List<WorkOrder> list;
         try {
-            List<WorkOrder> list = workOrderDao.selectByOrderId(orderId);
-            if (null != list && 0 < list.size()) {
-                WorkOrder baseWO = list.get(0);
-
-                int usedNum = 0;
-                int goodsNum= 0;
-                String open_id = baseWO.getReceiverId();
-                if (openId.equals(open_id) && null != baseWO.getOrderGoodsNum()) {
-                    goodsNum = baseWO.getOrderGoodsNum();
-                }
-                for (WorkOrder wo : list) {
-                    if (null != wo.getReceiverId()
-                            && wo.getReceiverId().equals(openId)
-                            && null != wo.getReturnedNum()
-                            && null != wo.getStatus()
-                            && !WorkOrderStatusType.REJECT.getCode().equals(wo.getStatus())) {
-                        usedNum += wo.getReturnedNum();
-                    }
-                }
-
-                validNum = goodsNum - usedNum;
-                if (0 > validNum) {
-                    validNum = 0;
-                }
-                WorkOrder workOrder = list.get(0);
-                workOrder.setReturnedNum(validNum);
-                return workOrder;
-            } else {
-                log.info(" not found record by orderId: " + orderId);
-                return null;
-            }
+            list = workOrderDao.selectByOrderId(orderId);
         } catch (Exception ex) {
-            log.error("selectByOrderId sql error: " + ex.getMessage());
-            WorkOrder mockRecord = new WorkOrder();
-            mockRecord.setReturnedNum(-1);
-            return mockRecord;
+            throw new Exception(ex);
         }
+
+        if (null == list || 0 == list.size()) {
+            return null;
+        }
+
+        WorkOrder baseWO = list.get(0);
+
+        int usedNum = 0;
+        int goodsNum = 0;
+        String open_id = baseWO.getReceiverId();
+        if (openId.equals(open_id) && null != baseWO.getOrderGoodsNum()) {
+            goodsNum = baseWO.getOrderGoodsNum();
+        }
+        for (WorkOrder wo : list) {
+            if (null != wo.getReceiverId()
+                    && wo.getReceiverId().equals(openId)
+                    && null != wo.getReturnedNum()
+                    && null != wo.getStatus()
+                    && !WorkOrderStatusType.REJECT.getCode().equals(wo.getStatus())) {
+                usedNum += wo.getReturnedNum();
+            }
+        }
+
+        validNum = goodsNum - usedNum;
+        if (0 > validNum) {
+            validNum = 0;
+        }
+        WorkOrder workOrder = list.get(0);
+        workOrder.setReturnedNum(validNum);
+        return workOrder;
 
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public JSONObject getOrderInfo(String openId, String subOrderId, Long merchantId) {
+    public JSONObject getOrderInfo(String openId, String subOrderId, Long merchantId) throws Exception{
         QueryOrderBodyBean body = new QueryOrderBodyBean();
         body.setOpenId(openId);
         body.setPageIndex(1);
-        body.setPageSize(50);
+        body.setPageSize(10);
         body.setSubOrderId(subOrderId);
-        body.setStatus(2);
         Map<String, Object> map = new HashedMap();
-        map.put("merchant", merchantId);
+        map.put("merchant", 0);//fix it
+        if (null == orderService) {
+            throw new Exception("未发现服务: order");
+        }
         OperaResult result = orderService.getOrderList(body,map);
-        log.info(result.toString());
+        if (null == result) {
+            throw new Exception("order searchOrder got response null");
+        }
+        log.info("searchOrder result : {}",JSON.toJSONString(result));
         if (result.getCode() == 200) {
             Map<String, Object> data = result.getData();
             if (null == data) {
@@ -258,7 +247,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
 
             List<JSONObject> list = JSONObject.parseArray(JSON.toJSONString(theList), JSONObject.class);
-            log.info("getOrderInfo, orderInfo: " + list.get(0).toString());
+            log.info("searchOrder: orderInfo  {}" + JSON.toJSONString(list.get(0)));
             return list.get(0);
 
         }
@@ -357,10 +346,15 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         return "success";
     }
 
-    private boolean hasHandledFare(String orderId) throws Exception{
+    private boolean hasHandledFare(WorkOrder wo) throws Exception{
+
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
-        criteria.andOrderIdEqualTo(orderId);
+        if (null != wo.getParentOrderId()) {
+            criteria.andParentOrderIdEqualTo(wo.getParentOrderId());
+        }else {
+            criteria.andOrderIdEqualTo(wo.getOrderId());
+        }
         criteria.andFareGreaterThan(0f);
         criteria.andStatusEqualTo(WorkOrderStatusType.CLOSED.getCode());
 
@@ -409,7 +403,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         if (null != handleFare && 0 != handleFare) {
             boolean handledFare;
             try {
-                handledFare = hasHandledFare(wo.getOrderId());
+                handledFare = hasHandledFare(wo);
             } catch (Exception e) {
                 throw new Exception(e);
             }
@@ -471,6 +465,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         wo.setRefundNo(refundNo);
         wo.setGuanaitongTradeNo(guanAiTongNo);
+
         if (null == handleFare || 0 == handleFare) {
             //since we will check fare when create work-order. and set it by query order info.
             //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.

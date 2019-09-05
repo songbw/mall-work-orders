@@ -3,6 +3,7 @@ package com.fengchao.workorders.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
+import com.fengchao.workorders.config.GuanAiTongConfig;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
@@ -83,7 +84,14 @@ public class CustomerWorkOrderController {
             StringUtil.throw400Exp(response, "400007:iAppId不能空缺");
             return result;
         }
-        if ("10".equals(iAppId)) {//GuanAiTong order
+
+        String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
+        boolean isGat = false;
+        if (null != configIAppIds && !configIAppIds.isEmpty() && configIAppIds.equals(iAppId)) {
+            isGat = true;
+        }
+
+        if (isGat) {//GuanAiTong order
             if (null == tAppId || tAppId.isEmpty() ) {
                 StringUtil.throw400Exp(response, "400007: 关爱通AppId不能空缺");
                 return result;
@@ -115,35 +123,50 @@ public class CustomerWorkOrderController {
         try {
             selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
         }catch (Exception e) {
-            log.info("workOrderService.getValidNumOfOrder not find work-order for customer:{}, orderId: {}",customer,orderId);
+            StringUtil.throw400Exp(response, "400009:"+e.getMessage());
+            return result;
         }
+
         if (null == selectedWO) {//totally new order
-            log.info("there is not work order of this orderId: " + orderId);
-            JSONObject json = workOrderService.getOrderInfo(customer, orderId, merchantId);
-            if (null == json) {
-                StringUtil.throw400Exp(response, "400007:所属订单信息错误");
+            log.info("准备新建工单, 子订单号= " + orderId);
+            JSONObject json;
+            try {
+                json = workOrderService.getOrderInfo(customer, orderId, merchantId);
+            }catch (Exception e) {
+                StringUtil.throw400Exp(response, "400007:"+e.getMessage());
                 return result;
+            }
+            if (null == json) {
+                StringUtil.throw400Exp(response, "400007: searchOrder失败");
+                return result;
+            }
+
+            Integer parentOrderId = json.getInteger("id");
+            if (null == parentOrderId) {
+                StringUtil.throw400Exp(response, "400008: searchOrder, 获取id失败");
+                return result;
+            } else {
+                workOrder.setParentOrderId(parentOrderId);
             }
 
             String paymentNo = json.getString("paymentNo");
             if (null == paymentNo) {
-                log.info("get order info err: paymentNo is null");
-                return result;
+                log.info("searchOrder info: paymentNo is null");
             } else {
                 workOrder.setTradeNo(paymentNo);
             }
 
             Float salePrice = json.getFloat("salePrice");
             if (null == salePrice) {
-                log.info("get order info err: salePrice is null");
-                return result;
+                log.info("searchOrder info: salePrice is null");
             } else {
                 workOrder.setSalePrice(salePrice);
             }
 
             Integer orderNum = json.getInteger("num");
             if (null == orderNum) {
-                log.info("get order info err: num is null");
+                log.error("searchOrder info: num is null");
+                StringUtil.throw400Exp(response, "400008: searchOrder info: num is null");
                 return result;
             } else {
                 workOrder.setOrderGoodsNum(orderNum);
@@ -162,10 +185,8 @@ public class CustomerWorkOrderController {
                 workOrder.setFare(fare);
             }
             Integer paymentAmount = json.getInteger("paymentAmount");
-            {
-                if (null != paymentAmount) {
-                    workOrder.setPaymentAmount(paymentAmount);
-                }
+            if (null != paymentAmount) {
+                workOrder.setPaymentAmount(paymentAmount);
             }
         } else {
             if (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum()) {
@@ -173,6 +194,9 @@ public class CustomerWorkOrderController {
                 return result;
             }
 
+            workOrder.setFare(selectedWO.getFare());
+            workOrder.setParentOrderId(selectedWO.getParentOrderId());
+            workOrder.setPaymentAmount(selectedWO.getPaymentAmount());
             workOrder.setTradeNo(selectedWO.getTradeNo());
             workOrder.setSalePrice(selectedWO.getSalePrice());
             workOrder.setOrderGoodsNum(selectedWO.getOrderGoodsNum());
@@ -374,10 +398,10 @@ public class CustomerWorkOrderController {
         response.setStatus(MyErrorMap.e200.getCode());
         if (null != workOrder) {
             result.validNum = (0>= workOrder.getReturnedNum()?0:workOrder.getReturnedNum());
+            log.info("get valid number {}",result.validNum);
             return result;
         }
 
-        log.info("there is not work order of this orderId: " + orderId);
         JSONObject json;
         try {
             json = workOrderService.getOrderInfo(customer, orderId, merchantId);
@@ -386,14 +410,14 @@ public class CustomerWorkOrderController {
             return result;
         }
         if (null == json) {
-            StringUtil.throw400Exp(response, "400003:所属订单信息错误");
+            StringUtil.throw400Exp(response, "400003:找不到订单信息");
             return result;
         }
 
         Integer orderNum = json.getInteger("num");
         if (null == orderNum) {
             log.info("get order info err: num is null");
-            StringUtil.throw400Exp(response, "400004:get order info err: num is null");
+            StringUtil.throw400Exp(response, "400004:订单信息中找不到num");
             return result;
         } else {
             result.validNum = orderNum;
