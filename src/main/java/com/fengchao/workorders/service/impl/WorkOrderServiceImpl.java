@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
 import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.bean.QueryOrderBodyBean;
+import com.fengchao.workorders.config.GuanAiTongConfig;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
@@ -373,7 +374,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
-        String notifyUrl = "http://api.weesharing.com/v2/workorders/refund/notify";
+        String notifyUrl = GuanAiTongConfig.getConfigGatNotifyUrl();//"http://api.weesharing.com/v2/workorders/refund/notify";
 
         Long timeStampMs = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
         Long timeStampS = timeStampMs/1000;
