@@ -196,9 +196,10 @@ public class WorkFlowController {
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();
-        Integer status = data.getStatus();
+        Integer nextStatus = data.getStatus();
         String comments = data.getComments();
         String operator = data.getOperator();
+        Integer handleFare = data.getHandleFare();
 
         if (null == workOrderId || 0 == workOrderId
             ) {
@@ -229,7 +230,7 @@ public class WorkFlowController {
             return result;
         }
 
-        if (null == status || WorkOrderStatusType.Int2String(status).isEmpty()) {
+        if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
         }
@@ -239,7 +240,7 @@ public class WorkFlowController {
         workFlow.setWorkOrderId(workOrderId);
         workFlow.setUpdatedBy(operator);
 
-        workFlow.setStatus(status);
+        workFlow.setStatus(nextStatus);
 
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
@@ -253,15 +254,18 @@ public class WorkFlowController {
         Integer workTypeId = workOrder.getTypeId();
 
         if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
-             (WorkOrderStatusType.CLOSED.getCode().equals(workFlow.getStatus()) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
+             (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
             String iAppId = workOrder.getiAppId();
             String tAppId = workOrder.gettAppId();
+
+
+
             if ("10".equals(iAppId) && null != tAppId) {
                 String guanAiTongTradeNo;
                 try {
-                    guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId);
+                    guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare);
                 } catch (Exception e) {
                     StringUtil.throw400Exp(response, "400006:" + e.getMessage());
                     return null;

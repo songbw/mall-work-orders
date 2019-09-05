@@ -230,7 +230,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         QueryOrderBodyBean body = new QueryOrderBodyBean();
         body.setOpenId(openId);
         body.setPageIndex(1);
-        body.setPageSize(10);
+        body.setPageSize(50);
         body.setSubOrderId(subOrderId);
         body.setStatus(2);
         Map<String, Object> map = new HashedMap();
@@ -357,25 +357,75 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         return "success";
     }
 
+    private boolean hasHandledFare(String orderId) throws Exception{
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andOrderIdEqualTo(orderId);
+        criteria.andFareGreaterThan(0f);
+        criteria.andStatusEqualTo(WorkOrderStatusType.CLOSED.getCode());
+
+        List<WorkOrder> list;
+        try{
+            list = mapper.selectByExample(example);
+        }catch (Exception e) {
+            log.error("workOrderMapper.selectByExample exception {}",e.getMessage());
+            throw new Exception(e);
+        }
+
+        if (null == list || 1 > list.size()) {
+            return false;
+        }else {
+            return true;
+        }
+
+    }
+
     @Override
-    public String sendRefund2GuangAiTong(Long workOrderId) {
+    public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare) throws Exception{
 
         log.info("sendRefund2GuangAiTong enter : workOrderId = ", workOrderId);
         WorkOrder wo = workOrderDao.selectByPrimaryKey(workOrderId);
         if (null == wo) {
             log.info("failed to find work-order record by id : " + workOrderId);
-            return null;
+            throw new Exception("failed to find work-order record by id : "+workOrderId);
         }
 
         String result = "";
         log.info("find work-order: " + wo.toString());
+        if (null == wo.getOrderId()) {
+            log.error("sendRefund2GuangAiTong: can not find orderId in work_order");
+            throw new Exception("can not find orderId in work_order");
+        }
+
         String tradeNo = wo.getTradeNo();
         String appId = wo.gettAppId();
         Float refundAmount = wo.getRefundAmount();
         String reason = wo.getTitle();
         if (null == tradeNo || null == appId || null == refundAmount || null == reason) {
-            log.warn("find wrong value in work-order ");
-            return result;
+            log.warn("tradeNo, appId, refundAmount or reason are missing ");
+            throw new Exception("check workOrder, found tradeNo, appId, refundAmount or reason are missing");
+        }
+
+        if (null != handleFare && 0 != handleFare) {
+            boolean handledFare;
+            try {
+                handledFare = hasHandledFare(wo.getOrderId());
+            } catch (Exception e) {
+                throw new Exception(e);
+            }
+
+            if (handledFare) {
+                throw new Exception("该订单已经处理过运费");
+            }
+
+            refundAmount += wo.getFare();
+
+            //if (0 < wo.getPaymentAmount()) {
+            //    if (refundAmount*100 > wo.getPaymentAmount()) {
+            //        refundAmount = (float)wo.getPaymentAmount()/100.00f;
+            //    }
+            //}
+
         }
 
         String notifyUrl = GuanAiTongConfig.getConfigGatNotifyUrl();//"http://api.weesharing.com/v2/workorders/refund/notify";
@@ -422,10 +472,16 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         wo.setRefundNo(refundNo);
         wo.setGuanaitongTradeNo(guanAiTongNo);
+        if (null == handleFare || 0 == handleFare) {
+            //since we will check fare when create work-order. and set it by query order info.
+            //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
+            wo.setFare(0.00f);
+        }
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
             log.error("update work-order sql error: " + ex.getMessage());
+            throw new Exception(ex);
         }
         log.info("sendRefund2GuangAiTong success ");
         return guanAiTongNo;

@@ -303,6 +303,17 @@ public class WorkOrderController {
                 return result;
             }
 
+            Float fare = json.getFloat("servFee");
+            if (null != fare) {
+                workOrder.setFare(fare);
+            }
+            Integer paymentAmount = json.getInteger("paymentAmount");
+            {
+                if (null != paymentAmount) {
+                    workOrder.setPaymentAmount(paymentAmount);
+                }
+            }
+
             workOrder.setTradeNo(json.getString("paymentNo"));
             workOrder.setSalePrice(json.getFloat("salePrice"));
             workOrder.setOrderGoodsNum(json.getInteger("num"));
@@ -643,6 +654,7 @@ public class WorkOrderController {
         }
         GuanAiTongNo result = new GuanAiTongNo();
         Long id = data.get("id");
+        Integer hasFare = (int)(long)data.get("fare");
         if (null == id) {
             log.error("send refund to GuanAiTong for work-order: id is null");
             StringUtil.throw400Exp(response, "400002: id is wrong");
@@ -652,7 +664,7 @@ public class WorkOrderController {
 
         String guanAiTongTradeNo;
         try {
-            guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id);
+            guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id,hasFare);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

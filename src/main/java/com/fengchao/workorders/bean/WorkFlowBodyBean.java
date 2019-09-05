@@ -14,13 +14,16 @@ public class WorkFlowBodyBean {
     @ApiModelProperty(value="附件所属工单ID", example="123",required=true)
     private Long workOrderId;
 
-    @ApiModelProperty(value="工单状态码", example="1",required=false)
+    @ApiModelProperty(value="工单目标状态码", example="1",required=true)
     private Integer status;
 
-    @ApiModelProperty(value="流程处理意见", example="移交",required=true)
+    @ApiModelProperty(value="流程处理意见", example="移交")
     private String comments;
 
-    @ApiModelProperty(value="流程处理人名称", example="tom",required=true)
+    @ApiModelProperty(value="流程处理人名称", example="somebody")
     private String operator;
+
+    @ApiModelProperty(value="是否处理运费, 0 : 不处理运费", example="0")
+    private Integer handleFare;
 
 }

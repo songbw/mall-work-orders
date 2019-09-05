@@ -15,6 +15,10 @@ public class WorkOrder {
 
     private Integer returnedNum;
 
+    private Float fare;
+
+    private Integer paymentAmount;
+
     private Float salePrice;
 
     private String refundNo;
@@ -93,6 +97,22 @@ public class WorkOrder {
 
     public void setReturnedNum(Integer returnedNum) {
         this.returnedNum = returnedNum;
+    }
+
+    public Float getFare() {
+        return fare;
+    }
+
+    public void setFare(Float fare) {
+        this.fare = fare;
+    }
+
+    public Integer getPaymentAmount() {
+        return paymentAmount;
+    }
+
+    public void setPaymentAmount(Integer paymentAmount) {
+        this.paymentAmount = paymentAmount;
     }
 
     public Float getSalePrice() {

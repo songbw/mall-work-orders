@@ -157,6 +157,16 @@ public class CustomerWorkOrderController {
             if (null != receiverName) {
                 workOrder.setReceiverName(receiverName);
             }
+            Float fare = json.getFloat("servFee");
+            if (null != fare) {
+                workOrder.setFare(fare);
+            }
+            Integer paymentAmount = json.getInteger("paymentAmount");
+            {
+                if (null != paymentAmount) {
+                    workOrder.setPaymentAmount(paymentAmount);
+                }
+            }
         } else {
             if (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum()) {
                 StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
