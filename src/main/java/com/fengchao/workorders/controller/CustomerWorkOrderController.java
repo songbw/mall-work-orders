@@ -321,11 +321,49 @@ public class CustomerWorkOrderController {
         return result;
     }
 
+    private CustomerQueryWorkOrderBean fillbeanByOrderInfo(WorkOrder workOrder) throws Exception{
+        JSONObject json;
+        try {
+            json = workOrderService.getOrderInfo(workOrder.getReceiverId(), workOrder.getOrderId(), workOrder.getMerchantId());
+        }catch (Exception e) {
+            throw new Exception(e);
+        }
+        if (null == json) {
+            return null;
+        }
+
+        CustomerQueryWorkOrderBean bean = new CustomerQueryWorkOrderBean();
+
+        String name = json.getString("name");
+        if (null == name) {
+            log.info("searchOrder info: name is null");
+        } else {
+            bean.setName(name);
+        }
+
+        String image = json.getString("image");
+        if (null == image) {
+            log.info("searchOrder info: image is null");
+        } else {
+            bean.setImage(image);
+        }
+
+        Float unitPrice = json.getFloat("unitPrice");
+        if (null == unitPrice) {
+            log.info("searchOrder info: unitPrice is null");
+        } else {
+            bean.setUnitPrice(unitPrice);
+        }
+
+        return bean;
+    }
+
+
     @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders")
-    public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
+    public PageInfo<CustomerQueryWorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    //@RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                    @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
                                                    @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
@@ -359,16 +397,28 @@ public class CustomerWorkOrderController {
             return null;
         }
 
-        List<WorkOrderBean> list = new ArrayList<>();
+        List<CustomerQueryWorkOrderBean> list = new ArrayList<>();
 
         if ((index -1) * limit <= pages.getTotal()) {
             for (WorkOrder a : pages.getRows()) {
-                WorkOrderBean b = new WorkOrderBean();
+                CustomerQueryWorkOrderBean b = new CustomerQueryWorkOrderBean();
                 BeanUtils.copyProperties(a, b);
+                CustomerQueryWorkOrderBean remoteBean = null;
+                try {
+                    remoteBean = fillbeanByOrderInfo(a);
+                }catch (Exception e){
+                    StringUtil.throw400Exp(response, "400007:"+e.getMessage());
+                    return null;
+                }
+                if (null != remoteBean){
+                    b.setImage(remoteBean.getImage());
+                    b.setName(remoteBean.getName());
+                    b.setUnitPrice(remoteBean.getUnitPrice());
+                }
                 list.add(b);
             }
         }
-        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
+        PageInfo<CustomerQueryWorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
         return result;
