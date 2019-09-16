@@ -52,7 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 */
     @Override
     public void configure(WebSecurity web) {
-        web.ignoring().antMatchers("/config/**", "/css/**", "/fonts/**", "/img/**", "/js/**","/v2/api-docs","/webjars/**","/swagger-resources/**","/swagger-ui.html","/workorders/**");
+        web.ignoring().antMatchers("/config/**", "/css/**", "/fonts/**", "/img/**", "/js/**","/v2/api-docs","/webjars/**","/swagger-resources/**","/swagger-ui.html","/workorders/**","/actuator/**");
     }
     /*
     @Override
@@ -112,6 +112,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                     .antMatchers("/swagger-ui**").permitAll()
                     .antMatchers("/v2/api-docs").permitAll()
+                    .antMatchers("/actuator").permitAll()
                     .antMatchers(HttpMethod.OPTIONS).permitAll()
                     .anyRequest().authenticated()
                     .anyRequest().permitAll()
