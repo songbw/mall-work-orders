@@ -6,6 +6,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.fengchao.workorders.bean.AddressBean;
 import com.fengchao.workorders.model.DefaultAddress;
 import com.fengchao.workorders.service.impl.DefaultAddressServiceImpl;
+import com.fengchao.workorders.util.MyErrorMap;
 import com.fengchao.workorders.util.StringUtil;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Api(tags="DefaultAddressAPI", description = "缺省地址管理相关", produces = "application/json;charset=UTF-8")
@@ -54,6 +52,10 @@ public class DefaultAddressController {
             return  null;
         }
 
+        if (null == record) {
+            StringUtil.throw400Exp(response, "400003:地址记录不存在");
+            return  null;
+        }
         AddressBean bean = new AddressBean();
         BeanUtils.copyProperties(record, bean);
         if (1 == record.getAsDefault()){
@@ -108,15 +110,17 @@ public class DefaultAddressController {
 
         List<AddressBean> result = new ArrayList<>();
 
-        for(DefaultAddress a : list) {
-            AddressBean bean = new AddressBean();
-            BeanUtils.copyProperties(a, bean);
-            if (1 == a.getAsDefault()) {
-                bean.setIsDefault(true);
-            } else {
-                bean.setIsDefault(false);
+        if (null != list && 0 < list.size()) {
+            for (DefaultAddress a : list) {
+                AddressBean bean = new AddressBean();
+                BeanUtils.copyProperties(a, bean);
+                if (1 == a.getAsDefault()) {
+                    bean.setIsDefault(true);
+                } else {
+                    bean.setIsDefault(false);
+                }
+                result.add(bean);
             }
-            result.add(bean);
         }
         response.setStatus(200);
         return result;
@@ -158,6 +162,8 @@ public class DefaultAddressController {
         } else {
             record.setAsDefault((asDefault) ? 1 : 0);
         }
+        record.setCreateTime(new Date());
+        record.setUpdateTime(new Date());
         Long newId;
         try{
             newId = defaultAddressService.insert(record);
@@ -223,6 +229,7 @@ public class DefaultAddressController {
             record.setAsDefault((asDefault) ? 1 : 0);
         }
 
+        record.setUpdateTime(new Date());
         try{
             defaultAddressService.update(record);
         }catch (Exception e){
@@ -232,6 +239,7 @@ public class DefaultAddressController {
 
 
         response.setStatus(201);
+        response.setContentType("application/json;charset=UTF-8");
         Map< String , Object > jsonMap = new HashMap<>();
         jsonMap.put("id",record.getId());
         jsonMap.put("message","success");
@@ -243,11 +251,22 @@ public class DefaultAddressController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to delete record") })
     @ResponseStatus(code = HttpStatus.OK)
     @DeleteMapping("addresses/{id}")
-    public void deleteAddress(HttpServletResponse response,
+    public String deleteAddress(HttpServletResponse response,
                                   @ApiParam(value="id",required=true)@PathVariable("id") long id) {
 
         if (0 == id) {
             StringUtil.throw400Exp(response, "400002:ID is wrong");
+        }
+
+        DefaultAddress record = null;
+        try{
+            record = defaultAddressService.selectById(id);
+        }catch (Exception e){
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+        }
+
+        if (null == record) {
+            StringUtil.throw400Exp(response, "400003:地址记录不存在");
         }
 
         try{
@@ -256,7 +275,12 @@ public class DefaultAddressController {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
         }
 
-        response.setStatus(204);
+        response.setStatus(MyErrorMap.e204.getCode());
+        response.setContentType("application/json;charset=UTF-8");
+        Map< String , Object > jsonMap = new HashMap<>();
+        jsonMap.put("message","success");
+        log.info("delete address success");
+        return JSONObject.toJSONString(jsonMap, SerializerFeature.WriteMapNullValue);
     }
 
 }

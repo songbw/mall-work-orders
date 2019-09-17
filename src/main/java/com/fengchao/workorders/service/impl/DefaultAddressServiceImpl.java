@@ -13,7 +13,7 @@ import java.util.List;
 
 @Slf4j
 @Transactional
-//@Service
+@Service
 public class DefaultAddressServiceImpl implements IDefaultAddressService {
 
     private DefaultAddressMapper mapper;

@@ -59,16 +59,17 @@ public class CustomerWorkOrderController {
     }
 
     @Autowired
-    public CustomerWorkOrderController(WorkOrderServiceImpl workOrderService
+    public CustomerWorkOrderController(WorkFlowServiceImpl workFlowService,WorkOrderServiceImpl workOrderService
                                         ) {
         this.workOrderService = workOrderService;
+        this.workFlowService = workFlowService;
     }
 
-    @ApiOperation(value = "查询工单流程", notes = "查询工单流程信息")
+    @ApiOperation(value = "APP查询工单流程", notes = "查询工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_flows")
-    public ResultObject<WorkFlowBeanList> queryWorkFlows(HttpServletResponse response,
+    public ResultObject<WorkFlowBeanList> appQueryWorkFlows(HttpServletResponse response,
                                                          @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
 
         log.info("app side queryWorkFlows workOrderId ={}",workOrderId);
@@ -102,11 +103,11 @@ public class CustomerWorkOrderController {
 
     }
 
-    @ApiOperation(value = "创建工单处理信息", notes = "创建工单处理信息")
+    @ApiOperation(value = "APP创建工单处理流程信息", notes = "创建工单处理信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_flows")
-    public IdResponseData createWorkFlow(HttpServletResponse response,
+    public IdResponseData appCreateWorkFlow(HttpServletResponse response,
                                          @RequestBody WorkFlowBodyBean data) {
 
         log.info("app side create WorkFlow enter : param {}", JSON.toJSONString(data));
@@ -199,11 +200,11 @@ public class CustomerWorkOrderController {
 
     }
 
-    @ApiOperation(value = "创建工单信息", notes = "创建工单信息")
+    @ApiOperation(value = "APP创建工单信息", notes = "创建工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_orders")
-    public IdResponseData createWorkOrder(HttpServletResponse response,
+    public IdResponseData appCreateWorkOrder(HttpServletResponse response,
                                           //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                           @RequestBody CustomerWorkOrderBean data) {
 
@@ -388,11 +389,11 @@ public class CustomerWorkOrderController {
 
     }
 
-    @ApiOperation(value = "更新工单流程信息", notes = "更新工单流程信息")
+    @ApiOperation(value = "APP更新工单信息", notes = "更新工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to update record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PutMapping("work_orders/{id}")
-    public IdResponseData updateWorkOrder(HttpServletResponse response,
+    public IdResponseData appUpdateWorkOrder(HttpServletResponse response,
                                                     //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                                     @ApiParam(value="id",required=true)@PathVariable("id") Long id,
                                                     @RequestBody CustomerWorkOrderBean data) {
@@ -503,11 +504,11 @@ public class CustomerWorkOrderController {
     }
 
 
-    @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
+    @ApiOperation(value = "APP条件查询工单", notes = "查询工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders")
-    public PageInfo<CustomerQueryWorkOrderBean> queryWorkOrders(HttpServletResponse response,
+    public PageInfo<CustomerQueryWorkOrderBean> appQueryWorkOrders(HttpServletResponse response,
                                                    //@RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                    @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
                                                    @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
@@ -583,11 +584,11 @@ public class CustomerWorkOrderController {
     }
 
 
-    @ApiOperation(value = "查询订单可退数量", notes = "查询订单可退数量")
+    @ApiOperation(value = "APP查询订单可退数量", notes = "查询订单可退数量")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("orders/validNum")
-    public ValidNumResponseData queryOrderValidNum(HttpServletResponse response,
+    public ValidNumResponseData appQueryOrderValidNum(HttpServletResponse response,
                                                    @ApiParam(value="订单所属客户",required=true)@RequestParam String customer,
                                                    @ApiParam(value="订单ID",required=true)@RequestParam String orderId,
                                                    @ApiParam(value="merchantId",required=true)@RequestParam Long merchantId

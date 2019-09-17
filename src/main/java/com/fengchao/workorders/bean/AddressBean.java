@@ -21,9 +21,4 @@ public class AddressBean {
     @ApiModelProperty(value="地址", example="北京市朝阳区建外街道88号",required=true)
     private String content;
 
-    @ApiModelProperty(value="提交时间", example="2019-06-16 11:11:11",required=false)
-    private LocalDate createTime;
-
-    @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
-    private LocalDate updateTime;
 }

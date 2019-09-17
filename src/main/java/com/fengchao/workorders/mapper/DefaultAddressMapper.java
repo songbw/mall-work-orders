@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
 
 @Mapper
-//@Component(value = "DefaultAddressMapper")
+@Component(value = "DefaultAddressMapper")
 public interface DefaultAddressMapper {
     long countByExample(DefaultAddressExample example);
 
