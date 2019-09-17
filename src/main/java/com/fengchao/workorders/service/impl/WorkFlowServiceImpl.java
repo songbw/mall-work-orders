@@ -1,5 +1,6 @@
 package com.fengchao.workorders.service.impl;
 
+import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.mapper.*;
@@ -61,31 +62,60 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
             return;
         }
         workFlowMapper.updateByPrimaryKeySelective(workFlow);
-        //System.out.println("updated workFlow for: " + workFlow.getId());
         log.info("updated user for: " + workFlow.getId());
     }
 
     @Override
-    public List<WorkFlow> selectAll() {
-
-        return workFlowMapper.selectRange("id", "DESC",  null, null, null);
-    }
-
-    @Override
     public PageInfo<WorkFlow> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                         Long workOrderId, Date createTimeStart, Date createTimeEnd) {
+                                         Long workOrderId, Date createTimeStart, Date createTimeEnd) throws Exception{
 
-        int counts = workFlowMapper.selectRange(sort, order, workOrderId, createTimeStart, createTimeEnd).size();
+        WorkFlowExample example = new WorkFlowExample();
+        WorkFlowExample.Criteria criteria = example.createCriteria();
 
-        PageHelper.startPage(pageIndex, pageSize);
-        List<WorkFlow> workFlows = workFlowMapper.selectRange(sort, order, workOrderId, createTimeStart, createTimeEnd);
+        if (null != workOrderId) {
+            criteria.andWorkOrderIdEqualTo(workOrderId);
+        }
+        if (null != createTimeStart){
+            criteria.andCreateTimeGreaterThanOrEqualTo(createTimeStart);
+        }
+        if (null != createTimeEnd){
+            criteria.andCreateTimeLessThanOrEqualTo(createTimeEnd);
+        }
+        if (null != sort && null != order){
+            example.setOrderByClause(sort + " " + order);
+        }
 
-        return new PageInfo<>(counts, pageSize, pageIndex,workFlows);
+        Page pages;
+        List<WorkFlow> list;
+
+        try {
+            pages = PageHelper.startPage(pageIndex, pageSize, true);
+            list = workFlowMapper.selectByExample(example);
+        }catch (Exception e) {
+            log.error("workFlow selectByExample exception {}",e.getMessage());
+            throw new Exception(e);
+        }
+        return new PageInfo<>((int)pages.getTotal(), pages.getPageSize(),pageIndex,list);
     }
 
     @Override
-    public List<WorkFlow> selectByWorkOrderId(Long workOrderId) {
-        return workFlowMapper.selectByWorkOrderId(workOrderId);
+    public List<WorkFlow> selectByWorkOrderId(Long workOrderId, Integer status) throws Exception{
+        if (null == workOrderId) {
+            throw new Exception("selectByWorkOrderId, workOrderId is null");
+        }
+        WorkFlowExample example = new WorkFlowExample();
+        WorkFlowExample.Criteria criteria = example.createCriteria();
+        criteria.andWorkOrderIdEqualTo(workOrderId);
+        if (null != status){
+            criteria.andStatusEqualTo(status);
+        }
+        example.setOrderByClause("create_time ASC");
+        try {
+            return workFlowMapper.selectByExample(example);
+        }catch (Exception e){
+            log.error("selectByWorkOrderId error {}",e.getMessage());
+            throw new Exception(e);
+        }
     }
 
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,11 +35,19 @@ public class CustomerWorkOrderController {
     //private static Logger log = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
+    private WorkFlowServiceImpl workFlowService;
 
     @ApiModel(value = "工单信息ID")
     private class IdResponseData implements Serializable {
         @ApiModelProperty(value = "ID", example = "1", required = true)
         public Long id;
+
+    }
+
+    @ApiModel(value = "流程信息List")
+    private class WorkFlowBeanList implements Serializable {
+        @ApiModelProperty(value = "流程信息List", example = " ", required = true)
+        public List<WorkFlowBean> result;
 
     }
 
@@ -53,6 +62,141 @@ public class CustomerWorkOrderController {
     public CustomerWorkOrderController(WorkOrderServiceImpl workOrderService
                                         ) {
         this.workOrderService = workOrderService;
+    }
+
+    @ApiOperation(value = "查询工单流程", notes = "查询工单流程信息")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("work_flows")
+    public ResultObject<WorkFlowBeanList> queryWorkFlows(HttpServletResponse response,
+                                                         @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
+
+        log.info("app side queryWorkFlows workOrderId ={}",workOrderId);
+        if (null == workOrderId){
+            response.setStatus(MyErrorMap.e400.getCode());
+            return new ResultObject<>(400002,"工单号不能为空",null);
+        }
+
+        List<WorkFlow> list;
+        try {
+            list = workFlowService.selectByWorkOrderId(workOrderId,null);
+        }catch (Exception e) {
+            response.setStatus(MyErrorMap.e400.getCode());
+            return new ResultObject<>(400006,e.getMessage(),null);
+        }
+
+        List<WorkFlowBean> result = new ArrayList<>();
+
+        for (WorkFlow a : list) {
+            WorkFlowBean b = new WorkFlowBean();
+            BeanUtils.copyProperties(a, b);
+            b.setOperator(a.getUpdatedBy());
+            result.add(b);
+        }
+        WorkFlowBeanList retResult = new WorkFlowBeanList();
+        retResult.result = result;
+        response.setStatus(MyErrorMap.e200.getCode());
+
+        log.info("app side queryWorkFlows success");
+        return new ResultObject<>(200,"success",retResult);
+
+    }
+
+    @ApiOperation(value = "创建工单处理信息", notes = "创建工单处理信息")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @PostMapping("work_flows")
+    public IdResponseData createWorkFlow(HttpServletResponse response,
+                                         @RequestBody WorkFlowBodyBean data) {
+
+        log.info("app side create WorkFlow enter : param {}", JSON.toJSONString(data));
+        IdResponseData result = new IdResponseData();
+
+        Long workOrderId = data.getWorkOrderId();
+        Integer nextStatus = data.getStatus();
+        String comments = data.getComments();
+        String operator = data.getOperator();
+
+        if (null == workOrderId || 0 == workOrderId
+        ) {
+            StringUtil.throw400Exp(response, "400002:工单号不能为空");
+            return result;
+        }
+
+        if (null == operator || operator.isEmpty()) {
+            StringUtil.throw400Exp(response, "400003: 操作员不能为空");
+            return result;
+        }
+
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(workOrderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400004:工单号不存在");
+            return result;
+        }
+
+        Integer orderStatus = workOrder.getStatus();
+        if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
+            StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
+            return result;
+        }
+
+        if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
+            StringUtil.throw400Exp(response, "400005:状态码错误");
+            return result;
+        }
+
+
+        WorkFlow workFlow = new WorkFlow();
+
+        workFlow.setWorkOrderId(workOrderId);
+        workFlow.setUpdatedBy(operator);
+
+        workFlow.setStatus(nextStatus);
+
+        if (null != comments && !comments.isEmpty()) {
+            workFlow.setComments(comments);
+        }
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
+        if (!operator.isEmpty()) {
+            workFlow.setCreatedBy(operator);
+        }
+
+
+        try {
+            result.id = workFlowService.insert(workFlow);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        if (0 == result.id) {
+            StringUtil.throw400Exp(response, "400006:Failed to create work_flow");
+            return result;
+        }
+
+        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+            workOrder.setStatus(workFlow.getStatus());
+            workOrder.setUpdateTime(new Date());
+            try {
+                workOrderService.update(workOrder);
+            }catch (Exception e) {
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
+        }
+
+        response.setStatus(MyErrorMap.e201.getCode());
+        log.info("create WorkFlow {} and update workOrder {} success ", workFlow.getId().toString(),workOrder.getId().toString());
+        return result;
+
     }
 
     @ApiOperation(value = "创建工单信息", notes = "创建工单信息")
@@ -414,6 +558,19 @@ public class CustomerWorkOrderController {
                     b.setImage(remoteBean.getImage());
                     b.setName(remoteBean.getName());
                     b.setUnitPrice(remoteBean.getUnitPrice());
+                }
+
+                if (WorkOrderStatusType.ACCEPTED.getCode().equals(b.getStatus())){
+                    List<WorkFlow> workFlows;
+                    try {
+                        workFlows = workFlowService.selectByWorkOrderId(b.getId(), b.getStatus());
+                    }catch (Exception e){
+                        StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                        return null;
+                    }
+                    if (null != workFlows && 0 < workFlows.size()){
+                        b.setDescription(workFlows.get(0).getComments());
+                    }
                 }
                 list.add(b);
             }

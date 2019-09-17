@@ -680,7 +680,7 @@ public class WorkOrderController {
 
         String guanAiTongTradeNo;
         try {
-            guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id,hasFare);
+            guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id,hasFare,null);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

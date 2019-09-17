@@ -44,5 +44,5 @@ public interface IWorkOrderService {
 
     String handleNotify(GuanAiTongNotifyBean backBean) throws Exception;
 
-    String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare) throws Exception;
+    String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception;
 }

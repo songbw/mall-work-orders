@@ -200,7 +200,8 @@ public class WorkFlowController {
         Integer nextStatus = data.getStatus();
         String comments = data.getComments();
         String operator = data.getOperator();
-        Integer handleFare = data.getHandleFare();
+        Integer handleFare = null;//data.getHandleFare();
+        Float refund = data.getRefund();
 
         if (null == workOrderId || 0 == workOrderId
             ) {
@@ -225,6 +226,7 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
         }
+
         String iAppId = workOrder.getiAppId();
         String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
@@ -236,6 +238,13 @@ public class WorkFlowController {
         if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
+        }
+
+        if (null != refund && 0 < refund){
+            if (workOrder.getRefundAmount() < refund){
+                StringUtil.throw400Exp(response, "400008:退款金额超出合理范围");
+                return result;
+            }
         }
 
         WorkFlow workFlow = new WorkFlow();
@@ -269,22 +278,22 @@ public class WorkFlowController {
             if (isGat && null != tAppId) {
                 String guanAiTongTradeNo;
                 try {
-                    guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare);
+                    guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare, refund);
                 } catch (Exception e) {
                     StringUtil.throw400Exp(response, "400006:" + e.getMessage());
                     return null;
                 }
                 if (null == guanAiTongTradeNo) {
-                    StringUtil.throw400Exp(response, "400004: failed to get guanAiTongTradeNo in result of response");
+                    StringUtil.throw400Exp(response, "400009: failed to get guanAiTongTradeNo in result of response");
                     return result;
                 } else {
                     if (guanAiTongTradeNo.isEmpty()) {
-                        StringUtil.throw400Exp(response, "400004: failed to get guanAiTongTradeNo in result of response");
+                        StringUtil.throw400Exp(response, "400009: failed to get guanAiTongTradeNo in result of response");
                         return result;
                     } else {
                         if (guanAiTongTradeNo.contains("Error:")) {
                             String errMsg = guanAiTongTradeNo.replace(':', '-');
-                            StringUtil.throw400Exp(response, "400006: " + errMsg);
+                            StringUtil.throw400Exp(response, "400009: " + errMsg);
                             return result;
                         }
                     }
@@ -301,7 +310,7 @@ public class WorkFlowController {
         }
 
         if (0 == result.id) {
-            StringUtil.throw400Exp(response, "400003:Failed to create work_flow");
+            StringUtil.throw400Exp(response, "400006:Failed to create work_flow");
             return result;
         }
 
