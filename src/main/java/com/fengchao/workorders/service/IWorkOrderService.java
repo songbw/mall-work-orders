@@ -55,5 +55,5 @@ public interface IWorkOrderService {
      * @return
      * @throws Exception
      */
-    List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, String startTime, String endTime) throws Exception;
+    List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, Date startTime, Date endTime) throws Exception;
 }

@@ -482,14 +482,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, String startTime, String endTime) throws Exception {
+    public List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, Date startTime, Date endTime) throws Exception {
         List<WorkOrder> workOrderList = null;
         try {
-            Date startTimeDate = DateUtil.parseDateTime(startTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
-            Date endTimeDate = DateUtil.parseDateTime(endTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
             log.info("查询已退款的记录 数据库入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
             workOrderList =
-                    workOrderDao.selectRefundSuccessOrderDetailIdList(merchantId, startTimeDate, endTimeDate);
+                    workOrderDao.selectRefundSuccessOrderDetailIdList(merchantId, startTime, endTime);
             log.info("查询已退款的记录 数据库返回:{}", JSONUtil.toJsonString(workOrderList));
         } catch (Exception e) {
             log.error("查询已退款的记录 异常:{}", e.getMessage(), e);

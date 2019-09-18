@@ -717,12 +717,12 @@ public class WorkOrderController {
      * @param endTime
      * @return
      */
-    @ApiOperation(value = "获取已退款的子订单idlist", notes = "获取已退款的子订单idlist")
+    @ApiOperation(value = "获取已退款的子订单id集合", notes = "获取已退款的子订单id集合")
     @ResponseStatus(code = HttpStatus.CREATED)
-    @GetMapping("refund/guanaitong")
+    @GetMapping("refund/query/refunded")
     public ResultObject<List<String>> queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
-                                                                     @RequestParam(value = "startTime") String startTime,
-                                                                     @RequestParam(value = "endTime") String endTime) {
+                                                                     @RequestParam(value = "startTime") Date startTime,
+                                                                     @RequestParam(value = "endTime") Date endTime) {
         // 返回值
         ResultObject<List<String>> resultObject = new ResultObject<>(500, "获取已退款的子订单id集合默认错误", null);
 
