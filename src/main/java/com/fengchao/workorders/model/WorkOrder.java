@@ -55,6 +55,8 @@ public class WorkOrder {
 
     private Date refundTime;
 
+    private String expressNo;
+
     public Long getId() {
         return id;
     }
@@ -261,5 +263,13 @@ public class WorkOrder {
 
     public void setRefundTime(Date refundTime) {
         this.refundTime = refundTime;
+    }
+
+    public String getExpressNo() {
+        return expressNo;
+    }
+
+    public void setExpressNo(String expressNo) {
+        this.expressNo = expressNo == null ? null : expressNo.trim();
     }
 }

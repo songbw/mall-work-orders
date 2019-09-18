@@ -247,7 +247,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
 
             List<JSONObject> list = JSONObject.parseArray(JSON.toJSONString(theList), JSONObject.class);
-            log.info("searchOrder: orderInfo  {}" + JSON.toJSONString(list.get(0)));
+            log.info("searchOrder: success");
             return list.get(0);
 
         }

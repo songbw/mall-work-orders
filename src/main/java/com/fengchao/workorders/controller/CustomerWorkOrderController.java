@@ -78,6 +78,28 @@ public class CustomerWorkOrderController {
             return new ResultObject<>(400002,"工单号不能为空",null);
         }
 
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(workOrderId);
+        } catch (Exception ex) {
+            StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
+            return null;
+        }
+
+        if (null == workOrder){
+            StringUtil.throw400Exp(response, "400003:工单不存在");
+            return null;
+        }
+
+        WorkFlowBean workFlowZero = new WorkFlowBean();
+        workFlowZero.setStatus(WorkOrderStatusType.EDITING.getCode());
+        workFlowZero.setCreateTime(workOrder.getCreateTime());
+        workFlowZero.setUpdateTime(workOrder.getCreateTime());
+        workFlowZero.setWorkOrderId(workOrderId);
+        workFlowZero.setComments("提交申请");
+        workFlowZero.setId(0L);
+        workFlowZero.setOperator(workOrder.getReceiverId());
+
         List<WorkFlow> list;
         try {
             list = workFlowService.selectByWorkOrderId(workOrderId,null);
@@ -94,6 +116,7 @@ public class CustomerWorkOrderController {
             b.setOperator(a.getUpdatedBy());
             result.add(b);
         }
+        result.add(workFlowZero);
         WorkFlowBeanList retResult = new WorkFlowBeanList();
         retResult.result = result;
         response.setStatus(MyErrorMap.e200.getCode());
@@ -117,6 +140,7 @@ public class CustomerWorkOrderController {
         Integer nextStatus = data.getStatus();
         String comments = data.getComments();
         String operator = data.getOperator();
+        String expressNo = data.getExpressNo();
 
         if (null == workOrderId || 0 == workOrderId
         ) {
@@ -151,6 +175,10 @@ public class CustomerWorkOrderController {
         if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
+        }
+
+        if (null != expressNo){
+            workOrder.setExpressNo(expressNo);
         }
 
 

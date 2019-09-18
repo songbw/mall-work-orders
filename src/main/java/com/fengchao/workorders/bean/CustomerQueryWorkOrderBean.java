@@ -73,4 +73,7 @@ public class CustomerQueryWorkOrderBean {
 
     @ApiModelProperty(value="图片链接", example="http://imgservice2.suning.cn/uimg1/b2c/image/gV8WOSpc02rfK1vp-pN-UA==.jpg_400w_400h_4e",required=false)
     private String image;
+
+    @ApiModelProperty(value="快递单号", example="2019111111",required=false)
+    private String expressNo;
 }
