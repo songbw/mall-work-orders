@@ -53,6 +53,8 @@ public class WorkOrder {
 
     private Date updateTime;
 
+    private Date refundTime;
+
     public Long getId() {
         return id;
     }
@@ -251,5 +253,13 @@ public class WorkOrder {
 
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public Date getRefundTime() {
+        return refundTime;
+    }
+
+    public void setRefundTime(Date refundTime) {
+        this.refundTime = refundTime;
     }
 }

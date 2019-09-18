@@ -45,4 +45,15 @@ public interface IWorkOrderService {
     String handleNotify(GuanAiTongNotifyBean backBean) throws Exception;
 
     String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare) throws Exception;
+
+    /**
+     * 查询退款成功的子订单
+     *
+     * @param merchantId
+     * @param startTime
+     * @param endTime
+     * @return
+     * @throws Exception
+     */
+    List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, String startTime, String endTime) throws Exception;
 }

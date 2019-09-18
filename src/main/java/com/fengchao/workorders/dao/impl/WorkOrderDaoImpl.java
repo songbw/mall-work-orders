@@ -203,4 +203,17 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             throw new Exception(e);
         }
     }
+
+    @Override
+    public List<WorkOrder> selectRefundSuccessOrderDetailIdList(Long merchantId, Date startTime, Date endTime) {
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andRefundTimeBetween(startTime, endTime);
+        if (merchantId != null) {
+            criteria.andMerchantIdEqualTo(merchantId);
+        }
+
+        List<WorkOrder> workOrderList = mapper.selectByExample(example);
+        return workOrderList;
+    }
 }

@@ -12,6 +12,7 @@ import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Api(tags="WorkOrderAPI", description = "工单管理相关", produces = "application/json;charset=UTF-8")
@@ -707,6 +709,49 @@ public class WorkOrderController {
         return result;
     }
 
+    /**
+     * 获取已退款的子订单id集合
+     *
+     * @param merchantId
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    @ApiOperation(value = "获取已退款的子订单idlist", notes = "获取已退款的子订单idlist")
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @GetMapping("refund/guanaitong")
+    public ResultObject<List<String>> queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
+                                                                     @RequestParam(value = "startTime") String startTime,
+                                                                     @RequestParam(value = "endTime") String endTime) {
+        // 返回值
+        ResultObject<List<String>> resultObject = new ResultObject<>(500, "获取已退款的子订单id集合默认错误", null);
+
+        log.info("获取已退款的子订单id集合 入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
+
+        try {
+            List<WorkOrder> workOrderList =
+                    workOrderService.querySuccessRefundOrderDetailIdList(merchantId, startTime, endTime);
+
+            List<String> idList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(workOrderList)) {
+                idList = workOrderList.stream().map(w -> w.getOrderId()).collect(Collectors.toList());
+            }
+
+            resultObject.setCode(200);
+            resultObject.setMsg("成功");
+            resultObject.setData(idList);
+        } catch (Exception e) {
+            log.error("取已退款的子订单id集合 异常:{}", e.getMessage(), e);
+
+            resultObject.setCode(500);
+            resultObject.setData(null);
+            resultObject.setMsg("取已退款的子订单id集合异常," + e.getMessage());
+        }
+
+        log.info("取已退款的子订单id集合 返回:{}", JSONUtil.toJsonString(resultObject));
+
+        return resultObject;
+    }
 
 /*
     @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")

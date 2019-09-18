@@ -27,6 +27,7 @@
     <result column="status" jdbcType="INTEGER" property="status" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="refund_time" jdbcType="TIMESTAMP" property="refundTime" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -90,7 +91,7 @@
     id, merchant_id, parent_order_id, order_id, order_goods_num, trade_no, returned_num, 
     fare, payment_amount, sale_price, refund_no, refund_amount, guanaitong_refund_amount, 
     guanaitong_trade_no, i_app_id, t_app_id, title, description, receiver_id, receiver_name, 
-    receiver_phone, type_id, status, create_time, update_time
+    receiver_phone, type_id, status, create_time, update_time, refund_time
   </sql>
   <select id="selectByExample" parameterType="com.fengchao.workorders.model.WorkOrderExample" resultMap="BaseResultMap">
     select
@@ -134,8 +135,8 @@
       guanaitong_trade_no, i_app_id, t_app_id, 
       title, description, receiver_id, 
       receiver_name, receiver_phone, type_id, 
-      status, create_time, update_time
-      )
+      status, create_time, update_time, 
+      refund_time)
     values (#{merchantId,jdbcType=BIGINT}, #{parentOrderId,jdbcType=INTEGER}, #{orderId,jdbcType=VARCHAR}, 
       #{orderGoodsNum,jdbcType=INTEGER}, #{tradeNo,jdbcType=VARCHAR}, #{returnedNum,jdbcType=INTEGER}, 
       #{fare,jdbcType=REAL}, #{paymentAmount,jdbcType=INTEGER}, #{salePrice,jdbcType=REAL}, 
@@ -143,8 +144,8 @@
       #{guanaitongTradeNo,jdbcType=VARCHAR}, #{iAppId,jdbcType=VARCHAR}, #{tAppId,jdbcType=VARCHAR}, 
       #{title,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{receiverId,jdbcType=VARCHAR}, 
       #{receiverName,jdbcType=VARCHAR}, #{receiverPhone,jdbcType=VARCHAR}, #{typeId,jdbcType=INTEGER}, 
-      #{status,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
-      )
+      #{status,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{refundTime,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkOrder">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
@@ -224,6 +225,9 @@
       <if test="updateTime != null">
         update_time,
       </if>
+      <if test="refundTime != null">
+        refund_time,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="merchantId != null">
@@ -297,6 +301,9 @@
       </if>
       <if test="updateTime != null">
         #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="refundTime != null">
+        #{refundTime,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -384,6 +391,9 @@
       <if test="record.updateTime != null">
         update_time = #{record.updateTime,jdbcType=TIMESTAMP},
       </if>
+      <if test="record.refundTime != null">
+        refund_time = #{record.refundTime,jdbcType=TIMESTAMP},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -415,7 +425,8 @@
       type_id = #{record.typeId,jdbcType=INTEGER},
       status = #{record.status,jdbcType=INTEGER},
       create_time = #{record.createTime,jdbcType=TIMESTAMP},
-      update_time = #{record.updateTime,jdbcType=TIMESTAMP}
+      update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      refund_time = #{record.refundTime,jdbcType=TIMESTAMP}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -495,6 +506,9 @@
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
+      <if test="refundTime != null">
+        refund_time = #{refundTime,jdbcType=TIMESTAMP},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -523,7 +537,8 @@
       type_id = #{typeId,jdbcType=INTEGER},
       status = #{status,jdbcType=INTEGER},
       create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      refund_time = #{refundTime,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=BIGINT}
   </update>
 </mapper>

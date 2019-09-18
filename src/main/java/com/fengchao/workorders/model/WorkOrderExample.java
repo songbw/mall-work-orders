@@ -1714,6 +1714,66 @@ public class WorkOrderExample {
             addCriterion("update_time not between", value1, value2, "updateTime");
             return (Criteria) this;
         }
+
+        public Criteria andRefundTimeIsNull() {
+            addCriterion("refund_time is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeIsNotNull() {
+            addCriterion("refund_time is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeEqualTo(Date value) {
+            addCriterion("refund_time =", value, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeNotEqualTo(Date value) {
+            addCriterion("refund_time <>", value, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeGreaterThan(Date value) {
+            addCriterion("refund_time >", value, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeGreaterThanOrEqualTo(Date value) {
+            addCriterion("refund_time >=", value, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeLessThan(Date value) {
+            addCriterion("refund_time <", value, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeLessThanOrEqualTo(Date value) {
+            addCriterion("refund_time <=", value, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeIn(List<Date> values) {
+            addCriterion("refund_time in", values, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeNotIn(List<Date> values) {
+            addCriterion("refund_time not in", values, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeBetween(Date value1, Date value2) {
+            addCriterion("refund_time between", value1, value2, "refundTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTimeNotBetween(Date value1, Date value2) {
+            addCriterion("refund_time not between", value1, value2, "refundTime");
+            return (Criteria) this;
+        }
     }
 
     public static class Criteria extends GeneratedCriteria {
