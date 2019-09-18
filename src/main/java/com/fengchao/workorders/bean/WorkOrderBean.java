@@ -63,4 +63,7 @@ public class WorkOrderBean {
     @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
     private Date updateTime;
 
+    @ApiModelProperty(value="退款完成时间", example="2019-06-16 11:11:11",required=false)
+    private Date refundTime;
+
 }

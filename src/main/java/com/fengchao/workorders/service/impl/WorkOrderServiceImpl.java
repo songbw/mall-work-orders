@@ -334,7 +334,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         wo.setGuanaitongRefundAmount(refund_amount);
         wo.setGuanaitongTradeNo(trade_no);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-
+        wo.setRefundTime(new Date());
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
