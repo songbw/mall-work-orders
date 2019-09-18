@@ -195,7 +195,7 @@ public class AttachmentController {
     @PostMapping("attachments")
     public IdData createProfile(HttpServletResponse response,
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @RequestBody AttachmentProfileBean data) throws RuntimeException {
+                                            @RequestBody AttachmentProfileBean data) {
 
         System.out.println("create attachment enter");
         IdData result = new IdData();

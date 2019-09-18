@@ -334,7 +334,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         wo.setGuanaitongRefundAmount(refund_amount);
         wo.setGuanaitongTradeNo(trade_no);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-
+        wo.setRefundTime(new Date());
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
@@ -375,7 +375,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare) throws Exception{
+    public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception{
 
         log.info("sendRefund2GuangAiTong enter : workOrderId = ", workOrderId);
         WorkOrder wo = workOrderDao.selectByPrimaryKey(workOrderId);
@@ -393,7 +393,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         String tradeNo = wo.getTradeNo();
         String appId = wo.gettAppId();
-        Float refundAmount = wo.getRefundAmount();
+        Float refundAmount = (null == refund)?wo.getRefundAmount():refund;
         String reason = wo.getTitle();
         if (null == tradeNo || null == appId || null == refundAmount || null == reason) {
             log.warn("tradeNo, appId, refundAmount or reason are missing ");

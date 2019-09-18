@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.fengchao.workorders.mapper.WorkFlowMapper">
-  <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.WorkFlow">
+<mapper namespace="com.fengchao.workorders.mapper.DefaultAddressMapper">
+  <resultMap id="BaseResultMap" type="com.fengchao.workorders.model.DefaultAddress">
     <id column="id" jdbcType="BIGINT" property="id" />
-    <result column="work_order_id" jdbcType="BIGINT" property="workOrderId" />
-    <result column="status" jdbcType="INTEGER" property="status" />
-    <result column="comments" jdbcType="VARCHAR" property="comments" />
+    <result column="as_default" jdbcType="INTEGER" property="asDefault" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
-    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -70,16 +67,16 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, work_order_id, status, comments, create_time, update_time, created_by, updated_by
+    id, as_default, content, create_time, update_time
   </sql>
-  <select id="selectByExample" parameterType="com.fengchao.workorders.model.WorkFlowExample" resultMap="BaseResultMap">
+  <select id="selectByExample" parameterType="com.fengchao.workorders.model.DefaultAddressExample" resultMap="BaseResultMap">
     select
     <if test="distinct">
       distinct
     </if>
     'true' as QUERYID,
     <include refid="Base_Column_List" />
-    from work_flow
+    from default_address
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
@@ -90,44 +87,39 @@
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from work_flow
+    from default_address
     where id = #{id,jdbcType=BIGINT}
   </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-    delete from work_flow
+    delete from default_address
     where id = #{id,jdbcType=BIGINT}
   </delete>
-  <delete id="deleteByExample" parameterType="com.fengchao.workorders.model.WorkFlowExample">
-    delete from work_flow
+  <delete id="deleteByExample" parameterType="com.fengchao.workorders.model.DefaultAddressExample">
+    delete from default_address
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.fengchao.workorders.model.WorkFlow">
+  <insert id="insert" parameterType="com.fengchao.workorders.model.DefaultAddress">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
       SELECT LAST_INSERT_ID()
     </selectKey>
-    insert into work_flow (work_order_id, status, comments, 
-      create_time, update_time, created_by, 
-      updated_by)
-    values (#{workOrderId,jdbcType=BIGINT}, #{status,jdbcType=INTEGER}, #{comments,jdbcType=VARCHAR}, 
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{createdBy,jdbcType=VARCHAR}, 
-      #{updatedBy,jdbcType=VARCHAR})
+    insert into default_address (as_default, content, create_time, 
+      update_time)
+    values (#{asDefault,jdbcType=INTEGER}, #{content,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="com.fengchao.workorders.model.WorkFlow">
+  <insert id="insertSelective" parameterType="com.fengchao.workorders.model.DefaultAddress">
     <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
       SELECT LAST_INSERT_ID()
     </selectKey>
-    insert into work_flow
+    insert into default_address
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="workOrderId != null">
-        work_order_id,
+      <if test="asDefault != null">
+        as_default,
       </if>
-      <if test="status != null">
-        status,
-      </if>
-      <if test="comments != null">
-        comments,
+      <if test="content != null">
+        content,
       </if>
       <if test="createTime != null">
         create_time,
@@ -135,22 +127,13 @@
       <if test="updateTime != null">
         update_time,
       </if>
-      <if test="createdBy != null">
-        created_by,
-      </if>
-      <if test="updatedBy != null">
-        updated_by,
-      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="workOrderId != null">
-        #{workOrderId,jdbcType=BIGINT},
+      <if test="asDefault != null">
+        #{asDefault,jdbcType=INTEGER},
       </if>
-      <if test="status != null">
-        #{status,jdbcType=INTEGER},
-      </if>
-      <if test="comments != null">
-        #{comments,jdbcType=VARCHAR},
+      <if test="content != null">
+        #{content,jdbcType=VARCHAR},
       </if>
       <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},
@@ -158,34 +141,25 @@
       <if test="updateTime != null">
         #{updateTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="createdBy != null">
-        #{createdBy,jdbcType=VARCHAR},
-      </if>
-      <if test="updatedBy != null">
-        #{updatedBy,jdbcType=VARCHAR},
-      </if>
     </trim>
   </insert>
-  <select id="countByExample" parameterType="com.fengchao.workorders.model.WorkFlowExample" resultType="java.lang.Long">
-    select count(*) from work_flow
+  <select id="countByExample" parameterType="com.fengchao.workorders.model.DefaultAddressExample" resultType="java.lang.Long">
+    select count(*) from default_address
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </select>
   <update id="updateByExampleSelective" parameterType="map">
-    update work_flow
+    update default_address
     <set>
       <if test="record.id != null">
         id = #{record.id,jdbcType=BIGINT},
       </if>
-      <if test="record.workOrderId != null">
-        work_order_id = #{record.workOrderId,jdbcType=BIGINT},
+      <if test="record.asDefault != null">
+        as_default = #{record.asDefault,jdbcType=INTEGER},
       </if>
-      <if test="record.status != null">
-        status = #{record.status,jdbcType=INTEGER},
-      </if>
-      <if test="record.comments != null">
-        comments = #{record.comments,jdbcType=VARCHAR},
+      <if test="record.content != null">
+        content = #{record.content,jdbcType=VARCHAR},
       </if>
       <if test="record.createTime != null">
         create_time = #{record.createTime,jdbcType=TIMESTAMP},
@@ -193,42 +167,30 @@
       <if test="record.updateTime != null">
         update_time = #{record.updateTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="record.createdBy != null">
-        created_by = #{record.createdBy,jdbcType=VARCHAR},
-      </if>
-      <if test="record.updatedBy != null">
-        updated_by = #{record.updatedBy,jdbcType=VARCHAR},
-      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
   </update>
   <update id="updateByExample" parameterType="map">
-    update work_flow
+    update default_address
     set id = #{record.id,jdbcType=BIGINT},
-      work_order_id = #{record.workOrderId,jdbcType=BIGINT},
-      status = #{record.status,jdbcType=INTEGER},
-      comments = #{record.comments,jdbcType=VARCHAR},
+      as_default = #{record.asDefault,jdbcType=INTEGER},
+      content = #{record.content,jdbcType=VARCHAR},
       create_time = #{record.createTime,jdbcType=TIMESTAMP},
-      update_time = #{record.updateTime,jdbcType=TIMESTAMP},
-      created_by = #{record.createdBy,jdbcType=VARCHAR},
-      updated_by = #{record.updatedBy,jdbcType=VARCHAR}
+      update_time = #{record.updateTime,jdbcType=TIMESTAMP}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
   </update>
-  <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.WorkFlow">
-    update work_flow
+  <update id="updateByPrimaryKeySelective" parameterType="com.fengchao.workorders.model.DefaultAddress">
+    update default_address
     <set>
-      <if test="workOrderId != null">
-        work_order_id = #{workOrderId,jdbcType=BIGINT},
+      <if test="asDefault != null">
+        as_default = #{asDefault,jdbcType=INTEGER},
       </if>
-      <if test="status != null">
-        status = #{status,jdbcType=INTEGER},
-      </if>
-      <if test="comments != null">
-        comments = #{comments,jdbcType=VARCHAR},
+      <if test="content != null">
+        content = #{content,jdbcType=VARCHAR},
       </if>
       <if test="createTime != null">
         create_time = #{createTime,jdbcType=TIMESTAMP},
@@ -236,24 +198,15 @@
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="createdBy != null">
-        created_by = #{createdBy,jdbcType=VARCHAR},
-      </if>
-      <if test="updatedBy != null">
-        updated_by = #{updatedBy,jdbcType=VARCHAR},
-      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.WorkFlow">
-    update work_flow
-    set work_order_id = #{workOrderId,jdbcType=BIGINT},
-      status = #{status,jdbcType=INTEGER},
-      comments = #{comments,jdbcType=VARCHAR},
+  <update id="updateByPrimaryKey" parameterType="com.fengchao.workorders.model.DefaultAddress">
+    update default_address
+    set as_default = #{asDefault,jdbcType=INTEGER},
+      content = #{content,jdbcType=VARCHAR},
       create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP},
-      created_by = #{createdBy,jdbcType=VARCHAR},
-      updated_by = #{updatedBy,jdbcType=VARCHAR}
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=BIGINT}
   </update>
 </mapper>

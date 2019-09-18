@@ -23,6 +23,9 @@ public class WorkFlowBodyBean {
     @ApiModelProperty(value="流程处理人名称", example="somebody")
     private String operator;
 
+    @ApiModelProperty(value="实际退费金额（元）", example="9.9")
+    private Float refund;
+
     @ApiModelProperty(value="是否处理运费, 0 : 不处理运费", example="0")
     private Integer handleFare;
 

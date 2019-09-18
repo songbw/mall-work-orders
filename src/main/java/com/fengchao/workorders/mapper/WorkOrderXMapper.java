@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
 
 @Mapper
-@Component
+@Component(value = "WorkOrderXMapper")
 public interface WorkOrderXMapper {
 
     /**

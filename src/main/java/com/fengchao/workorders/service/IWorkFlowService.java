@@ -10,19 +10,18 @@ import java.util.List;
 
 public interface IWorkFlowService {
 
-    Long insert(WorkFlow workFlow);
+    Long insert(WorkFlow workFlow) throws Exception;
 
-    void deleteById(long id);
+    void deleteById(long id) throws Exception;
 
-    WorkFlow selectById(long id);
+    WorkFlow selectById(long id) throws Exception;
 
-    void update(WorkFlow workFlow);
+    void update(WorkFlow workFlow) throws Exception;
 
-    List<WorkFlow> selectAll();
 
     PageInfo<WorkFlow> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                  Long workOrderId, Date createTimeStart, Date createTimeEnd);
+                                  Long workOrderId, Date createTimeStart, Date createTimeEnd) throws Exception;
 
-    List<WorkFlow> selectByWorkOrderId(Long workOrderId);
+    List<WorkFlow> selectByWorkOrderId(Long workOrderId, Integer status) throws Exception;
 
 }
