@@ -376,7 +376,7 @@ public class CustomerWorkOrderController {
         try {
             result.id = workOrderService.insert(workOrder);
         } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response,"40006:"+ ex.getMessage());
+            StringUtil.throw400Exp(response,"400006:"+ ex.getMessage());
         }
 
         if (0 == result.id) {
