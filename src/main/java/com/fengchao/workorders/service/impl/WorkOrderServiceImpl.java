@@ -480,4 +480,21 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         log.info("sendRefund2GuangAiTong success ");
         return guanAiTongNo;
     }
+
+    @Override
+    public List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, Date startTime, Date endTime) throws Exception {
+        List<WorkOrder> workOrderList = null;
+        try {
+            log.info("查询已退款的记录 数据库入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
+            workOrderList =
+                    workOrderDao.selectRefundSuccessOrderDetailIdList(merchantId, startTime, endTime);
+            log.info("查询已退款的记录 数据库返回:{}", JSONUtil.toJsonString(workOrderList));
+        } catch (Exception e) {
+            log.error("查询已退款的记录 异常:{}", e.getMessage(), e);
+
+            throw e;
+        }
+
+        return workOrderList;
+    }
 }

@@ -47,4 +47,14 @@ public interface WorkOrderDao {
      * @return
      */
     Integer selectRefundUserCountByMerchantId(@Param("merchantId") Long merchantId) throws Exception;
+
+    /**
+     * 查询退款成功的记录
+     *
+     * @param merchantId
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<WorkOrder> selectRefundSuccessOrderDetailIdList(Long merchantId, Date startTime, Date endTime);
 }
