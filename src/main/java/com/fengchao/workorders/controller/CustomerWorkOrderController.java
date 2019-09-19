@@ -44,11 +44,83 @@ public class CustomerWorkOrderController {
 
     }
 
-    @ApiModel(value = "流程信息List")
-    private class WorkFlowBeanList implements Serializable {
+    @ApiModel(value = "工单及流程信息")
+    private class WorkFlowBeanList {
+        @ApiModelProperty(value="所属订单ID", example="111",required=true)
+        public String orderId;
+        @ApiModelProperty(value="凤巢appID", example="10",required=true)
+        public String iAppId;
+
+        @ApiModelProperty(value="第三方appID", example="20110843",required=true)
+        public String tAppId;
+
+        @ApiModelProperty(value="退货商品数", example="1",required=true)
+        public Integer returnedNum;
+
+        @ApiModelProperty(value="申请退款金额", example="1.1",required=false)
+        public Float refundAmount;
+
+        @ApiModelProperty(value="实际退款金额", example="1.1",required=false)
+        public Float realRefundAmount;
+        @ApiModelProperty(value="商户ID", example="111",required=false)
+        public Long merchantId;
+
+        @ApiModelProperty(value="工单标题", example="退货000011",required=true)
+        public String title;
+
+        @ApiModelProperty(value="工单描述", example="退货000011",required=false)
+        public String description;
+
+        @ApiModelProperty(value="客户ID", example="123",required=false)
+        public String receiverId;
+
+        @ApiModelProperty(value="客户名称", example="李四",required=false)
+        public String receiverName;
+
+        @ApiModelProperty(value="客户电话", example="13345678901",required=false)
+        public String receiverPhone;
+
+        @ApiModelProperty(value="工单状态码", example="1",required=false)
+        public Integer status;
+
+        @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
+        public Date updateTime;
+
+        @ApiModelProperty(value="退款完成时间", example="2019-06-16 11:11:11",required=false)
+        public Date refundTime;
+
+        @ApiModelProperty(value="快递单号", example="2019111111",required=false)
+        public String expressNo;
+
+        @ApiModelProperty(value="工单类型ID", example="123",required=true)
+        public Integer typeId;
+
         @ApiModelProperty(value = "流程信息List", example = " ", required = true)
         public List<WorkFlowBean> result;
 
+    }
+
+    private WorkFlowBeanList fillFlowBeans(WorkOrder a, List<WorkFlowBean> list){
+        WorkFlowBeanList b = new WorkFlowBeanList();
+        b.result = list;
+        b.description = a.getDescription();
+        b.orderId = a.getOrderId();
+        b.expressNo = a.getExpressNo();
+        b.iAppId = a.getiAppId();
+        b.merchantId = a.getMerchantId();
+        b.realRefundAmount = a.getGuanaitongRefundAmount();
+        b.receiverId = a.getReceiverId();
+        b.receiverName = a.getReceiverName();
+        b.receiverPhone = a.getReceiverPhone();
+        b.refundAmount = a.getRefundAmount();
+        b.returnedNum = a.getReturnedNum();
+        b.refundTime = a.getRefundTime();
+        b.status = a.getStatus();
+        b.tAppId = a.gettAppId();
+        b.title = a.getTitle();
+        b.updateTime = a.getUpdateTime();
+        b.typeId = a.getTypeId();
+        return b;
     }
 
     @ApiModel(value = "工单信息ID")
@@ -65,7 +137,7 @@ public class CustomerWorkOrderController {
         this.workFlowService = workFlowService;
     }
 
-    @ApiOperation(value = "APP查询工单流程", notes = "查询工单流程信息")
+    @ApiOperation(value = "APP查询工单流程", notes = "APP查询工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_flows")
@@ -117,8 +189,8 @@ public class CustomerWorkOrderController {
             result.add(b);
         }
         result.add(workFlowZero);
-        WorkFlowBeanList retResult = new WorkFlowBeanList();
-        retResult.result = result;
+        WorkFlowBeanList retResult = fillFlowBeans(workOrder, result);
+
         response.setStatus(MyErrorMap.e200.getCode());
 
         log.info("app side queryWorkFlows success");
@@ -167,12 +239,20 @@ public class CustomerWorkOrderController {
         }
 
         Integer orderStatus = workOrder.getStatus();
-        if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
-            StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
+        if (!WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus)
+                && !WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)) {
+            String msg;
+            if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)){
+                msg = "工单已经处理完成";
+            }else{
+                msg = "工单必须审核通过才能进行处理";
+            }
+            StringUtil.throw400Exp(response, "400007:"+msg);
             return result;
         }
 
-        if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
+        if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty() ||
+            !WorkOrderStatusType.HANDLING.getCode().equals(nextStatus)) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
         }
@@ -180,7 +260,6 @@ public class CustomerWorkOrderController {
         if (null != expressNo){
             workOrder.setExpressNo(expressNo);
         }
-
 
         WorkFlow workFlow = new WorkFlow();
 
@@ -197,7 +276,6 @@ public class CustomerWorkOrderController {
         if (!operator.isEmpty()) {
             workFlow.setCreatedBy(operator);
         }
-
 
         try {
             result.id = workFlowService.insert(workFlow);
@@ -227,6 +305,7 @@ public class CustomerWorkOrderController {
         return result;
 
     }
+
 
     @ApiOperation(value = "APP创建工单信息", notes = "创建工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })

@@ -109,7 +109,7 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
         if (null != status){
             criteria.andStatusEqualTo(status);
         }
-        example.setOrderByClause("status DESC");
+        example.setOrderByClause("update_time DESC");
         try {
             return workFlowMapper.selectByExample(example);
         }catch (Exception e){
