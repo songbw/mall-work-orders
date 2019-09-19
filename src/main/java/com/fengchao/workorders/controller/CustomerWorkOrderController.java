@@ -130,6 +130,24 @@ public class CustomerWorkOrderController {
 
     }
 
+
+    @ApiModel(value = "主订单售后信息")
+    private class ParentOrderRefundData implements Serializable {
+        @ApiModelProperty(value = "主订单Id", example = "1", required = true)
+        public Integer parentOrderId;
+
+        @ApiModelProperty(value = "主订单付款金额(分)", example = "1", required = true)
+        public Integer paymentAmount;
+
+        @ApiModelProperty(value = "主订单退款金额(分)", example = "1", required = true)
+        public int refundAmount;
+
+        @ApiModelProperty(value = "主订单退款金额(分)", example = "1", required = true)
+        public int realRefundAmount;
+
+        public List<OrderRefundBean> result;
+    }
+
     @Autowired
     public CustomerWorkOrderController(WorkFlowServiceImpl workFlowService,WorkOrderServiceImpl workOrderService
                                         ) {
@@ -741,4 +759,78 @@ public class CustomerWorkOrderController {
 
     }
 
+    @ApiOperation(value = "APP查询订单售后详情", notes = "APP查询订单售后详情")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("orders/allRefunds")
+    public ResultObject<ParentOrderRefundData> appQueryParentOrderRefund(HttpServletResponse response,
+                                                      @ApiParam(value="子订单ID",required=true)@RequestParam String orderId
+    ) {
+
+        ParentOrderRefundData result = new ParentOrderRefundData();
+        response.setStatus(MyErrorMap.e400.getCode());
+
+        if (null == orderId || orderId.isEmpty()){
+            return new ResultObject<>(400002,"子订单号不可省略",null);
+        }
+
+        JSONObject json;
+        try {
+            json = workOrderService.getOrderInfo(null, orderId, 0L);
+        }catch (Exception e) {
+            return new ResultObject<>(400007,e.getMessage(),null);
+        }
+        if (null == json) {
+            return new ResultObject<>(400007,"searchOrder失败",null);
+        }
+
+        Integer parentOrderId = json.getInteger("id");
+        if (null == parentOrderId) {
+            return new ResultObject<>(400008,"searchOrder, 获取id失败",null);
+        } else {
+            result.parentOrderId = parentOrderId;
+        }
+
+        Integer paymentAmount = json.getInteger("paymentAmount");
+        if (null == paymentAmount) {
+            return new ResultObject<>(400008,"searchOrder,  paymentAmount is null",null);
+        } else {
+            result.paymentAmount = paymentAmount;
+        }
+
+        List<WorkOrder> workOrders;
+        try {
+            workOrders = workOrderService.selectByParentOrderId(parentOrderId);
+        }catch (Exception e) {
+            return new ResultObject<>(400006,e.getMessage(),null);
+        }
+
+        List<OrderRefundBean> list = new ArrayList<>();
+        result.result = list;
+        response.setStatus(MyErrorMap.e200.getCode());
+        if (null == workOrders || 0 == workOrders.size()){
+            result.realRefundAmount = 0;
+            result.refundAmount = 0;
+            return new ResultObject<>(200,"success",result);
+        }
+
+        for(WorkOrder a : workOrders){
+            OrderRefundBean b = new OrderRefundBean();
+            b.setOrderGoodsNum(a.getOrderGoodsNum());
+            b.setOrderId(a.getOrderId());
+            b.setRefundAmount(a.getRefundAmount());
+            b.setReturnedNum(a.getReturnedNum());
+            b.setRealRefundAmount(a.getGuanaitongRefundAmount());
+            if (null != b.getRefundAmount()){
+                result.refundAmount += (int)(b.getRefundAmount()*100);
+            }
+            if (null != b.getRealRefundAmount()){
+                result.realRefundAmount += (int)(b.getRealRefundAmount()*100);
+            }
+            list.add(b);
+        }
+
+        return new ResultObject<>(200,"success",result);
+
+    }
 }
