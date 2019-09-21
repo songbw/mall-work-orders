@@ -714,24 +714,26 @@ public class WorkOrderController {
      * 获取已退款的子订单id集合
      *
      * @param merchantId
-     * @param startTime
-     * @param endTime
+     * @param startTime yyyy-MM-dd HH:mm:ss
+     * @param endTime yyyy-MM-dd HH:mm:ss
      * @return
      */
     @ApiOperation(value = "获取已退款的子订单id集合", notes = "获取已退款的子订单id集合")
     @ResponseStatus(code = HttpStatus.CREATED)
     @GetMapping("refund/query/refunded")
     public ResultObject<List<String>> queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
-                                                                     @RequestParam(value = "startTime") @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss") Date startTime,
-                                                                     @RequestParam(value = "endTime") @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")  Date endTime) {
+                                                                     @RequestParam(value = "startTime") String startTime,
+                                                                     @RequestParam(value = "endTime") String endTime) {
         // 返回值
         ResultObject<List<String>> resultObject = new ResultObject<>(500, "获取已退款的子订单id集合默认错误", null);
 
         log.info("获取已退款的子订单id集合 入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
 
         try {
+            Date startTimeDate = DateUtil.parseDateTime(startTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
+            Date endTimeDate = DateUtil.parseDateTime(endTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
             List<WorkOrder> workOrderList =
-                    workOrderService.querySuccessRefundOrderDetailIdList(merchantId, startTime, endTime);
+                    workOrderService.querySuccessRefundOrderDetailIdList(merchantId, startTimeDate, endTimeDate);
 
             List<String> idList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(workOrderList)) {
