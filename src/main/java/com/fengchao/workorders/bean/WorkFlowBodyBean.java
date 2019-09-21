@@ -29,4 +29,7 @@ public class WorkFlowBodyBean {
     @ApiModelProperty(value="是否处理运费, 0 : 不处理运费", example="0")
     private Integer handleFare;
 
+    @ApiModelProperty(value="快递单号", example="2019111111",required=false)
+    private String expressNo;
+
 }

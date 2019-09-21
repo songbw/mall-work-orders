@@ -26,6 +26,8 @@ public interface IWorkOrderService {
 
     List<WorkOrder> selectByOrderId(String orderId) throws Exception;
 
+    List<WorkOrder> selectByParentOrderId(Integer parentOrderId) throws Exception;
+
     List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd) throws Exception;
 
     /**

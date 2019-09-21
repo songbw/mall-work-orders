@@ -1774,6 +1774,76 @@ public class WorkOrderExample {
             addCriterion("refund_time not between", value1, value2, "refundTime");
             return (Criteria) this;
         }
+
+        public Criteria andExpressNoIsNull() {
+            addCriterion("express_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoIsNotNull() {
+            addCriterion("express_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoEqualTo(String value) {
+            addCriterion("express_no =", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoNotEqualTo(String value) {
+            addCriterion("express_no <>", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoGreaterThan(String value) {
+            addCriterion("express_no >", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoGreaterThanOrEqualTo(String value) {
+            addCriterion("express_no >=", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoLessThan(String value) {
+            addCriterion("express_no <", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoLessThanOrEqualTo(String value) {
+            addCriterion("express_no <=", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoLike(String value) {
+            addCriterion("express_no like", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoNotLike(String value) {
+            addCriterion("express_no not like", value, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoIn(List<String> values) {
+            addCriterion("express_no in", values, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoNotIn(List<String> values) {
+            addCriterion("express_no not in", values, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoBetween(String value1, String value2) {
+            addCriterion("express_no between", value1, value2, "expressNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andExpressNoNotBetween(String value1, String value2) {
+            addCriterion("express_no not between", value1, value2, "expressNo");
+            return (Criteria) this;
+        }
     }
 
     public static class Criteria extends GeneratedCriteria {

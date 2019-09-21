@@ -121,6 +121,24 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
+    public List<WorkOrder> selectByParentOrderId(Integer parentOrderId) throws Exception{
+        log.info("selectByParentOrderId param {}",parentOrderId);
+        List<WorkOrder> list;
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andParentOrderIdEqualTo(parentOrderId);
+        criteria.andOrderIdIsNotNull();
+        criteria.andStatusNotEqualTo(WorkOrderStatusType.REJECT.getCode());
+        try {
+            list = mapper.selectByExample(example);
+        } catch (Exception ex) {
+            throw new Exception(ex);
+        }
+        log.info("selectByParentOrderId success {}",JSON.toJSONString(list));
+        return list;
+    }
+
+    @Override
     public int countReturn(Date createTimeStart, Date createTimeEnd) {
         int typeId;
 
@@ -247,7 +265,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
 
             List<JSONObject> list = JSONObject.parseArray(JSON.toJSONString(theList), JSONObject.class);
-            log.info("searchOrder: orderInfo  {}" + JSON.toJSONString(list.get(0)));
+            log.info("searchOrder: success");
             return list.get(0);
 
         }

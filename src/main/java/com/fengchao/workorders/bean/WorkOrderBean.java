@@ -66,4 +66,7 @@ public class WorkOrderBean {
     @ApiModelProperty(value="退款完成时间", example="2019-06-16 11:11:11",required=false)
     private Date refundTime;
 
+    @ApiModelProperty(value="快递单号", example="2019111111",required=false)
+    private String expressNo;
+
 }

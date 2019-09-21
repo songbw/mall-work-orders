@@ -36,7 +36,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     @Override
     public int insert(WorkOrder record) {
-        return mapper.insert(record);
+        return mapper.insertSelective(record);
     }
 
     @Override
