@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 //import org.slf4j.LoggerFactory;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -721,8 +722,8 @@ public class WorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @GetMapping("refund/query/refunded")
     public ResultObject<List<String>> queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
-                                                                     @RequestParam(value = "startTime") Date startTime,
-                                                                     @RequestParam(value = "endTime") Date endTime) {
+                                                                     @RequestParam(value = "startTime") @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss") Date startTime,
+                                                                     @RequestParam(value = "endTime") @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")  Date endTime) {
         // 返回值
         ResultObject<List<String>> resultObject = new ResultObject<>(500, "获取已退款的子订单id集合默认错误", null);
 
