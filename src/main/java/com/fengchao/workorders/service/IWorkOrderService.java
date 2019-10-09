@@ -1,6 +1,7 @@
 package com.fengchao.workorders.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.fengchao.workorders.bean.AggPayNotifyBean;
 import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
@@ -45,6 +46,8 @@ public interface IWorkOrderService {
     JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId) throws Exception;
 
     String handleNotify(GuanAiTongNotifyBean backBean) throws Exception;
+
+    String handleAggPaysNotify(AggPayNotifyBean bean) throws Exception;
 
     /**
      * 查询退款成功的子订单

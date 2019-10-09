@@ -168,13 +168,13 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     @Override
     public WorkOrder selectByRefundNo(String refundNo) {
-        log.info("selectByRefundNo: " + refundNo);
+        log.info("selectByOuterRefundNo: " + refundNo);
         if (null == refundNo) {
             return null;
         }
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
-        criteria.andRefundNoEqualTo(refundNo);
+        criteria.andGuanaitongTradeNoEqualTo(refundNo);
 
         try {
             List<WorkOrder> list = mapper.selectByExample(example);

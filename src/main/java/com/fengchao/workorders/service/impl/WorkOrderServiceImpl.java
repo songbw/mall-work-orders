@@ -3,10 +3,12 @@ package com.fengchao.workorders.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.fengchao.workorders.bean.AggPayNotifyBean;
 import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
 import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.bean.QueryOrderBodyBean;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.feign.IAggPayClient;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
@@ -313,6 +315,72 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         return list.getJSONObject(0);
         */
+    }
+
+    @Override
+    public String handleAggPaysNotify(AggPayNotifyBean bean) {
+
+        //JSONObject json = JSON.parseObject(body);
+        String result = "fail";
+        String outerRefundNo = bean.getOutRefundNo();//json.getString("outRefundNo");
+        // tradeNo = bean.getSourceOutTradeNo();//json.getString("sourceOutTradeNo");//
+        //Float refundAmount = json.getFloat("totalFee");//Float.valueOf(bean.getRefundFee());
+        String refundTimeStr = bean.getTradeDate();//json.getString("tradeDate");//
+        Integer status = bean.getStatus();//json.getInteger("status");//
+        String refundFeeStr = bean.getRefundFee();//json.getFloat("refundFee");
+
+        if (null == status) {
+            log.error("aggpay notify post body is wrong, status is null");
+            return result;
+        }
+        if (null == outerRefundNo || outerRefundNo.isEmpty()) {
+            log.error("aggpay notify post body is wrong, outerRefundNo is null");
+            return result;
+        }
+        //if ( null == tradeNo || tradeNo.isEmpty()) {
+        ////    log.error("aggpays notify post body is wrong, tradeNo is null");
+         //   return result;
+        //}
+        if (null == refundFeeStr) {
+            log.error("aggpay notify post body is wrong, refundFee is null");
+            return result;
+        }
+        WorkOrder wo = workOrderDao.selectByRefundNo(outerRefundNo);
+        if (null == wo) {
+            log.warn("handle notify, but not found work-order by refundNo: "+outerRefundNo);
+            return result;
+        }
+
+        if (1 != status && 3 != status){//2:退款失败, 1:成功； 3：部分成功
+            log.error("聚合支付退款异常,不记录退款时间");
+            return "success";
+        }
+
+        Float refundFee = Float.valueOf(refundFeeStr);
+        refundFee = refundFee/100;
+        if (0 > refundFee) {
+            log.warn("notify parameters refund_amount abnormal");
+            return result;
+        }
+
+        wo.setGuanaitongRefundAmount(refundFee);
+        wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
+        if (null != refundTimeStr && !refundTimeStr.isEmpty()) {
+            try {
+                wo.setRefundTime(StringUtil.String2Date(refundTimeStr));
+            }catch (Exception ex){
+                log.error("convert refundTime error {}",ex.getMessage());
+            }
+        }
+        try {
+            workOrderDao.updateByPrimaryKey(wo);
+        } catch (Exception ex) {
+            log.error("sql error when insert work-order " + ex.getMessage());
+            return result;
+        }
+        log.info("AggPays refund notify handle success");
+
+        return "success";
     }
 
     @Override

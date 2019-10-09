@@ -4,6 +4,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Date;
@@ -146,6 +149,22 @@ public class StringUtil {
         }
     }
 
+    public static String getTimeStampRandomStr(){
+        Long timeStampMs = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
+        Long timeStampS = timeStampMs/1000;
+        String timeStamp = timeStampS.toString();
+        Random random = new Random();
 
+        String triRandom = random.nextInt(1000) + "";
+        StringBuilder sb = new StringBuilder();
+        int randLength = triRandom.length();
+        if (randLength < 3) {
+            for (int i = 1; i <= 3 - randLength; i++)
+                sb.append("0");
+        }
+        sb.append(triRandom);
+        return timeStamp + sb.toString();
+
+    }
 
 }

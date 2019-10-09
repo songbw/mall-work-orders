@@ -1,8 +1,10 @@
 package com.fengchao.workorders.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.feign.IAggPayClient;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
 import com.fengchao.workorders.service.impl.*;
@@ -11,6 +13,7 @@ import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
+import io.swagger.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -21,6 +24,8 @@ import org.springframework.beans.BeanUtils;
 import javax.servlet.http.HttpServletResponse;
 //import java.io.IOException;
 import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,6 +41,7 @@ public class WorkFlowController {
 
     private WorkFlowServiceImpl workFlowService;
     private WorkOrderServiceImpl workOrderService;
+    private IAggPayClient aggPayClient;
 
     @ApiModel(value = "工单流程信息ID")
     private class IdData implements Serializable {
@@ -46,10 +52,12 @@ public class WorkFlowController {
 
     @Autowired
     public WorkFlowController(WorkOrderServiceImpl workOrderService,
+                              IAggPayClient aggPayClient,
                             WorkFlowServiceImpl workFlowService
                              ) {
         this.workFlowService = workFlowService;
         this.workOrderService = workOrderService;
+        this.aggPayClient = aggPayClient;
     }
 
     /*
@@ -228,10 +236,16 @@ public class WorkFlowController {
         }
 
         String iAppId = workOrder.getiAppId();
-        String tAppId = workOrder.gettAppId();
+        //String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
-        if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
+        if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)
+                || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
+            return result;
+        }
+        if (WorkOrderStatusType.REFUNDING.getCode().equals(orderStatus)
+                && (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus) ||WorkOrderStatusType.CLOSED.getCode().equals(nextStatus))) {
+            StringUtil.throw400Exp(response, "40000a:工单状态已经为退款处理中");
             return result;
         }
 
@@ -241,7 +255,7 @@ public class WorkFlowController {
         }
 
         if (null != refund && 0 < refund){
-            if (workOrder.getRefundAmount() < refund){
+            if (workOrder.getRefundAmount() + workOrder.getFare() < refund){
                 StringUtil.throw400Exp(response, "400008:退款金额超出合理范围");
                 return result;
             }
@@ -267,15 +281,20 @@ public class WorkFlowController {
 
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
         boolean isGat = false;
-        if (null != configIAppIds && !configIAppIds.isEmpty() && configIAppIds.equals(iAppId)) {
-            isGat = true;
+        boolean isAggPay = false;
+        if (null != configIAppIds && !configIAppIds.isEmpty()){
+            if (configIAppIds.equals(iAppId)) {
+                isGat = true;
+            } else if (iAppId.equals(Constant.AGGPAY_APPID_VALUE)){
+                isAggPay = true;
+            }
         }
-
+        log.info("create WorkFlow: isGat={}, isAggPay={}",isGat, isAggPay);
         if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
-             (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
+             ((WorkOrderStatusType.CLOSED.getCode().equals(nextStatus) || WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus)) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
-            if (isGat && null != tAppId) {
+            if (isGat) {
                 String guanAiTongTradeNo;
                 try {
                     guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare, refund);
@@ -293,11 +312,50 @@ public class WorkFlowController {
                     } else {
                         if (guanAiTongTradeNo.contains("Error:")) {
                             String errMsg = guanAiTongTradeNo.replace(':', '-');
-                            StringUtil.throw400Exp(response, "400009: " + errMsg);
+                            StringUtil.throw400Exp(response, "400009:" + errMsg);
                             return result;
                         }
                     }
                 }
+            } else if (isAggPay){
+                AggPayRefundBean aBean = new AggPayRefundBean();
+                aBean.setOrderNo(workOrder.getTradeNo());
+                NumberFormat formatter = new DecimalFormat("0");
+                aBean.setRefundFee(formatter.format(100*refund));
+                aBean.setOutRefundNo(iAppId+StringUtil.getTimeStampRandomStr());
+                aBean.setMerchantCode(workOrder.getMerchantId().toString());
+                aBean.setNotifyUrl(Constant.AGGPAY_NOTIFY_URL);
+                ResultObject<String> aggpayRst = null;
+                log.info("try send to aggpay {}",JSON.toJSONString(aBean));
+                try {
+                    aggpayRst = aggPayClient.postAggPayRefund(aBean);
+                }catch (Exception e){
+                    log.error("access aggpays failed {}",e.getMessage());
+                    StringUtil.throw400Exp(response,"40000a:access aggpays failed"+e.getMessage());
+                }
+                log.info("got response from aggpays: {}",JSON.toJSONString(aggpayRst));
+                if (null == aggpayRst || null == aggpayRst.getCode() || null == aggpayRst.getMsg()){
+                    StringUtil.throw400Exp(response,"40000b:access aggPays failed, got null response");
+                }
+                if (200 != aggpayRst.getCode()){
+                    StringUtil.throw400Exp(response,"40000c:access aggPays failed, "+aggpayRst.getMsg());
+                }
+
+                if (null != aggpayRst.getData()) {
+                    //JSONObject json = JSON.parseObject(aggpayRst.getData());
+                    //String aggpayRefundNo = json.getString("refundNo");
+                    String aggpayRefundNo = aBean.getOutRefundNo();
+                    if (null != aggpayRefundNo && !aggpayRefundNo.isEmpty()){
+                        try{
+                            workOrder.setGuanaitongTradeNo(aggpayRefundNo);
+                            workOrder.setUpdateTime(new Date());
+                            workOrderService.update(workOrder);
+                        }catch (Exception e){
+                            StringUtil.throw400Exp(response,"400006:work_order update failed "+e.getMessage());
+                        }
+                    }
+                }
+
             }
         }
 

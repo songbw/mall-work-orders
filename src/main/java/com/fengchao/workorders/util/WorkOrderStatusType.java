@@ -6,7 +6,8 @@ public enum WorkOrderStatusType {
     ACCEPTED(3, "审核通过"),
     REJECT(4, "审核有问题"),
     HANDLING(5, "处理中"),
-    CLOSED(6, "处理完成");
+    CLOSED(6, "处理完成"),
+    REFUNDING(7, "退款处理中");
 
     private Integer code;
     private String msg;
