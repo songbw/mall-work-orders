@@ -241,7 +241,7 @@ public class WorkFlowController {
         }
 
         if (null != refund && 0 < refund){
-            if (workOrder.getRefundAmount() < refund){
+            if (workOrder.getRefundAmount() + workOrder.getFare() < refund){
                 StringUtil.throw400Exp(response, "400008:退款金额超出合理范围");
                 return result;
             }
