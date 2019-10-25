@@ -2,27 +2,27 @@ package com.fengchao.workorders.controller;
 
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.model.*;
-//import com.fengchao.workorders.service.TokenAuthenticationService;
 import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.BeanUtils;
-
-import javax.servlet.http.HttpServletResponse;
-//import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+//import com.fengchao.workorders.service.TokenAuthenticationService;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+
+//import java.io.IOException;
 
 @Slf4j
 @Api(tags="AttachmentAPI", description = "附件管理相关", produces = "application/json;charset=UTF-8")
@@ -158,7 +158,7 @@ public class AttachmentController {
                 dateCreateTimeEnd = StringUtil.String2Date(createTimeEnd);
             }
         } catch (ParseException ex) {
-            StringUtil.throw400Exp(response,"400002:createTime format is wrong");
+            StringUtil.throw400Exp(response,"400002:createTime format is wrong "+ex.getMessage());
         }
 
         if (null != authentication) {

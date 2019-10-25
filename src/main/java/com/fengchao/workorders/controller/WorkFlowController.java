@@ -24,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import javax.servlet.http.HttpServletResponse;
 //import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -321,7 +322,9 @@ public class WorkFlowController {
                 AggPayRefundBean aBean = new AggPayRefundBean();
                 aBean.setOrderNo(workOrder.getTradeNo());
                 NumberFormat formatter = new DecimalFormat("0");
-                aBean.setRefundFee(formatter.format(100*refund));
+                BigDecimal dec100f = new BigDecimal("100");
+                BigDecimal decRefund = new BigDecimal(refund);
+                aBean.setRefundFee(formatter.format(decRefund.multiply(dec100f).floatValue()));
                 aBean.setOutRefundNo(iAppId+StringUtil.getTimeStampRandomStr());
                 aBean.setMerchantCode(workOrder.getMerchantId().toString());
                 aBean.setNotifyUrl(Constant.AGGPAY_NOTIFY_URL);

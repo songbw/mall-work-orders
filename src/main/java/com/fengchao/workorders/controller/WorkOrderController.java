@@ -167,6 +167,8 @@ public class WorkOrderController {
                                                    @ApiParam(value="客户名称")@RequestParam(required=false) String receiverName,
                                                    @ApiParam(value="工单类型ID")@RequestParam(required=false) Integer typeId,
                                                    @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
+                                                   @ApiParam(value="退款完成开始日期")@RequestParam(required=false) String refundTimeStart,
+                                                   @ApiParam(value="退款完成结束日期")@RequestParam(required=false) String refundTimeEnd,
                                                    @ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
                                                    @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd,
                                                    @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status
@@ -174,6 +176,8 @@ public class WorkOrderController {
 
         java.util.Date dateCreateTimeStart ;
         java.util.Date dateCreateTimeEnd ;
+        java.util.Date dateRefundTimeStart ;
+        java.util.Date dateRefundTimeEnd ;
         int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
         int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
         //String username = JwtTokenUtil.getUsername(authentication);
@@ -189,6 +193,8 @@ public class WorkOrderController {
         try {
             dateCreateTimeStart = getDateType(timeStart,false);
             dateCreateTimeEnd = getDateType(timeEnd,true);
+            dateRefundTimeStart = getDateType(refundTimeStart,false);
+            dateRefundTimeEnd = getDateType(refundTimeEnd,true);
         } catch (Exception e) {
             StringUtil.throw400Exp(response, "400005:"+e.getMessage());
             return null;
@@ -205,7 +211,7 @@ public class WorkOrderController {
         try {
             pages = workOrderService.selectPage(index, limit, "id", "DESC",
                     title, receiverId, receiverName, receiverPhone, orderId, typeId, merchant,
-                    status, dateCreateTimeStart, dateCreateTimeEnd);
+                    status, dateCreateTimeStart, dateCreateTimeEnd,dateRefundTimeStart, dateRefundTimeEnd);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

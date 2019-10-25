@@ -23,7 +23,7 @@ public interface IWorkOrderService {
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,
                                    String title, String receiverId, String receiverName, String receiverPhone,
                                    String orderId, Integer typeId, Long merchantId,Integer status,
-                                   Date createTimeStart, Date createTimeEnd) throws Exception;
+                                   Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd) throws Exception;
 
     List<WorkOrder> selectByOrderId(String orderId) throws Exception;
 

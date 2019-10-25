@@ -85,51 +85,57 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
                                            String receiverPhone, String receiverName,
                                            String orderId, Long merchantId,
                                            Integer typeId, Integer status,
-                                           Date createTimeStart, Date createTimeEnd
+                                           Date createTimeStart, Date createTimeEnd,
+                                           Date refundTimeBegin, Date refundTimeEnd
                                 ) throws Exception{
 
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
-        WorkOrderExample.Criteria orCriteria = example.createCriteria();
+
         if (null != title) {
             criteria.andTitleLike(title);
-            orCriteria.andTitleLike(title);
         }
         if (null != receiverId) {
             criteria.andReceiverIdEqualTo(receiverId);
-            orCriteria.andReceiverIdEqualTo(receiverId);
         }
         if (null != receiverPhone) {
             criteria.andReceiverPhoneEqualTo(receiverPhone);
-            orCriteria.andReceiverPhoneEqualTo(receiverPhone);
         }
         if (null != receiverName) {
             criteria.andReceiverNameLike(receiverName);
-            orCriteria.andReceiverNameLike(receiverName);
         }
         if (null != orderId) {
             criteria.andOrderIdEqualTo(orderId);
-            orCriteria.andOrderIdEqualTo(orderId);
         }
         if (null != merchantId) {
             criteria.andMerchantIdEqualTo(merchantId);
-            orCriteria.andMerchantIdEqualTo(merchantId);
         }
         if (null != typeId) {
             criteria.andTypeIdEqualTo(typeId);
-            orCriteria.andTypeIdEqualTo(typeId);
         }
         if (null != status) {
             criteria.andStatusEqualTo(status);
-            orCriteria.andStatusEqualTo(status);
         }
 
+        if (null != refundTimeBegin){
+            criteria.andRefundTimeGreaterThanOrEqualTo(refundTimeBegin);
+        }
+        if (null != refundTimeEnd){
+            criteria.andRefundTimeLessThanOrEqualTo(refundTimeEnd);
+        }
+        if (null != createTimeStart){
+            criteria.andCreateTimeGreaterThanOrEqualTo(createTimeStart);
+        }
+        if (null != createTimeEnd){
+            criteria.andCreateTimeLessThanOrEqualTo(createTimeEnd);
+        }
+        /*
         if (null != createTimeStart && null != createTimeEnd) {
             criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
             orCriteria.andCreateTimeEqualTo(createTimeEnd);
             example.or(orCriteria);
             example.or(criteria);
-        }
+        }*/
         example.setOrderByClause(sort + " " + order);
 
         Page pages;

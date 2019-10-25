@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -483,7 +484,13 @@ public class CustomerWorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setReturnedNum(num);
-        workOrder.setRefundAmount(num * workOrder.getSalePrice());
+        if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
+            workOrder.setRefundAmount(0.00f);
+        }else {
+            BigDecimal decSalePrice = new BigDecimal(workOrder.getSalePrice());
+            BigDecimal decNum = new BigDecimal(num);
+            workOrder.setRefundAmount(decSalePrice.multiply(decNum).floatValue());
+        }
         workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
@@ -661,7 +668,11 @@ public class CustomerWorkOrderController {
         PageInfo<WorkOrder> pages;
         try {
             pages = workOrderService.selectPage(index, limit,
-                    "id", "DESC", null, customer, null, null, orderId, null, null, null, null, null);
+                    "id", "DESC", null, customer,
+                    null, null, orderId,
+                    null, null, null,
+                    null, null,
+                    null,null);
         }catch(Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
@@ -821,11 +832,14 @@ public class CustomerWorkOrderController {
             b.setRefundAmount(a.getRefundAmount());
             b.setReturnedNum(a.getReturnedNum());
             b.setRealRefundAmount(a.getGuanaitongRefundAmount());
+            BigDecimal dec100f = new BigDecimal("100");
             if (null != b.getRefundAmount()){
-                result.refundAmount += (int)(b.getRefundAmount()*100);
+                BigDecimal decRefundAmount = new BigDecimal(b.getRefundAmount());
+                result.refundAmount += decRefundAmount.multiply(dec100f).intValue();
             }
             if (null != b.getRealRefundAmount()){
-                result.realRefundAmount += (int)(b.getRealRefundAmount()*100);
+                BigDecimal decRefundAmount = new BigDecimal(b.getRealRefundAmount());
+                result.realRefundAmount += decRefundAmount.multiply(dec100f).intValue();//(int)(b.getRealRefundAmount()*100);
             }
             list.add(b);
         }

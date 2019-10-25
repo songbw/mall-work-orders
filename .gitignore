@@ -18,6 +18,7 @@ $RECYCLE.BIN/
 *.lnk
 
 #VSCode
+.vscode/*
 .classpath
 .factorypath
 .project

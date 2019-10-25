@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 //import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -95,7 +96,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,
                                           String title, String receiverId, String receiverName, String receiverPhone,
                                           String orderId, Integer typeId, Long merchantId,Integer status,
-                                         Date createTimeStart, Date createTimeEnd) throws Exception{
+                                         Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd) throws Exception{
 
         PageInfo<WorkOrder> pageInfo;
         try {
@@ -103,7 +104,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,
                     title, receiverId, receiverPhone, receiverName,
                     orderId, merchantId, typeId, status,
-                    createTimeStart, createTimeEnd);
+                    createTimeStart, createTimeEnd, refundTimeBegin, refundTimeEnd);
         }catch (Exception e) {
             throw new Exception(e);
         }
@@ -356,8 +357,9 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return "success";
         }
 
-        Float refundFee = Float.valueOf(refundFeeStr);
-        refundFee = refundFee/100;
+        BigDecimal decRefundFee = new BigDecimal(refundFeeStr);
+        BigDecimal dec100f = new BigDecimal("100");
+        Float refundFee = decRefundFee.divide(dec100f).floatValue();
         if (0 > refundFee) {
             log.warn("notify parameters refund_amount abnormal");
             return result;
@@ -417,6 +419,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
+        wo.setRefundTime(new Date());
         wo.setGuanaitongRefundAmount(refund_amount);
         wo.setGuanaitongTradeNo(trade_no);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
