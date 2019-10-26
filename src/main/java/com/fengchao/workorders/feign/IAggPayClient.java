@@ -18,5 +18,5 @@ public interface IAggPayClient {
     ResultObject<String> postAggPayRefund(@RequestBody AggPayRefundBean body);
 
     @RequestMapping(value = "/wspay/query/refund", method = RequestMethod.GET)
-    ResultObject<List<AggPayRefundQueryBean>> getAggPayRefund(@RequestParam String tradeNo);
+    ResultObject<List<AggPayRefundQueryBean>> getAggPayRefund(@RequestParam String outRefundNo);
 }
