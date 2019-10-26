@@ -2,7 +2,6 @@ package com.fengchao.workorders.dao.impl;
 
 import com.fengchao.workorders.dao.WorkOrderDao;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
-import com.fengchao.workorders.mapper.WorkOrderXMapper;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.model.WorkOrderExample;
 import com.fengchao.workorders.util.PageInfo;
@@ -14,6 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -21,12 +22,11 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     private WorkOrderMapper mapper;
 
-    private WorkOrderXMapper workOrderXMapper;
+
 
     @Autowired
-    public WorkOrderDaoImpl(WorkOrderMapper mapper, WorkOrderXMapper workOrderXMapper) {
+    public WorkOrderDaoImpl(WorkOrderMapper mapper) {
         this.mapper = mapper;
-        this.workOrderXMapper = workOrderXMapper;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andOrderIdEqualTo(orderId);
         example.setOrderByClause("id DESC");
-        List<WorkOrder> list = null;
+        List<WorkOrder> list;
         try {
             list = mapper.selectByExample(example);
         } catch (Exception ex) {
@@ -202,12 +202,29 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     @Override
     public Integer selectRefundUserCountByMerchantId(Long merchantId) throws Exception{
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andMerchantIdEqualTo(merchantId);
+        List<WorkOrder> list;
         try {
-            return workOrderXMapper.selectRefundUserCountByMerchantId(merchantId);
+            list = mapper.selectByExample(example);
         }catch (Exception e) {
             log.warn("workOrderXMapper.selectRefundUserCountByMerchantId exception  {}",e.getMessage());
             throw new Exception(e);
         }
+
+        if (null == list || 0 == list.size()){
+            return 0;
+        }
+
+        Map<String, List<WorkOrder>> groupMap = list.stream().collect(Collectors.groupingBy(WorkOrder::getReceiverId));
+        int total = 0;
+        for(Map.Entry<String,List<WorkOrder>> m: groupMap.entrySet()){
+            if (!m.getKey().isEmpty()) {
+                total++;
+            }
+        }
+        return total;
     }
 
     @Override
@@ -219,7 +236,12 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             criteria.andMerchantIdEqualTo(merchantId);
         }
 
-        List<WorkOrder> workOrderList = mapper.selectByExample(example);
+        List<WorkOrder> workOrderList = null;
+        try {
+            workOrderList = mapper.selectByExample(example);
+        }catch (Exception e){
+            log.error(e.getMessage());
+        }
         return workOrderList;
     }
 }

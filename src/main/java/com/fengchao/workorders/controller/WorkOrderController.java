@@ -3,6 +3,7 @@ package com.fengchao.workorders.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
+import com.fengchao.workorders.feign.IAggPayClient;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
 import com.fengchao.workorders.service.impl.*;
@@ -39,6 +40,7 @@ public class WorkOrderController {
     //private static Logger = LoggerFactory.getLogger(WorkOrderController.class);
 
     private WorkOrderServiceImpl workOrderService;
+    private IAggPayClient aggPayClient;
 
     @ApiModel(value = "工单信息ID")
     private class IdData implements Serializable {
@@ -69,9 +71,10 @@ public class WorkOrderController {
     }
 
     @Autowired
-    public WorkOrderController(WorkOrderServiceImpl workOrderService
+    public WorkOrderController(IAggPayClient aggPayClient,WorkOrderServiceImpl workOrderService
                              ) {
         this.workOrderService = workOrderService;
+        this.aggPayClient = aggPayClient;
     }
 
     private Date getDateType(String timeStr, boolean isEnd) throws Exception{
@@ -146,6 +149,25 @@ public class WorkOrderController {
         if (null != workOrder.getGuanaitongRefundAmount()) {
             bean.setRealRefundAmount(workOrder.getGuanaitongRefundAmount());
         }
+
+        if (null != workOrder.getGuanaitongTradeNo()
+                /*&& WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus())*/){
+            ResultObject<List<AggPayRefundQueryBean>> resultObject;
+            try {
+                resultObject = aggPayClient.getAggPayRefund(workOrder.getGuanaitongTradeNo());
+            }catch (Exception e){
+                StringUtil.throw400Exp(response, "400008:"+e.getMessage());
+                return null;
+            }
+            log.info("聚合支付查询返回: {}",JSON.toJSONString(resultObject));
+            if (null != resultObject && null !=resultObject.getCode()
+                    && 200==resultObject.getCode()
+                    && null != resultObject.getData()){
+                String json = JSON.toJSONString(resultObject.getData());
+                bean.setComments(json);
+            }
+        }
+
         response.setStatus(MyErrorMap.e200.getCode());
         return bean;
 
@@ -732,10 +754,10 @@ public class WorkOrderController {
     /**
      * 获取已退款的子订单id集合
      *
-     * @param merchantId
+     * @param merchantId 厂商ID
      * @param startTime yyyy-MM-dd HH:mm:ss
      * @param endTime yyyy-MM-dd HH:mm:ss
-     * @return
+     * @return list
      */
     @ApiOperation(value = "获取已退款的子订单id集合", notes = "获取已退款的子订单id集合")
     @ResponseStatus(code = HttpStatus.CREATED)

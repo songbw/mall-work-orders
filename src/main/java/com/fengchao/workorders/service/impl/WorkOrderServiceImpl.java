@@ -331,30 +331,48 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         String refundFeeStr = bean.getRefundFee();//json.getFloat("refundFee");
 
         if (null == status) {
-            log.error("aggpay notify post body is wrong, status is null");
+            log.error("聚合支付退款回调 post body is wrong, status is null");
             return result;
         }
         if (null == outerRefundNo || outerRefundNo.isEmpty()) {
-            log.error("aggpay notify post body is wrong, outerRefundNo is null");
+            log.error("聚合支付退款回调 post body is wrong, outerRefundNo is null");
             return result;
         }
         //if ( null == tradeNo || tradeNo.isEmpty()) {
         ////    log.error("aggpays notify post body is wrong, tradeNo is null");
-         //   return result;
+        //   return result;
         //}
         if (null == refundFeeStr) {
-            log.error("aggpay notify post body is wrong, refundFee is null");
+            log.error("聚合支付退款回调 post body is wrong, refundFee is null");
             return result;
         }
         WorkOrder wo = workOrderDao.selectByRefundNo(outerRefundNo);
         if (null == wo) {
-            log.warn("handle notify, but not found work-order by refundNo: "+outerRefundNo);
+            log.warn("聚合支付退款回调 handle notify, but not found work-order by refundNo: " + outerRefundNo);
             return result;
         }
 
-        if (1 != status && 3 != status){//2:退款失败, 1:成功； 3：部分成功
-            log.error("聚合支付退款异常,不记录退款时间");
-            return "success";
+        if (1 == status || 3 == status || 2 == status) {//2:退款失败, 1:成功； 3：部分成功
+            if (null != refundTimeStr && !refundTimeStr.isEmpty()) {
+                try {
+                    wo.setRefundTime(StringUtil.String2Date(refundTimeStr));
+                } catch (Exception ex) {
+                    log.error("convert refundTime error {}", ex.getMessage());
+                }
+            }
+            if (1 == status) {
+                String msg = "聚合支付退款成功";
+                log.error(msg);
+                wo.setComments(msg);
+            } else if (3 == status) {
+                String msg = "聚合支付退款部分成功";
+                log.error(msg);
+                wo.setComments(msg);
+            } else {
+                String msg = "聚合支付退款失败";
+                log.error(msg);
+                wo.setComments(msg);
+            }
         }
 
         BigDecimal decRefundFee = new BigDecimal(refundFeeStr);
@@ -367,13 +385,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         wo.setGuanaitongRefundAmount(refundFee);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-        if (null != refundTimeStr && !refundTimeStr.isEmpty()) {
-            try {
-                wo.setRefundTime(StringUtil.String2Date(refundTimeStr));
-            }catch (Exception ex){
-                log.error("convert refundTime error {}",ex.getMessage());
-            }
-        }
+
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {

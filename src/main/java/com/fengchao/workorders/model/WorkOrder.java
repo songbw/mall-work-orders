@@ -57,6 +57,8 @@ public class WorkOrder {
 
     private String expressNo;
 
+    private String comments;
+
     public Long getId() {
         return id;
     }
@@ -271,5 +273,13 @@ public class WorkOrder {
 
     public void setExpressNo(String expressNo) {
         this.expressNo = expressNo == null ? null : expressNo.trim();
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments == null ? null : comments.trim();
     }
 }

@@ -1844,6 +1844,76 @@ public class WorkOrderExample {
             addCriterion("express_no not between", value1, value2, "expressNo");
             return (Criteria) this;
         }
+
+        public Criteria andCommentsIsNull() {
+            addCriterion("comments is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsIsNotNull() {
+            addCriterion("comments is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsEqualTo(String value) {
+            addCriterion("comments =", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsNotEqualTo(String value) {
+            addCriterion("comments <>", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsGreaterThan(String value) {
+            addCriterion("comments >", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsGreaterThanOrEqualTo(String value) {
+            addCriterion("comments >=", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsLessThan(String value) {
+            addCriterion("comments <", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsLessThanOrEqualTo(String value) {
+            addCriterion("comments <=", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsLike(String value) {
+            addCriterion("comments like", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsNotLike(String value) {
+            addCriterion("comments not like", value, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsIn(List<String> values) {
+            addCriterion("comments in", values, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsNotIn(List<String> values) {
+            addCriterion("comments not in", values, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsBetween(String value1, String value2) {
+            addCriterion("comments between", value1, value2, "comments");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommentsNotBetween(String value1, String value2) {
+            addCriterion("comments not between", value1, value2, "comments");
+            return (Criteria) this;
+        }
     }
 
     public static class Criteria extends GeneratedCriteria {
