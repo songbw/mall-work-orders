@@ -797,6 +797,48 @@ public class WorkOrderController {
         return resultObject;
     }
 
+
+    /**
+     * 获取已退款的子订单信息集合
+     *
+     * @param merchantId 厂商ID
+     * @param startTime yyyy-MM-dd HH:mm:ss
+     * @param endTime yyyy-MM-dd HH:mm:ss
+     * @return list
+     */
+    @ApiOperation(value = "获取已退款的子订单信息集合", notes = "获取已退款的子订单id集合")
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @GetMapping("refund/query/refundedDetail")
+    public ResultObject<List<WorkOrder>> queryRefundedOrderDetailList(@RequestParam(value = "merchantId", required = false) Long merchantId,
+                                                                     @RequestParam(value = "startTime") String startTime,
+                                                                     @RequestParam(value = "endTime") String endTime) {
+        // 返回值
+        ResultObject<List<WorkOrder>> resultObject = new ResultObject<>(500, "获取已退款的子订单信息集合默认错误", null);
+
+        log.info("获取已退款的子订单信息集合 入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
+
+        try {
+            Date startTimeDate = DateUtil.parseDateTime(startTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
+            Date endTimeDate = DateUtil.parseDateTime(endTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
+            List<WorkOrder> workOrderList =
+                    workOrderService.querySuccessRefundOrderDetailIdList(merchantId, startTimeDate, endTimeDate);
+
+            resultObject.setCode(200);
+            resultObject.setMsg("成功");
+            resultObject.setData(workOrderList);
+        } catch (Exception e) {
+            log.error("获取已退款的子订单信息集合 异常:{}", e.getMessage(), e);
+
+            resultObject.setCode(500);
+            resultObject.setData(null);
+            resultObject.setMsg("获取已退款的子订单信息集合异常," + e.getMessage());
+        }
+
+        log.info("获取已退款的子订单信息集合 返回:{}", JSONUtil.toJsonString(resultObject));
+
+        return resultObject;
+    }
+
 /*
     @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })

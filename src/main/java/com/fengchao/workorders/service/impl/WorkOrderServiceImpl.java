@@ -29,10 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 @Slf4j
 @Service(value="WorkOrderServiceImpl")
@@ -584,7 +581,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, Date startTime, Date endTime) throws Exception {
-        List<WorkOrder> workOrderList = null;
+        List<WorkOrder> workOrderList = new ArrayList<>();
+
         try {
             log.info("查询已退款的记录 数据库入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
             workOrderList =
