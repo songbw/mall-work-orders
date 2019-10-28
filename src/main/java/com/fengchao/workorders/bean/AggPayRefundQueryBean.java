@@ -42,6 +42,6 @@ public class AggPayRefundQueryBean {
     private String tradeDate;
 
     @ApiModelProperty(value = "创建时间")
-    private LocalDateTime createDate;
+    private String createDate;
 
 }

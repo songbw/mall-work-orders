@@ -111,6 +111,58 @@ public class WorkOrderController {
        return dateTime;
     }
 
+    private String getCommnets(String tradeNo){
+        if (null != tradeNo) {
+            ResultObject<List<AggPayRefundQueryBean>> resultObject;
+            try {
+                resultObject = aggPayClient.getAggPayRefund(tradeNo);
+            } catch (Exception e) {
+                return null;
+            }
+            log.info("聚合支付查询返回: {}", JSON.toJSONString(resultObject));
+            /*
+            //below only test
+            List<AggPayRefundQueryBean> list = new ArrayList<>();
+            AggPayRefundQueryBean b1 = new AggPayRefundQueryBean();
+            b1.setCreateDate("2019-10-26 12:05:27");
+            b1.setMerchantCode("2");
+            b1.setOrderNo("fc44cc5567ef497d8dfd69c8b60c229d");
+            b1.setOutRefundNo("111572062727298");
+            b1.setPayType("balance");
+            b1.setRefundFee("15100");
+            b1.setSourceOutTradeNo("1111bd2ba6278b3542ee8c921d3ce299dd8764085541");
+            b1.setStatus(1);
+            b1.setStatusMsg("退款成功");
+            b1.setTotalFee("0");
+            b1.setTradeDate("20191026120527");
+            list.add(b1);
+            AggPayRefundQueryBean b11 = new AggPayRefundQueryBean();
+            b11.setCreateDate("2019-10-26 12:05:27");
+            b11.setMerchantCode("2");
+            b11.setOrderNo("fc44cc5567ef497d8dfd69c8b60c229d");
+            b11.setOutRefundNo("111572062727298");
+            b11.setPayType("bank");
+            b11.setRefundFee("15100");
+            b11.setSourceOutTradeNo("1111bd2ba6278b3542ee8c921d3ce299dd8764085541");
+            b11.setStatus(1);
+            b11.setStatusMsg("退款处理中");
+            b11.setTotalFee("100");
+            b11.setTradeDate("20191026120527");
+            list.add(b11);
+            ResultObject<List<AggPayRefundQueryBean>> resultObject = new ResultObject<>(200,"ok",list);
+            log.info("聚合支付查询返回: {}",JSON.toJSONString(resultObject));
+            */
+
+            if (null != resultObject && null != resultObject.getCode()
+                    && 200 == resultObject.getCode()
+                    && null != resultObject.getData()) {
+                String json = JSON.toJSONString(resultObject.getData());
+                return json;
+
+            }
+        }
+        return null;
+    }
 
     @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -152,19 +204,20 @@ public class WorkOrderController {
 
         if (null != workOrder.getGuanaitongTradeNo()
                 /*&& WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus())*/){
-            ResultObject<List<AggPayRefundQueryBean>> resultObject;
-            try {
-                resultObject = aggPayClient.getAggPayRefund(workOrder.getGuanaitongTradeNo());
-            }catch (Exception e){
-                StringUtil.throw400Exp(response, "400008:"+e.getMessage());
-                return null;
-            }
-            log.info("聚合支付查询返回: {}",JSON.toJSONString(resultObject));
-            if (null != resultObject && null !=resultObject.getCode()
-                    && 200==resultObject.getCode()
-                    && null != resultObject.getData()){
-                String json = JSON.toJSONString(resultObject.getData());
-                bean.setComments(json);
+
+            String comments = getCommnets(workOrder.getGuanaitongTradeNo());
+
+            if (null != comments){
+                bean.setComments(comments);
+                /*
+                workOrder.setComments(comments);
+                workOrder.setUpdateTime(new Date());
+                log.info("json = {}, length={}",JSON.toJSONString(json),json.length());
+                try{
+                    workOrderService.update(workOrder);
+                }catch (Exception e){
+                    log.error("数据库操作异常 {}",e.getMessage());
+                }*/
             }
         }
 
@@ -172,6 +225,7 @@ public class WorkOrderController {
         return bean;
 
     }
+
 
     @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -246,6 +300,13 @@ public class WorkOrderController {
                 BeanUtils.copyProperties(a, b);
                 if (null != a.getGuanaitongRefundAmount()) {
                     b.setRealRefundAmount(a.getGuanaitongRefundAmount());
+                }
+
+                if (null != a.getGuanaitongTradeNo()) {
+                    String comments = getCommnets(a.getGuanaitongTradeNo());
+                    if (null != comments){
+                        b.setComments(comments);
+                    }
                 }
                 list.add(b);
             }
@@ -638,6 +699,15 @@ public class WorkOrderController {
         try {
             List<WorkOrder> list = workOrderService.selectByTimeRange(dateCreateTimeStart, dateCreateTimeEnd);
             if (null != list) {
+                for (WorkOrder a: list){
+                    if (null != a.getGuanaitongTradeNo()){
+                        String comments = getCommnets(a.getGuanaitongTradeNo());
+                        if (null != comments){
+                            a.setComments(comments);
+                        }
+                    }
+                }
+
                 result.setData(list);
                 result.setCode(200);
                 result.setMsg("success");

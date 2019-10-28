@@ -18,7 +18,32 @@ pagehelper:
     supportMethodsArguments: true
     params: count=countSql
 
+feign:
+  compression:
+    response:
+      enabled: true
+    request:
+      enabled: true
+      mime-types: text/xml,application/xml,application/json
+      min-request-size: 2048
+  hystrix:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000
+
 
 GAT_NOTIFY_URL: refund/notify
-GAT_I_APP_ID: 10
+GAT_I_APP_ID: '10'
 
