@@ -349,6 +349,14 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
+        BigDecimal decRefundFee = new BigDecimal(refundFeeStr);
+        BigDecimal dec100f = new BigDecimal("100");
+        Float refundFee = decRefundFee.divide(dec100f).floatValue();
+        if (0 > refundFee) {
+            log.warn("notify parameters refund_amount abnormal");
+            return result;
+        }
+
         if (1 == status || 3 == status || 2 == status) {//2:退款失败, 1:成功； 3：部分成功
             if (null != refundTimeStr && !refundTimeStr.isEmpty()) {
                 try {
@@ -358,10 +366,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                 }
             }
             if (1 == status) {
+                wo.setGuanaitongRefundAmount(refundFee);
                 String msg = "聚合支付退款成功";
                 log.error(msg);
                 wo.setComments(msg);
             } else if (3 == status) {
+                wo.setGuanaitongRefundAmount(refundFee);
                 String msg = "聚合支付退款部分成功";
                 log.error(msg);
                 wo.setComments(msg);
@@ -372,15 +382,6 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
         }
 
-        BigDecimal decRefundFee = new BigDecimal(refundFeeStr);
-        BigDecimal dec100f = new BigDecimal("100");
-        Float refundFee = decRefundFee.divide(dec100f).floatValue();
-        if (0 > refundFee) {
-            log.warn("notify parameters refund_amount abnormal");
-            return result;
-        }
-
-        wo.setGuanaitongRefundAmount(refundFee);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
 
         try {
