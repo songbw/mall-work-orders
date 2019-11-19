@@ -194,6 +194,34 @@ public class WorkFlowController {
 
     }
 
+
+    private void updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow) throws Exception{
+        Long flowId;
+        try {
+            flowId = workFlowService.insert(workFlow);
+            log.info("create WorkFlow success, id = {}", flowId );
+        }catch (Exception e) {
+            log.error("数据库操作异常 {}",e.getMessage());
+            throw e;
+        }
+
+        if (0 == flowId) {
+            throw new Exception("Failed to create work_flow");
+        }
+
+        log.info("create work_flow {}",JSON.toJSONString(workFlow));
+        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+            workOrder.setStatus(workFlow.getStatus());
+            workOrder.setUpdateTime(new Date());
+            try {
+                workOrderService.update(workOrder);
+            }catch (Exception e) {
+                throw e;
+            }
+        }
+
+    }
+
     @ApiOperation(value = "创建工单流程信息", notes = "创建工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
@@ -235,7 +263,7 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
         }
-
+        log.info("工单： {}",JSON.toJSONString(workOrder));
         String iAppId = workOrder.getiAppId();
         //String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
@@ -244,8 +272,41 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
             return result;
         }
+
+        WorkFlow workFlow = new WorkFlow();
+
+        workFlow.setWorkOrderId(workOrderId);
+        workFlow.setUpdatedBy(operator);
+
+        workFlow.setStatus(nextStatus);
+
+        if (null != comments && !comments.isEmpty()) {
+            workFlow.setComments(comments);
+        }
+
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
+        if (null != username && !username.isEmpty()) {
+            workFlow.setCreatedBy(username);
+        }
+
+        if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){//直接关闭工单
+            try{
+                updateFlowAndWorkorder(workOrder,workFlow);
+            }catch (Exception e){
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
+
+            result.id = workFlow.getId();
+            response.setStatus(MyErrorMap.e201.getCode());
+            log.info("create WorkFlow and close workOrder {} success ",workOrder.getId().toString());
+            return result;
+
+        }
+
         if (WorkOrderStatusType.REFUNDING.getCode().equals(orderStatus)
-                && (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus) ||WorkOrderStatusType.CLOSED.getCode().equals(nextStatus))) {
+                && (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus))) {
             StringUtil.throw400Exp(response, "40000a:工单状态已经为退款处理中");
             return result;
         }
@@ -262,28 +323,13 @@ public class WorkFlowController {
             }
         }
 
-        WorkFlow workFlow = new WorkFlow();
-
-        workFlow.setWorkOrderId(workOrderId);
-        workFlow.setUpdatedBy(operator);
-
-        workFlow.setStatus(nextStatus);
-
-        if (null != comments && !comments.isEmpty()) {
-            workFlow.setComments(comments);
-        }
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
-        if (!username.isEmpty()) {
-            workFlow.setCreatedBy(username);
-        }
-
         Integer workTypeId = workOrder.getTypeId();
 
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
+
         boolean isGat = false;
         boolean isAggPay = false;
-        if (null != configIAppIds && !configIAppIds.isEmpty()){
+        if (null != iAppId && null != configIAppIds && !configIAppIds.isEmpty() && !iAppId.isEmpty()){
             if (configIAppIds.equals(iAppId)) {
                 isGat = true;
             } else if (iAppId.equals(Constant.AGGPAY_APPID_VALUE)){
@@ -362,30 +408,14 @@ public class WorkFlowController {
             }
         }
 
-        try {
-            result.id = workFlowService.insert(workFlow);
-            log.info("create WorkFlow success, id = {}", result.id );
-        }catch (Exception e) {
+        try{
+            updateFlowAndWorkorder(workOrder,workFlow);
+        }catch (Exception e){
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
         }
 
-        if (0 == result.id) {
-            StringUtil.throw400Exp(response, "400006:Failed to create work_flow");
-            return result;
-        }
-
-        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-            workOrder.setStatus(workFlow.getStatus());
-            workOrder.setUpdateTime(new Date());
-            try {
-                workOrderService.update(workOrder);
-            }catch (Exception e) {
-                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                return null;
-            }
-        }
-
+        result.id = workFlow.getId();
         response.setStatus(MyErrorMap.e201.getCode());
         log.info("create WorkFlow and update workOrder {} success ",workOrder.getId().toString());
         return result;
