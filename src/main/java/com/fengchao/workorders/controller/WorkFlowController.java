@@ -185,6 +185,33 @@ public class WorkFlowController {
 
     }
 
+    private void updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow) throws Exception{
+        Long flowId;
+        try {
+            flowId = workFlowService.insert(workFlow);
+            log.info("create WorkFlow success, id = {}", flowId );
+        }catch (Exception e) {
+            log.error("数据库操作异常 {}",e.getMessage());
+            throw e;
+        }
+
+        if (0 == flowId) {
+            throw new Exception("Failed to create work_flow");
+        }
+
+        log.info("create work_flow {}",JSON.toJSONString(workFlow));
+        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+            workOrder.setStatus(workFlow.getStatus());
+            workOrder.setUpdateTime(new Date());
+            try {
+                workOrderService.update(workOrder);
+            }catch (Exception e) {
+                throw e;
+            }
+        }
+
+    }
+
     @ApiOperation(value = "创建工单流程信息", notes = "创建工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
@@ -227,6 +254,7 @@ public class WorkFlowController {
             return result;
         }
 
+        log.info("create WorkFlow 获取到工单信息： {}",JSON.toJSONString(workOrder));
         String iAppId = workOrder.getiAppId();
         String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
@@ -238,6 +266,12 @@ public class WorkFlowController {
         if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
+        }
+        if (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus)){
+            if (null == refund){
+                StringUtil.throw400Exp(response, "400008:退款金额缺失");
+                return result;
+            }
         }
 
         if (null != refund && 0 < refund){
@@ -265,17 +299,33 @@ public class WorkFlowController {
 
         Integer workTypeId = workOrder.getTypeId();
 
+        if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){//直接关闭工单
+            try{
+                updateFlowAndWorkorder(workOrder,workFlow);
+            }catch (Exception e){
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
+
+            result.id = workFlow.getId();
+            response.setStatus(MyErrorMap.e201.getCode());
+            log.info("create WorkFlow and close workOrder {} success ",workOrder.getId().toString());
+            return result;
+
+        }
+
+
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
         boolean isGat = false;
         if (null != configIAppIds && !configIAppIds.isEmpty() && configIAppIds.equals(iAppId)) {
             isGat = true;
         }
-
+        log.info("create WorkFlow isGat={}",isGat);
         if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
-             (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
+             (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
-            if (isGat && null != tAppId) {
+            if (isGat) {
                 String guanAiTongTradeNo;
                 try {
                     guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare, refund);
@@ -301,30 +351,14 @@ public class WorkFlowController {
             }
         }
 
-        try {
-            result.id = workFlowService.insert(workFlow);
-            log.info("create WorkFlow success, id = {}", result.id );
-        }catch (Exception e) {
+        try{
+            updateFlowAndWorkorder(workOrder,workFlow);
+        }catch (Exception e){
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
         }
 
-        if (0 == result.id) {
-            StringUtil.throw400Exp(response, "400006:Failed to create work_flow");
-            return result;
-        }
-
-        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-            workOrder.setStatus(workFlow.getStatus());
-            workOrder.setUpdateTime(new Date());
-            try {
-                workOrderService.update(workOrder);
-            }catch (Exception e) {
-                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                return null;
-            }
-        }
-
+        result.id = workFlow.getId();
         response.setStatus(MyErrorMap.e201.getCode());
         log.info("create WorkFlow and update workOrder {} success ",workOrder.getId().toString());
         return result;

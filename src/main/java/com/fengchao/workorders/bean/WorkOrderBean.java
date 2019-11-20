@@ -69,4 +69,6 @@ public class WorkOrderBean {
     @ApiModelProperty(value="快递单号", example="2019111111",required=false)
     private String expressNo;
 
+    @ApiModelProperty(value="关爱通单号", example="2019111111")
+    private String guanaitongTradeNo;
 }
