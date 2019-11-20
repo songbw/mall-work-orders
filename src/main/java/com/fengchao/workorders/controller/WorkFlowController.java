@@ -338,10 +338,14 @@ public class WorkFlowController {
         }
         log.info("create WorkFlow: isGat={}, isAggPay={}",isGat, isAggPay);
         if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
-             ((WorkOrderStatusType.CLOSED.getCode().equals(nextStatus) || WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus)) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
+             ((WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus)) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
                WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
 
             if (isGat) {
+                if (null == refund){
+                    StringUtil.throw400Exp(response, "400008:退款金额缺失");
+                    return null;
+                }
                 String guanAiTongTradeNo;
                 try {
                     guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(workOrderId, handleFare, refund);
@@ -365,6 +369,10 @@ public class WorkFlowController {
                     }
                 }
             } else if (isAggPay){
+                if (null == refund){
+                    StringUtil.throw400Exp(response, "400008:退款金额缺失");
+                    return null;
+                }
                 AggPayRefundBean aBean = new AggPayRefundBean();
                 aBean.setOrderNo(workOrder.getTradeNo());
                 NumberFormat formatter = new DecimalFormat("0");
