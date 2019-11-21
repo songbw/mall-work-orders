@@ -183,6 +183,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public WorkOrder getValidNumOfOrder(String openId, String orderId) throws Exception {
+        log.info("getValidNumOfOrder param: openId={}, orderId={}",openId,orderId);
         int validNum;
 
         openId = openId.trim();
@@ -221,7 +222,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             validNum = 0;
         }
         WorkOrder workOrder = list.get(0);
-        workOrder.setReturnedNum(validNum);
+        workOrder.setReturnedNum(validNum);//可退货数量
+        log.info("getValidNumOfOrder : {}",JSON.toJSONString(workOrder));
         return workOrder;
 
     }

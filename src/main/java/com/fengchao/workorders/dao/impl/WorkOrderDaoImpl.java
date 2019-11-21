@@ -1,5 +1,6 @@
 package com.fengchao.workorders.dao.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.fengchao.workorders.dao.WorkOrderDao;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.model.WorkOrder;
@@ -61,7 +62,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     @Override
     public List<WorkOrder> selectByOrderId(String orderId) throws Exception{
-        log.info("selectByOrderId: " + orderId);
+        log.info("selectByOrderId param : {} ",orderId);
         if (null == orderId) {
             return null;
         }
@@ -76,6 +77,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             log.error("workOrderMapper exception {}",ex.getMessage());
             throw new Exception(ex);
         }
+        log.info("selectByOrderId exit: {}", JSON.toJSONString(list));
         return list;
     }
 
