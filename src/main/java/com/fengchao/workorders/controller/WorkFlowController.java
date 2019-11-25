@@ -216,10 +216,89 @@ public class WorkFlowController {
             try {
                 workOrderService.update(workOrder);
             }catch (Exception e) {
+                log.error("数据库操作异常 {}",e.getMessage());
                 throw e;
             }
         }
 
+    }
+
+    @ApiOperation(value = "特别处理重新打开工单创建工单流程信息", notes = "特别处理重新打开工单创建工单流程信息")
+    @ApiResponses({ @ApiResponse(code = 400, message = "特别处理重新打开工单失败") })
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @PostMapping("work_flows/work_order")
+    public IdData renewProfile(HttpServletResponse response,
+                                @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                @RequestBody WorkFlowBodyBean data) throws RuntimeException {
+
+        log.info("特别处理重新打开工单 入参 {}", JSON.toJSONString(data));
+        IdData result = new IdData();
+        String username = JwtTokenUtil.getUsername(authentication);
+        Long workOrderId = data.getWorkOrderId();
+        Integer nextStatus = WorkOrderStatusType.EDITING.getCode();
+        String comments = data.getComments();
+        String operator = data.getOperator();
+
+
+        if (null == workOrderId || 0 == workOrderId
+        ) {
+            StringUtil.throw400Exp(response, "400002:工单号不能为空");
+            return result;
+        }
+
+        if (null == operator || operator.isEmpty()) {
+            StringUtil.throw400Exp(response, "400003: 操作员不能为空");
+            return result;
+        }
+
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(workOrderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400004:工单号不存在");
+            return result;
+        }
+        log.info("特别处理重新打开工单： {}",JSON.toJSONString(workOrder));
+
+        Integer orderStatus = workOrder.getStatus();
+        if (!WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)) {
+            StringUtil.throw400Exp(response, "400007:工单状态为处理完成时才可以重新打开");
+            return result;
+        }
+
+        WorkFlow workFlow = new WorkFlow();
+
+        workFlow.setWorkOrderId(workOrderId);
+        workFlow.setUpdatedBy(operator);
+
+        workFlow.setStatus(nextStatus);
+
+        if (null != comments && !comments.isEmpty()) {
+            workFlow.setComments(comments);
+        }
+
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
+        if (null != username && !username.isEmpty()) {
+            workFlow.setCreatedBy(username);
+        }
+
+        try{
+            updateFlowAndWorkorder(workOrder,workFlow);
+        }catch (Exception e){
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        result.id = workFlow.getId();
+        response.setStatus(MyErrorMap.e201.getCode());
+        log.info("特别处理重新打开工单 {} success ",workOrder.getId().toString());
+        return result;
     }
 
     @ApiOperation(value = "创建工单流程信息", notes = "创建工单流程信息")
