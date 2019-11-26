@@ -384,9 +384,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             }
         }
 
-        if (1 == status) {//2:退款失败, 1:成功； 3：部分成功
-            wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-        }
+        wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
 
         try {
             workOrderDao.updateByPrimaryKey(wo);

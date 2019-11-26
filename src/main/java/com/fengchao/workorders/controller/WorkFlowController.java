@@ -197,6 +197,8 @@ public class WorkFlowController {
 
     private void updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow) throws Exception{
         Long flowId;
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
         try {
             flowId = workFlowService.insert(workFlow);
             log.info("create WorkFlow success, id = {}", flowId );
@@ -213,6 +215,7 @@ public class WorkFlowController {
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
             workOrder.setStatus(workFlow.getStatus());
             workOrder.setUpdateTime(new Date());
+
             try {
                 workOrderService.update(workOrder);
             }catch (Exception e) {
@@ -282,12 +285,13 @@ public class WorkFlowController {
             workFlow.setComments(comments);
         }
 
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
         if (null != username && !username.isEmpty()) {
             workFlow.setCreatedBy(username);
         }
 
+        //workOrder.setRefundNo("");
+        workOrder.setComments("重新打开工单");
+        //workOrder.setExpressNo("");
         try{
             updateFlowAndWorkorder(workOrder,workFlow);
         }catch (Exception e){
@@ -309,7 +313,7 @@ public class WorkFlowController {
                                             @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                             @RequestBody WorkFlowBodyBean data) throws RuntimeException {
 
-        log.info("create WorkFlow enter : param {}", JSON.toJSONString(data));
+        log.info("创建工单流程信息 param {}", JSON.toJSONString(data));
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();

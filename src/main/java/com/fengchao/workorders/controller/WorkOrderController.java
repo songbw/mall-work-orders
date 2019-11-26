@@ -302,12 +302,12 @@ public class WorkOrderController {
                     b.setRealRefundAmount(a.getGuanaitongRefundAmount());
                 }
 
-                if (null != a.getGuanaitongTradeNo()) {
+                /*if (null != a.getGuanaitongTradeNo()) {
                     String comments = getCommnets(a.getGuanaitongTradeNo());
                     if (null != comments){
                         b.setComments(comments);
                     }
-                }
+                }*/
                 list.add(b);
             }
         }
@@ -699,6 +699,7 @@ public class WorkOrderController {
         try {
             List<WorkOrder> list = workOrderService.selectByTimeRange(dateCreateTimeStart, dateCreateTimeEnd);
             if (null != list) {
+                /*
                 for (WorkOrder a: list){
                     if (null != a.getGuanaitongTradeNo()){
                         String comments = getCommnets(a.getGuanaitongTradeNo());
@@ -706,7 +707,7 @@ public class WorkOrderController {
                             a.setComments(comments);
                         }
                     }
-                }
+                }*/
 
                 result.setData(list);
                 result.setCode(200);
