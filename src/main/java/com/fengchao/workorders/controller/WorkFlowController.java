@@ -232,7 +232,7 @@ public class WorkFlowController {
     @PostMapping("work_flows/work_order")
     public IdData renewProfile(HttpServletResponse response,
                                 @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                @RequestBody WorkFlowBodyBean data) throws RuntimeException {
+                                @RequestBody WorkFlowBodyBean data) throws Exception {
 
         log.info("特别处理重新打开工单 入参 {}", JSON.toJSONString(data));
         IdData result = new IdData();
@@ -241,6 +241,8 @@ public class WorkFlowController {
         Integer nextStatus = WorkOrderStatusType.EDITING.getCode();
         String comments = data.getComments();
         String operator = data.getOperator();
+        Integer typeId = data.getTypeId();
+        Float refund = data.getRefund();
 
 
         if (null == workOrderId || 0 == workOrderId
@@ -252,6 +254,17 @@ public class WorkFlowController {
         if (null == operator || operator.isEmpty()) {
             StringUtil.throw400Exp(response, "400003: 操作员不能为空");
             return result;
+        }
+
+        if (null != typeId){
+            if (WorkOrderType.Int2String(typeId).isEmpty()) {
+                StringUtil.throw400Exp(response, "400005:工单类型错误");
+                return result;
+            }
+            if (!WorkOrderType.EXCHANGE.getCode().equals(typeId) && null == refund){
+                StringUtil.throw400Exp(response, "400010:退款金额缺失");
+                return result;
+            }
         }
 
         WorkOrder workOrder;
@@ -284,13 +297,28 @@ public class WorkFlowController {
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
         }
+        if (null != typeId){
+            if (null == comments) {
+                String tmpStr = " 更改工单类型,从" + workOrder.getTypeId().toString() + " 到 " + typeId.toString();
+                String oldComments = workFlow.getComments();
+                workFlow.setComments(oldComments + tmpStr);
+                workOrder.setComments("重新打开工单 同时更改工单类型,从 " + workOrder.getTypeId().toString() + " 到 " + typeId.toString());
+            }
+            workOrder.setTypeId(typeId);
+            if (WorkOrderType.EXCHANGE.getCode().equals(typeId)){
+                workOrder.setRefundAmount(0.00F);
+            }else {
+                workOrder.setRefundAmount(refund);
+            }
+        }else {
+            workOrder.setComments("重新打开工单");
+        }
 
         if (null != username && !username.isEmpty()) {
             workFlow.setCreatedBy(username);
         }
 
         //workOrder.setRefundNo("");
-        workOrder.setComments("重新打开工单");
         //workOrder.setExpressNo("");
         try{
             updateFlowAndWorkorder(workOrder,workFlow);
