@@ -747,20 +747,21 @@ public class WorkOrderController {
         return resultObject;
     }
 
-    @ApiOperation(value = "聚合支付支付回调", notes = "聚合支付支付回调")
+    @ApiOperation(value = "聚合支付退款回调", notes = "聚合支付退款回调")
     @ResponseStatus(code = HttpStatus.OK)
     @PostMapping(value = "aggpays/notify", produces = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String aggpaysNotify(@RequestBody AggPayNotifyBean data) {
-        log.info("聚合支付 notify: params : {}",JSON.toJSONString(data));
+        log.info("聚合支付退款回调通知: {}",JSON.toJSONString(data));
         try {
             return workOrderService.handleAggPaysNotify(data);
         }catch (Exception e) {
+            log.error(e.getMessage(),e);
             return "fail";
         }
     }
 
 
-    @ApiOperation(value = "关爱通支付回调", notes = "关爱通支付回调")
+    @ApiOperation(value = "关爱通退款回调", notes = "关爱通退款回调")
     @ResponseStatus(code = HttpStatus.OK)
     @PostMapping(value = "refund/notify", produces = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String gBack(GuanAiTongNotifyBean bean) {
@@ -769,6 +770,7 @@ public class WorkOrderController {
         try {
             return workOrderService.handleNotify(bean);
         }catch (Exception e) {
+            log.error(e.getMessage(),e);
             return "fail";
         }
     }
