@@ -3,7 +3,7 @@ package com.fengchao.workorders.util;
 
 public class Constant {
 
-    public static final String AGGPAY_APPID_VALUE = "11";
+    //public static final String AGGPAY_APPID_VALUE = "11";
     public static final String AGGPAY_NOTIFY_URL = "aggpays/notify";
 
     public static final String APPID_VALUE = "20110843";

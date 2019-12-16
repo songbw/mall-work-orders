@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.config.RefundConfig;
 import com.fengchao.workorders.feign.IAggPayClient;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
@@ -43,6 +44,7 @@ public class WorkFlowController {
     private WorkFlowServiceImpl workFlowService;
     private WorkOrderServiceImpl workOrderService;
     private IAggPayClient aggPayClient;
+    private RefundConfig refundConfig;
 
     @ApiModel(value = "工单流程信息ID")
     private class IdData implements Serializable {
@@ -53,12 +55,14 @@ public class WorkFlowController {
 
     @Autowired
     public WorkFlowController(WorkOrderServiceImpl workOrderService,
+                              RefundConfig refundConfig,
                               IAggPayClient aggPayClient,
                             WorkFlowServiceImpl workFlowService
                              ) {
         this.workFlowService = workFlowService;
         this.workOrderService = workOrderService;
         this.aggPayClient = aggPayClient;
+        this.refundConfig = refundConfig;
     }
 
     /*
@@ -437,14 +441,32 @@ public class WorkFlowController {
         Integer workTypeId = workOrder.getTypeId();
 
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
+        ConfigBean configBean;
+        try{
+           configBean = refundConfig.getConfig(iAppId);
+        }catch (Exception e){
+            StringUtil.throw400Exp(response, "410005:未配置或无效的iAppId: "+iAppId);
+            return result;
+        }
+        if (null == configBean || null == configBean.getIAppId() || null == configBean.getApiType()){
+            StringUtil.throw400Exp(response, "410006:未配置iAppId:"+iAppId);
+            return result;
+        }
+
 
         boolean isGat = false;
         boolean isAggPay = false;
         if (null != iAppId && null != configIAppIds && !configIAppIds.isEmpty() && !iAppId.isEmpty()){
+            if ("10".equals(configBean.getApiType())){
+                isGat = true;
+            }else{
+                if ("11".equals(configBean.getApiType())){
+                    isAggPay = true;
+                }
+            }
+
             if (configIAppIds.equals(iAppId)) {
                 isGat = true;
-            } else if (iAppId.equals(Constant.AGGPAY_APPID_VALUE)){
-                isAggPay = true;
             }
         }
         log.info("create WorkFlow: isGat={}, isAggPay={}",isGat, isAggPay);
