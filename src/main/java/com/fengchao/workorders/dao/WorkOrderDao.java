@@ -23,6 +23,7 @@ public interface WorkOrderDao {
     List<WorkOrder> selectByOrderId(String orderId) throws Exception;
 
     PageInfo<WorkOrder> selectRange(int pageIndex, int pageSize,String sort, String order,
+                                    String iAppId,
                                     String title,
                                     String receiverId,
                                     String receiverPhone,

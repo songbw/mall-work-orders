@@ -90,7 +90,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,
+    public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,String iAppId,
                                           String title, String receiverId, String receiverName, String receiverPhone,
                                           String orderId, Integer typeId, Long merchantId,Integer status,
                                          Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd) throws Exception{
@@ -98,7 +98,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         PageInfo<WorkOrder> pageInfo;
         try {
 
-            pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,
+            pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,iAppId,
                     title, receiverId, receiverPhone, receiverName,
                     orderId, merchantId, typeId, status,
                     createTimeStart, createTimeEnd, refundTimeBegin, refundTimeEnd);

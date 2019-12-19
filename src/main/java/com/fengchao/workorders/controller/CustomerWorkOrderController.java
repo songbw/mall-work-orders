@@ -668,7 +668,7 @@ public class CustomerWorkOrderController {
         PageInfo<WorkOrder> pages;
         try {
             pages = workOrderService.selectPage(index, limit,
-                    "id", "DESC", null, customer,
+                    "id", "DESC", null, null,customer,
                     null, null, orderId,
                     null, null, null,
                     null, null,

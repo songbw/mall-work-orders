@@ -83,6 +83,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     @Override
     public PageInfo<WorkOrder> selectRange(int pageIndex, int pageSize,String sort, String order,
+                                           String iAppId,
                                            String title, String receiverId,
                                            String receiverPhone, String receiverName,
                                            String orderId, Long merchantId,
@@ -93,6 +94,10 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
+
+        if (null != iAppId && !iAppId.isEmpty()){
+            criteria.andIAppIdEqualTo(iAppId);
+        }
 
         if (null != title) {
             criteria.andTitleLike(title);

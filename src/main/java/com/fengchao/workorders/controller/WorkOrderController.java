@@ -240,6 +240,7 @@ public class WorkOrderController {
                                                    @ApiParam(value="订单ID")@RequestParam(required=false) String orderId,
                                                    @ApiParam(value="客户ID")@RequestParam(required=false) String receiverId,
                                                    @ApiParam(value="客户电话")@RequestParam(required=false) String receiverPhone,
+                                                   @ApiParam(value="iAppId")@RequestParam(required=false) String iAppId,
                                                    @ApiParam(value="客户名称")@RequestParam(required=false) String receiverName,
                                                    @ApiParam(value="工单类型ID")@RequestParam(required=false) Integer typeId,
                                                    @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
@@ -285,7 +286,7 @@ public class WorkOrderController {
 
         PageInfo<WorkOrder> pages;
         try {
-            pages = workOrderService.selectPage(index, limit, "id", "DESC",
+            pages = workOrderService.selectPage(index, limit, "id", "DESC",iAppId,
                     title, receiverId, receiverName, receiverPhone, orderId, typeId, merchant,
                     status, dateCreateTimeStart, dateCreateTimeEnd,dateRefundTimeStart, dateRefundTimeEnd);
         }catch (Exception e) {

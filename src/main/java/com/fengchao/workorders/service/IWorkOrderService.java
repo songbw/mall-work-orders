@@ -20,7 +20,7 @@ public interface IWorkOrderService {
 
     void update(WorkOrder workOrder) throws Exception;
 
-    PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,
+    PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,String iAppId,
                                    String title, String receiverId, String receiverName, String receiverPhone,
                                    String orderId, Integer typeId, Long merchantId,Integer status,
                                    Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd) throws Exception;
