@@ -109,7 +109,7 @@ public class FeedbackController {
         try {
             java.util.Date feedbackTime = StringUtil.String2Date(feedbackTimeStr);
             feedback.setFeedbackTime(feedbackTime);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             StringUtil.throw400Exp(response,"400002:反馈时间格式必须为:yyyy-MM-dd HH:mm:ss");
             return result;
         }
@@ -212,7 +212,7 @@ public class FeedbackController {
             try {
                 Date feedbackTime = StringUtil.String2Date(feedbackTimeStr);
                 feedback.setFeedbackTime(feedbackTime);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 StringUtil.throw400Exp(response, "400002:反馈时间格式必须为:yyyy-MM-dd HH:mm:ss");
                 return result;
             }
@@ -277,7 +277,7 @@ public class FeedbackController {
             if (null != feedbackTimeEnd && !feedbackTimeEnd.isEmpty()) {
                 dateEnd = StringUtil.String2Date(feedbackTimeEnd);
             }
-        } catch (ParseException ex) {
+        } catch (Exception ex) {
             StringUtil.throw400Exp(response,"400002:date format is wrong");
         }
 

@@ -109,6 +109,25 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
+    public PageInfo<WorkOrder> selectAbnormalRefundList(int pageIndex, int pageSize,String sort, String order,
+                                                 String iAppId,
+                                                 String orderId, Long merchantId,
+                                                 Date createTimeStart, Date createTimeEnd
+                                    ) throws Exception{
+
+        PageInfo<WorkOrder> pageInfo;
+        try {
+
+            pageInfo = workOrderDao.selectAbnormalRefund(pageIndex, pageSize,sort, order,
+                    iAppId, orderId, merchantId,
+                    createTimeStart, createTimeEnd);
+        }catch (Exception e) {
+            throw new Exception(e);
+        }
+        return pageInfo;
+    }
+
+    @Override
     public List<WorkOrder> selectByOrderId(String orderId) throws Exception{
         orderId = orderId.trim();
         List<WorkOrder> list = null;
@@ -359,7 +378,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
-        if (1 == status || 3 == status || 2 == status) {//2:退款失败, 1:成功； 3：部分成功
+        //2:退款失败, 1:成功； 3：部分成功
+        if (1 == status || 3 == status || 2 == status) {
             if (null != refundTimeStr && !refundTimeStr.isEmpty() && 1 == status) {
                 try {
                     wo.setRefundTime(StringUtil.String2Date(refundTimeStr));
@@ -370,12 +390,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             if (1 == status) {
                 wo.setGuanaitongRefundAmount(refundFee);
                 String msg = "聚合支付退款成功";
-                log.error(msg);
+                log.info(msg);
                 wo.setComments(msg);
             } else if (3 == status) {
                 wo.setGuanaitongRefundAmount(refundFee);
                 String msg = "聚合支付退款,部分成功";
-                log.error(msg);
+                log.info(msg);
                 wo.setComments(msg);
             } else {
                 String msg = "聚合支付退款失败";
@@ -527,8 +547,9 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         StringBuilder sb = new StringBuilder();
         int randLength = triRandom.length();
         if (randLength < 3) {
-            for (int i = 1; i <= 3 - randLength; i++)
+            for(int i = 1; i <= 3 - randLength; i++) {
                 sb.append("0");
+            }
         }
         sb.append(triRandom);
         String refundNo = appId + timeStamp + sb.toString();

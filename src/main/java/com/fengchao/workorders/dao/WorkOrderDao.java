@@ -58,4 +58,10 @@ public interface WorkOrderDao {
      * @return
      */
     List<WorkOrder> selectRefundSuccessOrderDetailIdList(Long merchantId, Date startTime, Date endTime);
+
+    PageInfo<WorkOrder> selectAbnormalRefund(int pageIndex, int pageSize,String sort, String order,
+                                             String iAppId,
+                                             String orderId, Long merchantId,
+                                             Date createTimeStart, Date createTimeEnd
+    ) throws Exception;
 }

@@ -166,7 +166,7 @@ public class WorkFlowController {
             if (null != createTimeEnd && !createTimeEnd.isEmpty()) {
                 dateCreateTimeEnd = StringUtil.String2Date(createTimeEnd);
             }
-        } catch (ParseException ex) {
+        } catch (Exception ex) {
             StringUtil.throw400Exp(response,"400002:createTime format is wrong");
         }
 
@@ -203,6 +203,11 @@ public class WorkFlowController {
         Long flowId;
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(new Date());
+        if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
+           && null != workOrder.getRefundNo()){
+            String oldComments = workFlow.getComments();
+            workFlow.setComments(oldComments + " refundNo="+workOrder.getRefundNo());
+        }
         try {
             flowId = workFlowService.insert(workFlow);
             log.info("create WorkFlow success, id = {}", flowId );
@@ -223,7 +228,7 @@ public class WorkFlowController {
             try {
                 workOrderService.update(workOrder);
             }catch (Exception e) {
-                log.error("数据库操作异常 {}",e.getMessage());
+                log.error("数据库操作异常 {}",e.getMessage(),e);
                 throw e;
             }
         }
@@ -513,9 +518,10 @@ public class WorkFlowController {
                 BigDecimal decRefund = new BigDecimal(refund);
                 aBean.setRefundFee(formatter.format(decRefund.multiply(dec100f).floatValue()));
                 aBean.setOutRefundNo(iAppId+StringUtil.getTimeStampRandomStr());
+                workOrder.setRefundNo(aBean.getOutRefundNo());
                 aBean.setMerchantCode(workOrder.getMerchantId().toString());
                 aBean.setNotifyUrl(Constant.AGGPAY_NOTIFY_URL);
-                ResultObject<String> aggpayRst = null;
+                ResultMessage<String> aggpayRst = null;
                 log.info("try send to aggpay {}",JSON.toJSONString(aBean));
                 try {
                     aggpayRst = aggPayClient.postAggPayRefund(aBean);
@@ -524,11 +530,11 @@ public class WorkFlowController {
                     StringUtil.throw400Exp(response,"40000a:access aggpays failed"+e.getMessage());
                 }
                 log.info("got response from aggpays: {}",JSON.toJSONString(aggpayRst));
-                if (null == aggpayRst || null == aggpayRst.getCode() || null == aggpayRst.getMsg()){
+                if (null == aggpayRst || null == aggpayRst.getCode() || null == aggpayRst.getMessage()){
                     StringUtil.throw400Exp(response,"40000b:access aggPays failed, got null response");
                 }
                 if (200 != aggpayRst.getCode()){
-                    StringUtil.throw400Exp(response,"40000c:access aggPays failed, "+aggpayRst.getMsg());
+                    StringUtil.throw400Exp(response,"40000c:access aggPays failed, "+aggpayRst.getMessage());
                 }
 
                 if (null != aggpayRst.getData()) {

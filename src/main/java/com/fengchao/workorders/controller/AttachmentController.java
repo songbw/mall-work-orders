@@ -157,7 +157,7 @@ public class AttachmentController {
             if (null != createTimeEnd && !createTimeEnd.isEmpty()) {
                 dateCreateTimeEnd = StringUtil.String2Date(createTimeEnd);
             }
-        } catch (ParseException ex) {
+        } catch (Exception ex) {
             StringUtil.throw400Exp(response,"400002:createTime format is wrong "+ex.getMessage());
         }
 

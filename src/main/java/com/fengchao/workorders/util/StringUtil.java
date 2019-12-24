@@ -1,5 +1,7 @@
 package com.fengchao.workorders.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -13,6 +15,7 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import javax.servlet.http.HttpServletResponse;
 
+@Slf4j
 public class StringUtil {
 
     public static String exceptionDetail(Throwable throwable) {
@@ -30,7 +33,7 @@ public class StringUtil {
     }
 
     public static String formatJson(String jsonStr) {
-        if (null == jsonStr || "".equals(jsonStr)) return "";
+        if (null == jsonStr || "".equals(jsonStr)) { return "";}
         StringBuilder sb = new StringBuilder();
         char last = '\0';
         char current = '\0';
@@ -92,7 +95,7 @@ public class StringUtil {
         }
         return result.toString().toLowerCase();
     }
-
+/*
     public static boolean isRightName(String name) {
         if (null == name || name.isEmpty()) {
             return false;
@@ -120,33 +123,66 @@ public class StringUtil {
         }
         return true;
     }
-
+*/
     public static String Date2String(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(date);
     }
 
-    public static Date String2Date(String stringDate)
-                throws ParseException {
+    public static Date string2DateNew(String stringDate) {
+        if (null == stringDate || stringDate.isEmpty()) {
+            return null;
+        }
+
+        int stringSize = stringDate.length();
+        if (14 == stringSize){
+            StringBuilder sb = new StringBuilder();
+            sb.append(stringDate.substring(0,4));
+            sb.append("-");
+            sb.append(stringDate.substring(4,6));
+            sb.append("-");
+            sb.append(stringDate.substring(6,8));
+            sb.append(" ");
+            sb.append(stringDate.substring(8,10));
+            sb.append(":");
+            sb.append(stringDate.substring(10,12));
+            sb.append(":");
+            sb.append(stringDate.substring(12));
+            stringDate = sb.toString();
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date returnDate = null;
+        try {
+            returnDate = sdf.parse(stringDate);
+        } catch (ParseException ex) {
+            log.error(ex.getMessage(),ex);
+        }
+
+        return returnDate;
+    }
+
+    public static Date String2Date(String stringDate) {
         if (null == stringDate) {
             return null;
         }
         if (stringDate.isEmpty()) {
             return null;
         }
-        //System.out.println("==String2Date: " + stringDate);
+        //log.debug("==String2Date: " + stringDate);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date returnDate = new Date(1L);
+        Date returnDate;
         try {
             Date tmpDate = sdf.parse(stringDate);
             returnDate = tmpDate;
-            //System.out.println("== tmpDate: " + tmpDate + " resultDate: " + returnDate);
+            //log.debug("== tmpDate: " + tmpDate + " resultDate: " + returnDate);
         } catch (ParseException ex) {
-            System.out.println(ex.getMessage());
+            log.error(ex.getMessage(),ex);
             returnDate = new Date();
-        } finally {
-            return returnDate;
         }
+
+        return returnDate;
+
     }
 
     public static String getTimeStampRandomStr(){
@@ -159,8 +195,9 @@ public class StringUtil {
         StringBuilder sb = new StringBuilder();
         int randLength = triRandom.length();
         if (randLength < 3) {
-            for (int i = 1; i <= 3 - randLength; i++)
+            for (int i = 1; i <= 3 - randLength; i++) {
                 sb.append("0");
+            }
         }
         sb.append(triRandom);
         return timeStamp + sb.toString();

@@ -31,6 +31,11 @@ public interface IWorkOrderService {
 
     List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd) throws Exception;
 
+    PageInfo<WorkOrder> selectAbnormalRefundList(int pageIndex, int pageSize,String sort, String order,
+                                             String iAppId,
+                                             String orderId, Long merchantId,
+                                             Date createTimeStart, Date createTimeEnd
+    ) throws Exception;
     /**
      * 获取商户的退货人数
      *

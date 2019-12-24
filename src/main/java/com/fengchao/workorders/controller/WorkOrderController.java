@@ -1,6 +1,7 @@
 package com.fengchao.workorders.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.feign.IAggPayClient;
@@ -103,7 +104,7 @@ public class WorkOrderController {
 
        try {
            dateTime = StringUtil.String2Date(timeString);
-       } catch (ParseException ex) {
+       } catch (Exception ex) {
            log.error("timeString is wrong {}",ex.getMessage());
            throw new Exception(ex);
        }
@@ -111,58 +112,6 @@ public class WorkOrderController {
        return dateTime;
     }
 
-    private String getCommnets(String tradeNo){
-        if (null != tradeNo) {
-            ResultObject<List<AggPayRefundQueryBean>> resultObject;
-            try {
-                resultObject = aggPayClient.getAggPayRefund(tradeNo);
-            } catch (Exception e) {
-                return null;
-            }
-            log.info("聚合支付查询返回: {}", JSON.toJSONString(resultObject));
-            /*
-            //below only test
-            List<AggPayRefundQueryBean> list = new ArrayList<>();
-            AggPayRefundQueryBean b1 = new AggPayRefundQueryBean();
-            b1.setCreateDate("2019-10-26 12:05:27");
-            b1.setMerchantCode("2");
-            b1.setOrderNo("fc44cc5567ef497d8dfd69c8b60c229d");
-            b1.setOutRefundNo("111572062727298");
-            b1.setPayType("balance");
-            b1.setRefundFee("15100");
-            b1.setSourceOutTradeNo("1111bd2ba6278b3542ee8c921d3ce299dd8764085541");
-            b1.setStatus(1);
-            b1.setStatusMsg("退款成功");
-            b1.setTotalFee("0");
-            b1.setTradeDate("20191026120527");
-            list.add(b1);
-            AggPayRefundQueryBean b11 = new AggPayRefundQueryBean();
-            b11.setCreateDate("2019-10-26 12:05:27");
-            b11.setMerchantCode("2");
-            b11.setOrderNo("fc44cc5567ef497d8dfd69c8b60c229d");
-            b11.setOutRefundNo("111572062727298");
-            b11.setPayType("bank");
-            b11.setRefundFee("15100");
-            b11.setSourceOutTradeNo("1111bd2ba6278b3542ee8c921d3ce299dd8764085541");
-            b11.setStatus(1);
-            b11.setStatusMsg("退款处理中");
-            b11.setTotalFee("100");
-            b11.setTradeDate("20191026120527");
-            list.add(b11);
-            ResultObject<List<AggPayRefundQueryBean>> resultObject = new ResultObject<>(200,"ok",list);
-            log.info("聚合支付查询返回: {}",JSON.toJSONString(resultObject));
-            */
-
-            if (null != resultObject && null != resultObject.getCode()
-                    && 200 == resultObject.getCode()
-                    && null != resultObject.getData()) {
-                String json = JSON.toJSONString(resultObject.getData());
-                return json;
-
-            }
-        }
-        return null;
-    }
 
     @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -202,29 +151,140 @@ public class WorkOrderController {
             bean.setRealRefundAmount(workOrder.getGuanaitongRefundAmount());
         }
 
-        if (null != workOrder.getGuanaitongTradeNo()
-                /*&& WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus())*/){
+        String outRefundNo = workOrder.getGuanaitongTradeNo();
+        if (null != outRefundNo
+                && WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus())) {
+            log.info("调用查询聚合支付退款状态接口 outRefundNo={}", outRefundNo);
 
-            String comments = getCommnets(workOrder.getGuanaitongTradeNo());
-
-            if (null != comments){
-                bean.setComments(comments);
-                /*
-                workOrder.setComments(comments);
-                workOrder.setUpdateTime(new Date());
-                log.info("json = {}, length={}",JSON.toJSONString(json),json.length());
-                try{
-                    workOrderService.update(workOrder);
-                }catch (Exception e){
-                    log.error("数据库操作异常 {}",e.getMessage());
-                }*/
+            ResultMessage<List<AggPayRefundQueryBean>> aggPayResult;
+            try {
+                aggPayResult = aggPayClient.getAggPayRefund(outRefundNo);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                aggPayResult = null;
             }
+            log.info("查询聚合支付退款状态： response={}", JSON.toJSONString(aggPayResult));
+            if (null == aggPayResult || null == aggPayResult.getCode() ||
+                    200 != aggPayResult.getCode() || null == aggPayResult.getData()) {
+                log.error("未找到聚合支付服务, 或调用查询聚合支付退款状态接口失败");
+                response.setStatus(MyErrorMap.e200.getCode());
+                return bean;
+            }
+            bean.setComments(JSON.toJSONString(aggPayResult.getData()));
+
+            boolean isAllDone = true;
+            int itemCount = 0;
+            int itemOk = 0;
+            int itemFailed = 0;
+
+            for(AggPayRefundQueryBean b: aggPayResult.getData()){
+                itemCount += 1;
+                if (AggPayRefundStatusEnum.NEW.getCode().equals(b.getStatus())){
+                    isAllDone = false;
+                    break;
+                }else if(AggPayRefundStatusEnum.FAILED.getCode().equals(b.getStatus())){
+                    itemFailed += 1;
+                }else{
+                    itemOk += 1;
+                }
+            }
+
+            if (isAllDone && (itemCount == itemOk || itemCount == itemFailed)) {
+                workOrder.setStatus(WorkOrderStatusType.CLOSED.getCode());
+                if (itemCount == itemOk) {
+                    workOrder.setComments("聚合支付退款成功");
+                }else {
+                    workOrder.setComments("聚合支付退款失败");
+                }
+
+                try {
+                    workOrderService.update(workOrder);
+                } catch (Exception e) {
+                    log.error("数据库操作异常 {}", e.getMessage(), e);
+                }
+            }
+
         }
 
         response.setStatus(MyErrorMap.e200.getCode());
         return bean;
 
     }
+
+
+    @ApiOperation(value = "查询退款异常工单", notes = "查询退款异常工单")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("work_orders/abnormalList")
+    public PageInfo<WorkOrderBean> queryAbnormalList(HttpServletResponse response,
+                                                   @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
+                                                   @RequestHeader(value = "merchant") Long merchantIdInHeader,
+                                                   @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
+                                                   @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
+                                                   @ApiParam(value="iAppId")@RequestParam(required=false) String iAppId,
+                                                   @ApiParam(value="订单ID")@RequestParam(required=false) String orderId,
+                                                   @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
+                                                   @ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
+                                                   @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd
+
+    ) {
+
+        java.util.Date dateCreateTimeStart ;
+        java.util.Date dateCreateTimeEnd ;
+
+        int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
+        int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
+
+        if (null == authentication) {
+            log.info("can not get authentication");
+        }
+        if (null == merchantIdInHeader) {
+            log.warn("can not find merchant in header");
+            StringUtil.throw400Exp(response, "400002:merchant  is wrong");
+            return null;
+        }
+
+        try {
+            dateCreateTimeStart = getDateType(timeStart,false);
+            dateCreateTimeEnd = getDateType(timeEnd,true);
+        } catch (Exception e) {
+            StringUtil.throw400Exp(response, "400005:"+e.getMessage());
+            return null;
+        }
+
+        Long merchant;
+        if (0 != merchantIdInHeader) {
+            merchant = merchantIdInHeader;
+        } else {
+            merchant = merchantId;
+        }
+
+        PageInfo<WorkOrder> pages;
+        try {
+            pages = workOrderService.selectAbnormalRefundList(index, limit,"id", "DESC",
+                    iAppId, orderId, merchant,
+                    dateCreateTimeStart, dateCreateTimeEnd);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+        List<WorkOrderBean> list = new ArrayList<>();
+
+        if ((index -1) * pages.getPageSize() <= pages.getTotal()) {
+            for (WorkOrder a : pages.getRows()) {
+                WorkOrderBean b = new WorkOrderBean();
+                BeanUtils.copyProperties(a, b);
+
+                list.add(b);
+            }
+        }
+        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
+
+        response.setStatus(MyErrorMap.e200.getCode());
+        return result;
+
+    }
+
 
 
     @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
@@ -678,7 +738,7 @@ public class WorkOrderController {
             try {
                 dateCreateTimeStart = StringUtil.String2Date(todayBegin);
                 dateCreateTimeEnd = StringUtil.String2Date(todayEnd);
-            } catch (ParseException ex) {
+            } catch (Exception ex) {
                 log.error("exception: {}",ex.getMessage());
                 result.setMsg("createTime is wrong");
                 return result;
