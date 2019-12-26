@@ -411,14 +411,14 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-
+        wo.setUpdateTime(new Date());
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
             log.error("sql error when insert work-order " + ex.getMessage());
             return result;
         }
-        log.info("AggPays refund notify handle success");
+        log.info("AggPays refund notify handle success {}",JSON.toJSONString(wo));
 
         return "success";
     }
