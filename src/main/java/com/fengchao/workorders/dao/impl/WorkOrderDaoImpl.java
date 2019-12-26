@@ -175,22 +175,18 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andRefundNoEqualTo(refundNo);
-
+        List<WorkOrder> list = null;
         try {
-            List<WorkOrder> list = mapper.selectByExample(example);
-            if (null == list) {
-                log.warn(" Not found record by example");
-            } else {
-                return list.get(0);
-            }
-            return null;
+            list = mapper.selectByExample(example);
         } catch (Exception ex) {
-            if (null != ex.getMessage()) {
-                log.warn(" sql failed: {}", ex.getMessage() );
-            } else {
-                log.warn(" sql failed");
-            }
+            log.error("数据库操作异常: {}", ex.getMessage() ,ex);
         }
+        if (null == list || 0 == list.size()) {
+            log.error("没有找到 refund_no = {} 的记录",refundNo);
+        } else {
+            return list.get(0);
+        }
+
         return null;
     }
 

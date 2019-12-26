@@ -368,6 +368,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
             wo.setGuanaitongTradeNo(tradeNo);
             wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
+            wo.setUpdateTime(new Date());
             wo.setRefundTime(new Date());
             try {
                 workOrderDao.updateByPrimaryKey(wo);
@@ -375,6 +376,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                 log.error("关爱通退款回调处理 sql error when update work-order {}" , ex.getMessage());
                 return result;
             }
+        }else{
+            log.warn("关爱通退款回调处理 再次确认工单状态选择工单记录失败");
         }
         log.info("关爱通 refund notify handle success {}",JSON.toJSONString(wo));
 
@@ -470,7 +473,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Override
     public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception{
 
-        log.info("sendRefund2GuangAiTong enter : workOrderId = {}", workOrderId);
+        log.info("sendRefund2GuangAiTong enter : workOrderId = {}, refundAmount={}", workOrderId,refund);
         WorkOrder wo = workOrderDao.selectByPrimaryKey(workOrderId);
         if (null == wo) {
             log.info("failed to find work-order record by id: {}" , workOrderId);
@@ -543,7 +546,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         String guanAiTongNo = gResult.getData();
         if ( null == guanAiTongNo ||
                 !Constant.HTTP_STATUS_CODE_OK.equals(code) || guanAiTongNo.isEmpty()) {
-            log.info("post to GuanAiTong refund failed : {}", gResult.getMsg());
+            log.error("post to GuanAiTong refund failed : {}", gResult.getMsg());
             StringBuilder errMsgSb = new StringBuilder();
             errMsgSb.append("got error from Guan Ai Tong ");
             if (null != code) {
@@ -558,9 +561,10 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             throw new Exception(errMsgSb.toString());
         }
 
+        wo.setRefundAmount(refundAmount);
         wo.setRefundNo(refundNo);
         wo.setGuanaitongTradeNo(guanAiTongNo);
-
+        wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
         if (null == handleFare || 0 == handleFare) {
             //since we will check fare when create work-order. and set it by query order info.
             //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
@@ -568,6 +572,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         try {
+            wo.setUpdateTime(new Date());
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
             log.error("update work-order sql error: {}", ex.getMessage(),ex);

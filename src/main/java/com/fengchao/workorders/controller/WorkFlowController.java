@@ -358,6 +358,25 @@ public class WorkFlowController {
                     }
                 }
             }
+
+            Long flowId = 0L;
+            try {
+                flowId = workFlowService.insert(workFlow);
+                log.info("create WorkFlow success, id = {}", flowId );
+            }catch (Exception e) {
+                log.error("数据库操作异常 {}",e.getMessage(),e);
+            }
+
+            if (0L == flowId) {
+                log.error("Failed to create work_flow");
+            } else {
+                log.info("create work_flow {}", JSON.toJSONString(workFlow));
+                result.id = workFlow.getId();
+            }
+            response.setStatus(MyErrorMap.e201.getCode());
+
+            return result;
+
         }
 
         try{
