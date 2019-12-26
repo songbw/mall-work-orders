@@ -289,7 +289,7 @@ public class WorkOrderController {
 
         WorkOrder selectedWO;
         try {
-            selectedWO = workOrderService.getValidNumOfOrder(receiverId, orderId);
+            selectedWO = workOrderService.getValidNumOfOrder(orderId);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
@@ -651,8 +651,7 @@ public class WorkOrderController {
     @ResponseStatus(code = HttpStatus.OK)
     @PostMapping(value = "refund/notify", produces = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String gBack(GuanAiTongNotifyBean bean) {
-        String param = JSON.toJSONString(bean);
-        log.info("关爱通 refund notify: params : " + param);
+        log.info("关爱通 refund-notify: params : {}", JSON.toJSONString(bean) );
         try {
             return workOrderService.handleNotify(bean);
         }catch (Exception e) {

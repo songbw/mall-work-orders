@@ -204,12 +204,16 @@ public class WorkFlowController {
             workOrder.setStatus(workFlow.getStatus());
             workOrder.setUpdateTime(new Date());
             try {
-                workOrderService.update(workOrder);
+                WorkOrder record = workOrderService.selectById(workOrder.getId());
+                if (!WorkOrderStatusType.CLOSED.getCode().equals(record.getStatus())) {
+                    workOrderService.update(workOrder);
+                }
             }catch (Exception e) {
+                log.error(e.getMessage(),e);
                 throw e;
             }
         }
-
+        log.info("update work_order {}",JSON.toJSONString(workOrder));
     }
 
     @ApiOperation(value = "创建工单流程信息", notes = "创建工单流程信息")
@@ -256,7 +260,7 @@ public class WorkFlowController {
 
         log.info("create WorkFlow 获取到工单信息： {}",JSON.toJSONString(workOrder));
         String iAppId = workOrder.getiAppId();
-        String tAppId = workOrder.gettAppId();
+        //String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
         if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
@@ -270,6 +274,10 @@ public class WorkFlowController {
         if (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus)){
             if (null == refund){
                 StringUtil.throw400Exp(response, "400008:退款金额缺失");
+                return result;
+            }
+            if (workOrder.getTypeId().equals(WorkOrderType.EXCHANGE.getCode())){
+                StringUtil.throw400Exp(response, "400009:换货工单不能做退款");
                 return result;
             }
         }
@@ -314,7 +322,6 @@ public class WorkFlowController {
 
         }
 
-
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
         boolean isGat = false;
         if (null != configIAppIds && !configIAppIds.isEmpty() && configIAppIds.equals(iAppId)) {
@@ -334,10 +341,12 @@ public class WorkFlowController {
                     return null;
                 }
                 if (null == guanAiTongTradeNo) {
+                    log.error("关爱通退款 未返回交易号");
                     StringUtil.throw400Exp(response, "400009: failed to get guanAiTongTradeNo in result of response");
                     return result;
                 } else {
                     if (guanAiTongTradeNo.isEmpty()) {
+                        log.error("关爱通退款 未返回交易号");
                         StringUtil.throw400Exp(response, "400009: failed to get guanAiTongTradeNo in result of response");
                         return result;
                     } else {

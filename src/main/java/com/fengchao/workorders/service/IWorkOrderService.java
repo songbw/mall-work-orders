@@ -40,7 +40,7 @@ public interface IWorkOrderService {
 
     int countReturn(Date createTimeStart, Date createTimeEnd) throws Exception;
 
-    WorkOrder getValidNumOfOrder(String openId, String sbuOrderId) throws Exception;
+    WorkOrder getValidNumOfOrder(String sbuOrderId) throws Exception;
 
     JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId) throws Exception;
 

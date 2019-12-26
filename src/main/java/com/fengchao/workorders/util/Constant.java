@@ -39,4 +39,7 @@ public class Constant {
     public static final String PERMISSION_SELECT_CODE = "select";
 
     public static final String NORMAL_SELLER_STRING = "vendor";
+
+    public static final String MERCHANT_KEY = "merchant";
+    public static final Integer HTTP_STATUS_CODE_OK = 200;
 }

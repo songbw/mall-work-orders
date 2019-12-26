@@ -1,6 +1,7 @@
 package com.fengchao.workorders.feign.hystric;
 
 import com.fengchao.workorders.bean.GuanAiTongRefundBean;
+import com.fengchao.workorders.bean.GuanAiTongTradeInfoPostBean;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.util.ResultObject;
 import org.springframework.stereotype.Component;
@@ -14,4 +15,11 @@ public class GuanAiTongClient implements IGuanAiTongClient {
 
         return null;
     }
+
+    @Override
+    public ResultObject<String> postTradeInfo(@RequestBody GuanAiTongTradeInfoPostBean body){
+        return null;
+    }
+
+
 }

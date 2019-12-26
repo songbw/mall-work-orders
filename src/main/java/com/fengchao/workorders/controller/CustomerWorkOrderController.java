@@ -391,7 +391,7 @@ public class CustomerWorkOrderController {
 
         WorkOrder selectedWO = null;
         try {
-            selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
+            selectedWO = workOrderService.getValidNumOfOrder(orderId);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400009:"+e.getMessage());
             return result;
@@ -723,7 +723,7 @@ public class CustomerWorkOrderController {
 
         WorkOrder workOrder;
         try {
-            workOrder = workOrderService.getValidNumOfOrder(customer, orderId);
+            workOrder = workOrderService.getValidNumOfOrder(orderId);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return result;

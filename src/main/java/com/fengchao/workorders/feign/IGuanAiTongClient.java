@@ -1,6 +1,7 @@
 package com.fengchao.workorders.feign;
 
 import com.fengchao.workorders.bean.GuanAiTongRefundBean;
+import com.fengchao.workorders.bean.GuanAiTongTradeInfoPostBean;
 import com.fengchao.workorders.feign.hystric.GuanAiTongClient;
 import com.fengchao.workorders.util.OperaResult;
 import com.fengchao.workorders.util.ResultObject;
@@ -16,5 +17,8 @@ public interface IGuanAiTongClient {
 
     @RequestMapping(value = "seller/pay/syncRefund", method = RequestMethod.POST)
     ResultObject<String> postRefund(@RequestBody GuanAiTongRefundBean body);
+
+    @RequestMapping(value = "seller/payV2/transfer_trade_info", method = RequestMethod.POST)
+    ResultObject<String> postTradeInfo(@RequestBody GuanAiTongTradeInfoPostBean body);
 
 }
