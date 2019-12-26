@@ -370,6 +370,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
+        wo = verifyWorkOrderStatus(wo,outerRefundNo);
+        if (null == wo){
+            log.error("AggPays refund notify handle success, 再次选择工单失败");
+            return "success";
+        }
+
         BigDecimal decRefundFee = new BigDecimal(refundFeeStr);
         BigDecimal dec100f = new BigDecimal("100");
         Float refundFee = decRefundFee.divide(dec100f).floatValue();
@@ -417,6 +423,25 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         return "success";
     }
 
+    private WorkOrder verifyWorkOrderStatus(WorkOrder wo, String outer_refund_no){
+        if (!wo.getStatus().equals(WorkOrderStatusType.REFUNDING.getCode())){
+            int timeOut = 3;
+            for(int i = 0; i < timeOut; i++) {
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+                //再次确认工单状态
+                wo = workOrderDao.selectByRefundNo(outer_refund_no);
+                if (null != wo && wo.getStatus().equals(WorkOrderStatusType.REFUNDING.getCode())){
+                    return wo;
+                }
+            }
+        }
+        return wo;
+    }
+
     @Override
     public String handleNotify(GuanAiTongNotifyBean bean) {
 
@@ -451,16 +476,21 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
-        wo.setRefundTime(new Date());
-        wo.setGuanaitongRefundAmount(refund_amount);
-        wo.setGuanaitongTradeNo(trade_no);
-        wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-        wo.setRefundTime(new Date());
-        try {
-            workOrderDao.updateByPrimaryKey(wo);
-        } catch (Exception ex) {
-            log.error("sql error when insert work-order " + ex.getMessage());
-            return result;
+        wo = verifyWorkOrderStatus(wo,outer_refund_no);
+        if (null != wo) {
+            wo.setRefundTime(new Date());
+            wo.setGuanaitongRefundAmount(refund_amount);
+            wo.setGuanaitongTradeNo(trade_no);
+            wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
+            wo.setRefundTime(new Date());
+            try {
+                workOrderDao.updateByPrimaryKey(wo);
+            } catch (Exception ex) {
+                log.error("sql error when insert work-order " + ex.getMessage());
+                return result;
+            }
+        }else{
+            log.error("再次检查工单失败,工单状态无法更新");
         }
         log.info("关爱通 refund notify handle success");
 
