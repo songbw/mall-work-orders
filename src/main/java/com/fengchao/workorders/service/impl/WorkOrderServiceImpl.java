@@ -476,13 +476,15 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
+        //再次确认工单状态处于“退款处理中”，防止状态覆盖问题
         wo = verifyWorkOrderStatus(wo,outer_refund_no);
+
         if (null != wo) {
             wo.setRefundTime(new Date());
             wo.setGuanaitongRefundAmount(refund_amount);
             wo.setGuanaitongTradeNo(trade_no);
             wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-            wo.setRefundTime(new Date());
+            wo.setUpdateTime(new Date());
             try {
                 workOrderDao.updateByPrimaryKey(wo);
             } catch (Exception ex) {
@@ -617,12 +619,14 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         wo.setRefundNo(refundNo);
         wo.setGuanaitongTradeNo(guanAiTongNo);
-
+        wo.setRefundAmount(refundAmount);
         if (null == handleFare || 0 == handleFare) {
             //since we will check fare when create work-order. and set it by query order info.
             //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
             wo.setFare(0.00f);
         }
+        wo.setUpdateTime(new Date());
+        wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {

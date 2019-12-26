@@ -198,6 +198,30 @@ public class WorkFlowController {
 
     }
 
+    private Long createWorkFlow(WorkOrder workOrder, WorkFlow workFlow){
+        Long flowId;
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
+        if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
+                && null != workOrder.getRefundNo()){
+            String oldComments = workFlow.getComments();
+            workFlow.setComments(oldComments + " refundNo="+workOrder.getRefundNo());
+        }
+        try {
+            flowId = workFlowService.insert(workFlow);
+            log.info("create WorkFlow success, id = {}", flowId );
+        }catch (Exception e) {
+            log.error("数据库操作异常 {}",e.getMessage(),e);
+            return 0L;
+        }
+
+        if (0L == flowId) {
+            log.error("Failed to create work_flow");
+        }
+
+        log.info("create work_flow {}",JSON.toJSONString(workFlow));
+        return flowId;
+    }
 
     private void updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow) throws Exception{
         Long flowId;
@@ -517,8 +541,9 @@ public class WorkFlowController {
                 BigDecimal dec100f = new BigDecimal("100");
                 BigDecimal decRefund = new BigDecimal(refund);
                 aBean.setRefundFee(formatter.format(decRefund.multiply(dec100f).floatValue()));
-                aBean.setOutRefundNo(iAppId+StringUtil.getTimeStampRandomStr());
-                workOrder.setRefundNo(aBean.getOutRefundNo());
+                String outerRefundNo = iAppId+StringUtil.getTimeStampRandomStr();
+                aBean.setOutRefundNo(outerRefundNo);
+                workOrder.setRefundNo(outerRefundNo);
                 aBean.setMerchantCode(workOrder.getMerchantId().toString());
                 aBean.setNotifyUrl(Constant.AGGPAY_NOTIFY_URL);
                 ResultMessage<String> aggpayRst = null;
@@ -543,8 +568,10 @@ public class WorkFlowController {
                     String aggpayRefundNo = aBean.getOutRefundNo();
                     if (null != aggpayRefundNo && !aggpayRefundNo.isEmpty()){
                         try{
+                            workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                             workOrder.setGuanaitongTradeNo(aggpayRefundNo);
                             workOrder.setUpdateTime(new Date());
+                            workOrder.setRefundAmount(refund);
                             workOrderService.update(workOrder);
                         }catch (Exception e){
                             StringUtil.throw400Exp(response,"400006:work_order update failed "+e.getMessage());
@@ -553,6 +580,11 @@ public class WorkFlowController {
                 }
 
             }
+
+            result.id = createWorkFlow(workOrder,workFlow);
+            response.setStatus(MyErrorMap.e201.getCode());
+            log.info("退款接口完并更新工单,记录处理流程 id= {} ",result.id);
+            return result;
         }
 
         try{
