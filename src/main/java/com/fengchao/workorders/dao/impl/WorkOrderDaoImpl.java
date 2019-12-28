@@ -238,12 +238,15 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public List<WorkOrder> selectRefundSuccessOrderDetailIdList(Long merchantId, Date startTime, Date endTime) {
+    public List<WorkOrder> selectRefundSuccessOrderDetailIdList(String iAppId,Long merchantId, Date startTime, Date endTime) {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andRefundTimeBetween(startTime, endTime);
         if (merchantId != null) {
             criteria.andMerchantIdEqualTo(merchantId);
+        }
+        if (null != iAppId){
+            criteria.andIAppIdEqualTo(iAppId);
         }
 
         List<WorkOrder> workOrderList = null;

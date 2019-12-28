@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(value = "aggpay", fallback = AggPayClient.class)
 public interface IAggPayClient {
@@ -20,4 +21,8 @@ public interface IAggPayClient {
 
     @RequestMapping(value = "/wspay/query/refund", method = RequestMethod.GET)
     ResultMessage<List<AggPayRefundQueryBean>> getAggPayRefund(@RequestParam String outRefundNo);
+
+    @RequestMapping(value = "/wspay/batch/query/refund", method = RequestMethod.GET)
+    ResultMessage<Map<String,List<AggPayRefundQueryBean>>> getBatchAggPayRefund(@RequestParam String outRefundNos);
+
 }

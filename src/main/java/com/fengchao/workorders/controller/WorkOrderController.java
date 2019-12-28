@@ -26,10 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 //import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -896,9 +893,11 @@ public class WorkOrderController {
     @ApiOperation(value = "获取已退款的子订单id集合", notes = "获取已退款的子订单id集合")
     @ResponseStatus(code = HttpStatus.CREATED)
     @GetMapping("refund/query/refunded")
-    public ResultObject<List<String>> queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
-                                                                     @RequestParam(value = "startTime") String startTime,
-                                                                     @RequestParam(value = "endTime") String endTime) {
+    public ResultObject<List<String>>
+    queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
+                                   @RequestParam(value = "appId", required = false) String appId,
+                                   @RequestParam(value = "startTime") String startTime,
+                                   @RequestParam(value = "endTime") String endTime) {
         // 返回值
         ResultObject<List<String>> resultObject = new ResultObject<>(500, "获取已退款的子订单id集合默认错误", null);
 
@@ -908,7 +907,7 @@ public class WorkOrderController {
             Date startTimeDate = DateUtil.parseDateTime(startTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
             Date endTimeDate = DateUtil.parseDateTime(endTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
             List<WorkOrder> workOrderList =
-                    workOrderService.querySuccessRefundOrderDetailIdList(merchantId, startTimeDate, endTimeDate);
+                    workOrderService.querySuccessRefundOrderDetailIdList(appId,merchantId, startTimeDate, endTimeDate);
 
             List<String> idList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(workOrderList)) {
@@ -932,6 +931,78 @@ public class WorkOrderController {
     }
 
 
+    private ResultMessage<List<AggPayRefundQueryBean>> queryAggPay(WorkOrder workOrder) {
+
+        String outRefundNo = workOrder.getGuanaitongTradeNo();
+        if (null != outRefundNo
+                && WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus())) {
+            log.info("调用查询聚合支付退款状态接口 outRefundNo={}", outRefundNo);
+
+            ResultMessage<List<AggPayRefundQueryBean>> aggPayResult;
+            try {
+                aggPayResult = aggPayClient.getAggPayRefund(outRefundNo);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                aggPayResult = null;
+            }
+            log.info("查询聚合支付退款状态： response={}", JSON.toJSONString(aggPayResult));
+            if (null == aggPayResult || null == aggPayResult.getCode() ||
+                    200 != aggPayResult.getCode() || null == aggPayResult.getData()) {
+                log.error("未找到聚合支付服务, 或调用查询聚合支付退款状态接口失败");
+
+            }
+            workOrder.setComments(JSON.toJSONString(aggPayResult.getData()));
+            return aggPayResult;
+        }
+        return null;
+    }
+
+    private List<WorkOrder> batchQueryAggPay(List<WorkOrder> list) {
+
+        StringBuilder sb = new StringBuilder();
+
+        for(WorkOrder w:list){
+            if (null != w.getGuanaitongTradeNo()) {
+                if (0 != sb.length()) {
+                    sb.append(",");
+                }
+                sb.append(w.getGuanaitongTradeNo());
+            }
+        }
+
+        String refundNoList = sb.toString();
+        if (null == refundNoList || refundNoList.isEmpty()){
+            log.info("没有需要查询的退款记录");
+            return list;
+        }
+
+        log.info("查询聚合支付退款状态：参数 {}", refundNoList);
+        ResultMessage<Map<String,List<AggPayRefundQueryBean>>> aggPayResult =
+                aggPayClient.getBatchAggPayRefund(refundNoList);
+
+        log.info("查询聚合支付退款状态：返回 {}", JSON.toJSONString(aggPayResult));
+        if (null == aggPayResult || null == aggPayResult.getCode() ||
+                    200 != aggPayResult.getCode() || null == aggPayResult.getData()) {
+                log.error("未找到聚合支付服务, 或调用查询聚合支付退款状态接口失败");
+                return list;
+
+        }
+
+        Map<String,List<AggPayRefundQueryBean>> refundMap = aggPayResult.getData();
+        for(WorkOrder record: list){
+            String refundNo = record.getGuanaitongTradeNo();
+            if (null != refundNo){
+                String refundDetail = JSON.toJSONString(refundMap.get(refundNo));
+                if (null != refundDetail) {
+                    record.setComments(refundDetail);
+                }
+            }
+        }
+
+        return list;
+    }
+
+
     /**
      * 获取已退款的子订单信息集合
      *
@@ -944,31 +1015,47 @@ public class WorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @GetMapping("refund/query/refundedDetail")
     public ResultObject<List<WorkOrder>> queryRefundedOrderDetailList(@RequestParam(value = "merchantId", required = false) Long merchantId,
+                                                                      @RequestParam(value = "appId", required = false) String appId,
                                                                      @RequestParam(value = "startTime") String startTime,
                                                                      @RequestParam(value = "endTime") String endTime) {
         // 返回值
         ResultObject<List<WorkOrder>> resultObject = new ResultObject<>(500, "获取已退款的子订单信息集合默认错误", null);
 
-        log.info("获取已退款的子订单信息集合 入参 merchantId:{}, startTime:{}, endTime:{}", merchantId, startTime, endTime);
+        log.info("获取已退款的子订单信息集合 入参 appId={}, merchantId:{}, startTime:{}, endTime:{}", appId,merchantId, startTime, endTime);
+        Date startTimeDate=null;
+        Date endTimeDate=null;
+        List<WorkOrder> workOrderList = null;
 
         try {
-            Date startTimeDate = DateUtil.parseDateTime(startTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
-            Date endTimeDate = DateUtil.parseDateTime(endTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
-            List<WorkOrder> workOrderList =
-                    workOrderService.querySuccessRefundOrderDetailIdList(merchantId, startTimeDate, endTimeDate);
-
-            resultObject.setCode(200);
-            resultObject.setMsg("成功");
-            resultObject.setData(workOrderList);
+            startTimeDate = DateUtil.parseDateTime(startTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
+            endTimeDate = DateUtil.parseDateTime(endTime, DateUtil.DATE_YYYY_MM_DD_HH_MM_SS);
+        }catch (Exception e){
+            log.error(e.getMessage(),e);
+        }
+        if (null == startTimeDate || null == endTimeDate){
+            resultObject.setCode(500);
+            resultObject.setData(null);
+            resultObject.setMsg("查询失败：开始时间，结束时间不能为空");
+            return  resultObject;
+        }
+        try {
+            workOrderList =
+                    workOrderService.querySuccessRefundOrderDetailIdList(appId,merchantId, startTimeDate, endTimeDate);
         } catch (Exception e) {
-            log.error("获取已退款的子订单信息集合 异常:{}", e.getMessage(), e);
-
             resultObject.setCode(500);
             resultObject.setData(null);
             resultObject.setMsg("获取已退款的子订单信息集合异常," + e.getMessage());
+            return resultObject;
         }
 
-        log.info("获取已退款的子订单信息集合 返回:{}", JSONUtil.toJsonString(resultObject));
+        resultObject.setCode(200);
+        resultObject.setMsg("成功");
+        resultObject.setData(workOrderList);
+
+        List<WorkOrder> result = batchQueryAggPay(workOrderList);
+        resultObject.setData(result);
+
+        log.info("获取已退款的子订单信息集合 返回"/*, JSONUtil.toJsonString(result)*/);
 
         return resultObject;
     }

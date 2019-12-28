@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AggPayClient implements IAggPayClient {
@@ -23,4 +24,10 @@ public class AggPayClient implements IAggPayClient {
     @Override
     @RequestMapping(value = "/wspay/query/refund", method = RequestMethod.GET)
     public ResultMessage<List<AggPayRefundQueryBean>> getAggPayRefund(@RequestParam String outRefundNo){return null;}
+
+    @Override
+    @RequestMapping(value = "/wspay/batch/query/refund", method = RequestMethod.GET)
+    public ResultMessage<Map<String,List<AggPayRefundQueryBean>>> getBatchAggPayRefund(@RequestParam String outRefundNos){
+        return null;
+    }
 }

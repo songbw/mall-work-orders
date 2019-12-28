@@ -63,7 +63,7 @@ public interface IWorkOrderService {
      * @return
      * @throws Exception
      */
-    List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, Date startTime, Date endTime) throws Exception;
+    List<WorkOrder> querySuccessRefundOrderDetailIdList(String iAppId,Long merchantId, Date startTime, Date endTime) throws Exception;
 
     String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception;
 
