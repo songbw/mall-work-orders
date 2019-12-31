@@ -40,3 +40,27 @@ ActiveTime: 5
 TemplateID1: 257540
 #腾讯云模板更新密码ID template
 TemplateID2: 257544
+
+#GuangAiTong
+GAT_NOTIFY_URL: http://xcx-dev.weesharing.com/v2/workorders/refund/notify
+GAT_I_APP_ID: '10'
+
+refund:
+  ids[0]:
+    iAppId: "10"
+    apiType: "10"
+
+  ids[1]:
+    iAppId: "11"
+    apiType: "11"
+
+  ids[2]:
+    iAppId: "01"
+    apiType: "11"
+
+  ids[3]:
+    iAppId: "12"
+    apiType: "11"
+  ids[4]:
+    iAppId: "02"
+    apiType: "11"

@@ -223,7 +223,8 @@ public class WorkFlowController {
         return flowId;
     }
 
-    private void updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow) throws Exception{
+    private void
+    updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow,boolean canRollBackStatus) throws Exception{
         Long flowId;
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(new Date());
@@ -234,7 +235,6 @@ public class WorkFlowController {
         }
         try {
             flowId = workFlowService.insert(workFlow);
-            log.info("create WorkFlow success, id = {}", flowId );
         }catch (Exception e) {
             log.error("数据库操作异常 {}",e.getMessage());
             throw e;
@@ -248,20 +248,27 @@ public class WorkFlowController {
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
             Long workOrderId = workOrder.getId();
             try {
-                workOrder = workOrderService.selectById(workOrderId);
-                if (null != workOrder) {
-                    if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())){
-                        workOrder.setStatus(workFlow.getStatus());
-                    }
+                if (canRollBackStatus) {
+                    //允许工单状态回退
+                    workOrder.setStatus(workFlow.getStatus());
                     workOrder.setUpdateTime(new Date());
                     workOrderService.update(workOrder);
+                } else {
+                    workOrder = workOrderService.selectById(workOrderId);
+                    if (null != workOrder) {
+                        if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
+                            workOrder.setStatus(workFlow.getStatus());
+                        }
+                        workOrder.setUpdateTime(new Date());
+                        workOrderService.update(workOrder);
+                    }
                 }
             }catch (Exception e) {
                 log.error("数据库操作异常 {}",e.getMessage(),e);
                 throw e;
             }
         }
-
+        log.info("Update workOrder success {}",JSON.toJSONString(workOrder));
     }
 
     @ApiOperation(value = "特别处理重新打开工单创建工单流程信息", notes = "特别处理重新打开工单创建工单流程信息")
@@ -281,7 +288,6 @@ public class WorkFlowController {
         String operator = data.getOperator();
         Integer typeId = data.getTypeId();
         Float refund = data.getRefund();
-
 
         if (null == workOrderId || 0 == workOrderId
         ) {
@@ -359,7 +365,7 @@ public class WorkFlowController {
         //workOrder.setRefundNo("");
         //workOrder.setExpressNo("");
         try{
-            updateFlowAndWorkorder(workOrder,workFlow);
+            updateFlowAndWorkorder(workOrder,workFlow,true);
         }catch (Exception e){
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;
@@ -367,7 +373,7 @@ public class WorkFlowController {
 
         result.id = workFlow.getId();
         response.setStatus(MyErrorMap.e201.getCode());
-        log.info("特别处理重新打开工单 {} success ",workOrder.getId().toString());
+        log.info("特别处理重新打开工单 success");
         return result;
     }
 
@@ -442,7 +448,7 @@ public class WorkFlowController {
         if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){
             // 直接关闭工单
             try{
-                updateFlowAndWorkorder(workOrder,workFlow);
+                updateFlowAndWorkorder(workOrder,workFlow,false);
             }catch (Exception e){
                 StringUtil.throw400Exp(response, "400006:"+e.getMessage());
                 return null;
@@ -601,7 +607,7 @@ public class WorkFlowController {
 
         // 没有进行退款操作处理
         try{
-            updateFlowAndWorkorder(workOrder,workFlow);
+            updateFlowAndWorkorder(workOrder,workFlow,false);
         }catch (Exception e){
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

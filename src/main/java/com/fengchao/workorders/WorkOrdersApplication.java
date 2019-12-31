@@ -3,6 +3,7 @@ package com.fengchao.workorders;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.web.client.RestTemplate;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 @EnableFeignClients
 @EnableDiscoveryClient
 @SpringBootApplication
+@EnableConfigurationProperties
 @MapperScan({"com.fengchao.workorders.mapper"})
 public class WorkOrdersApplication {
 
