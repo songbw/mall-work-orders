@@ -109,6 +109,57 @@ public class WorkOrderController {
        return dateTime;
     }
 
+    /**
+     * 根据查询结果更新工单记录
+     */
+    private void
+    checkWorkOrderByAggPay(WorkOrder workOrder,List<AggPayRefundQueryBean> list){
+
+        boolean isAllDone = true;
+        int itemCount = 0;
+        int itemOk = 0;
+        int itemFailed = 0;
+        String endTime = "1970-01-01 00:0:00";
+
+        for(AggPayRefundQueryBean b: list){
+            itemCount += 1;
+            if (AggPayRefundStatusEnum.NEW.getCode().equals(b.getStatus()) ||
+                    AggPayRefundStatusEnum.PENDING.getCode().equals(b.getStatus())){
+                isAllDone = false;
+                break;
+            }else {
+                if (AggPayRefundStatusEnum.SUCCESS.getCode().equals(b.getStatus())) {
+                    itemOk += 1;
+                    if (null != b.getTradeDate() && 0 < b.getTradeDate().compareTo(endTime)){
+                        endTime = b.getCreateDate();
+                    }
+                } else {
+                    itemFailed += 1;
+                }
+            }
+        }
+
+        if (isAllDone && (itemCount == itemOk || itemCount == itemFailed)) {
+            if (itemCount == itemOk) {
+                workOrder.setComments("聚合支付退款成功");
+            }else {
+                workOrder.setComments("聚合支付退款失败");
+            }
+            Long recordId = workOrder.getId();
+            String comments = workOrder.getComments();
+            try {
+                workOrder = workOrderService.selectById(recordId);
+                if (null != workOrder && !WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
+                    workOrder.setStatus(WorkOrderStatusType.CLOSED.getCode());
+                    workOrder.setRefundTime(StringUtil.String2Date(endTime));
+                    workOrder.setComments(comments);
+                    workOrderService.update(workOrder);
+                }
+            } catch (Exception e) {
+                log.error("数据库操作异常 {}", e.getMessage(), e);
+            }
+        }
+    }
 
     @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -118,6 +169,7 @@ public class WorkOrderController {
                                  @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                  @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
+        String functionDescription = "获取指定工单信息";
         WorkOrderBean bean = new WorkOrderBean();
         String username = JwtTokenUtil.getUsername(authentication);
 
@@ -169,41 +221,11 @@ public class WorkOrderController {
             }
             bean.setComments(JSON.toJSONString(aggPayResult.getData()));
 
-            boolean isAllDone = true;
-            int itemCount = 0;
-            int itemOk = 0;
-            int itemFailed = 0;
-
-            for(AggPayRefundQueryBean b: aggPayResult.getData()){
-                itemCount += 1;
-                if (AggPayRefundStatusEnum.NEW.getCode().equals(b.getStatus())){
-                    isAllDone = false;
-                    break;
-                }else if(AggPayRefundStatusEnum.FAILED.getCode().equals(b.getStatus())){
-                    itemFailed += 1;
-                }else{
-                    itemOk += 1;
-                }
-            }
-
-            if (isAllDone && (itemCount == itemOk || itemCount == itemFailed)) {
-                workOrder.setStatus(WorkOrderStatusType.CLOSED.getCode());
-                if (itemCount == itemOk) {
-                    workOrder.setComments("聚合支付退款成功");
-                }else {
-                    workOrder.setComments("聚合支付退款失败");
-                }
-
-                try {
-                    workOrderService.update(workOrder);
-                } catch (Exception e) {
-                    log.error("数据库操作异常 {}", e.getMessage(), e);
-                }
-            }
-
+            // 根据查询结果更新工单记录
+            checkWorkOrderByAggPay(workOrder,aggPayResult.getData());
         }
-
         response.setStatus(MyErrorMap.e200.getCode());
+        log.info("{} {}",functionDescription,JSON.toJSONString(bean));
         return bean;
 
     }
@@ -861,7 +883,7 @@ public class WorkOrderController {
             return null;
         }
         if (null == guanAiTongTradeNo) {
-            StringUtil.throw400Exp(response, "400003: failed to find work-order");
+            StringUtil.throw400Exp(response, "400003: 关爱通退款接口没有返回关爱通退款单号");
             return result;
         } else {
             if (guanAiTongTradeNo.isEmpty()) {

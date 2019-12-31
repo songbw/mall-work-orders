@@ -8,9 +8,11 @@ public enum AggPayRefundStatusEnum {
     /*
     * ENUM
     * */
+    NEW(0, "新创建"),
     SUCCESS(1, "成功"),
     FAILED(2, "失败"),
-    NEW(3, "新创建");
+    PART_FAILED(3,"部分失败"),
+    PENDING(4, "处理中");
 
     private Integer code;
     private String description;

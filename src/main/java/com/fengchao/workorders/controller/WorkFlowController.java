@@ -246,11 +246,16 @@ public class WorkFlowController {
 
         log.info("create work_flow {}",JSON.toJSONString(workFlow));
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-            workOrder.setStatus(workFlow.getStatus());
-            workOrder.setUpdateTime(new Date());
-
+            Long workOrderId = workOrder.getId();
             try {
-                workOrderService.update(workOrder);
+                workOrder = workOrderService.selectById(workOrderId);
+                if (null != workOrder) {
+                    if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())){
+                        workOrder.setStatus(workFlow.getStatus());
+                    }
+                    workOrder.setUpdateTime(new Date());
+                    workOrderService.update(workOrder);
+                }
             }catch (Exception e) {
                 log.error("数据库操作异常 {}",e.getMessage(),e);
                 throw e;
@@ -434,7 +439,8 @@ public class WorkFlowController {
             workFlow.setCreatedBy(username);
         }
 
-        if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){//直接关闭工单
+        if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){
+            // 直接关闭工单
             try{
                 updateFlowAndWorkorder(workOrder,workFlow);
             }catch (Exception e){
@@ -530,6 +536,7 @@ public class WorkFlowController {
                         }
                     }
                 }
+
             } else if (isAggPay){
                 if (null == refund){
                     StringUtil.throw400Exp(response, "400008:退款金额缺失");
@@ -543,7 +550,6 @@ public class WorkFlowController {
                 aBean.setRefundFee(formatter.format(decRefund.multiply(dec100f).floatValue()));
                 String outerRefundNo = iAppId+StringUtil.getTimeStampRandomStr();
                 aBean.setOutRefundNo(outerRefundNo);
-                workOrder.setRefundNo(outerRefundNo);
                 aBean.setMerchantCode(workOrder.getMerchantId().toString());
                 aBean.setNotifyUrl(Constant.AGGPAY_NOTIFY_URL);
                 ResultMessage<String> aggpayRst = null;
@@ -567,12 +573,18 @@ public class WorkFlowController {
                     //String aggpayRefundNo = json.getString("refundNo");
                     String aggpayRefundNo = aBean.getOutRefundNo();
                     if (null != aggpayRefundNo && !aggpayRefundNo.isEmpty()){
-                        try{
-                            workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
-                            workOrder.setGuanaitongTradeNo(aggpayRefundNo);
-                            workOrder.setUpdateTime(new Date());
-                            workOrder.setRefundAmount(refund);
-                            workOrderService.update(workOrder);
+                        try {
+                            workOrder = workOrderService.selectById(workOrderId);
+                            if (null != workOrder) {
+                                if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
+                                    workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
+                                }
+                                workOrder.setRefundNo(outerRefundNo);
+                                workOrder.setGuanaitongTradeNo(aggpayRefundNo);
+                                workOrder.setUpdateTime(new Date());
+                                workOrder.setRefundAmount(refund);
+                                workOrderService.update(workOrder);
+                            }
                         }catch (Exception e){
                             StringUtil.throw400Exp(response,"400006:work_order update failed "+e.getMessage());
                         }
@@ -583,10 +595,11 @@ public class WorkFlowController {
 
             result.id = createWorkFlow(workOrder,workFlow);
             response.setStatus(MyErrorMap.e201.getCode());
-            log.info("退款接口完并更新工单,记录处理流程 id= {} ",result.id);
+            log.info("退款接口完成并更新工单,记录处理流程 id= {} ",result.id);
             return result;
         }
 
+        // 没有进行退款操作处理
         try{
             updateFlowAndWorkorder(workOrder,workFlow);
         }catch (Exception e){
