@@ -205,7 +205,10 @@ public class WorkFlowController {
         if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
                 && null != workOrder.getRefundNo()){
             String oldComments = workFlow.getComments();
-            workFlow.setComments(oldComments + " refundNo="+workOrder.getRefundNo());
+            if (null == oldComments || oldComments.isEmpty()){
+                oldComments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
+            }
+            workFlow.setComments(oldComments);
         }
         try {
             flowId = workFlowService.insert(workFlow);
@@ -230,8 +233,11 @@ public class WorkFlowController {
         workFlow.setUpdateTime(new Date());
         if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
            && null != workOrder.getRefundNo()){
-            String oldComments = workFlow.getComments();
-            workFlow.setComments(oldComments + " refundNo="+workOrder.getRefundNo());
+            String comments = workFlow.getComments();
+            if (null == comments || comments.isEmpty()){
+                comments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
+            }
+            workFlow.setComments(comments);
         }
         try {
             flowId = workFlowService.insert(workFlow);
