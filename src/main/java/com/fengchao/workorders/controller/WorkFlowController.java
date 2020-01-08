@@ -185,8 +185,20 @@ public class WorkFlowController {
 
     }
 
-    private void updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow) throws Exception{
+    private void
+    updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow,boolean canRollBackStatus) throws Exception{
         Long flowId;
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
+        if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
+                && null != workOrder.getRefundNo()){
+            String comments = workFlow.getComments();
+            if (null == comments || comments.isEmpty()){
+                comments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
+            }
+            workFlow.setComments(comments);
+        }
+
         try {
             flowId = workFlowService.insert(workFlow);
             log.info("create WorkFlow success, id = {}", flowId );
@@ -201,12 +213,23 @@ public class WorkFlowController {
 
         log.info("create work_flow {}",JSON.toJSONString(workFlow));
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-            workOrder.setStatus(workFlow.getStatus());
-            workOrder.setUpdateTime(new Date());
+            Long workOrderId = workOrder.getId();
             try {
-                WorkOrder record = workOrderService.selectById(workOrder.getId());
-                if (!WorkOrderStatusType.CLOSED.getCode().equals(record.getStatus())) {
+                if (canRollBackStatus) {
+                    //允许工单状态回退
+                    workOrder.setStatus(workFlow.getStatus());
+                    workOrder.setUpdateTime(new Date());
                     workOrderService.update(workOrder);
+                } else {
+                    workOrder = workOrderService.selectById(workOrderId);
+                    if (null != workOrder) {
+                        if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
+                            workOrder.setStatus(workFlow.getStatus());
+                        }
+                        workOrder.setUpdateTime(new Date());
+                        workOrderService.update(workOrder);
+                    }
+
                 }
             }catch (Exception e) {
                 log.error(e.getMessage(),e);
@@ -215,6 +238,111 @@ public class WorkFlowController {
         }
         log.info("update work_order {}",JSON.toJSONString(workOrder));
     }
+
+    @ApiOperation(value = "特别处理重新打开工单创建工单流程信息", notes = "特别处理重新打开工单创建工单流程信息")
+    @ApiResponses({ @ApiResponse(code = 400, message = "特别处理重新打开工单失败") })
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @PostMapping("work_flows/work_order")
+    public IdData reNewProfile(HttpServletResponse response,
+                               @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                               @RequestBody WorkFlowBodyBean data) {
+
+        log.info("特别处理重新打开工单 入参 {}", JSON.toJSONString(data));
+        IdData result = new IdData();
+        String username = JwtTokenUtil.getUsername(authentication);
+        Long workOrderId = data.getWorkOrderId();
+        Integer nextStatus = WorkOrderStatusType.EDITING.getCode();
+        String comments = data.getComments();
+        String operator = data.getOperator();
+        Integer typeId = data.getTypeId();
+        Float refund = data.getRefund();
+
+        if (null == workOrderId || 0 == workOrderId
+        ) {
+            StringUtil.throw400Exp(response, "400002:工单号不能为空");
+            return result;
+        }
+
+        if (null == operator || operator.isEmpty()) {
+            StringUtil.throw400Exp(response, "400003: 操作员不能为空");
+            return result;
+        }
+
+        if (null != typeId){
+            if (WorkOrderType.Int2String(typeId).isEmpty()) {
+                StringUtil.throw400Exp(response, "400005:工单类型错误");
+                return result;
+            }
+            if (!WorkOrderType.EXCHANGE.getCode().equals(typeId) && null == refund){
+                StringUtil.throw400Exp(response, "400010:退款金额缺失");
+                return result;
+            }
+        }
+
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(workOrderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400004:工单号不存在");
+            return result;
+        }
+        log.info("特别处理重新打开工单： {}",JSON.toJSONString(workOrder));
+
+        Integer orderStatus = workOrder.getStatus();
+        if (!WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)) {
+            StringUtil.throw400Exp(response, "400007:工单状态为处理完成时才可以重新打开");
+            return result;
+        }
+
+        WorkFlow workFlow = new WorkFlow();
+
+        workFlow.setWorkOrderId(workOrderId);
+        workFlow.setUpdatedBy(operator);
+
+        workFlow.setStatus(nextStatus);
+
+        if (null != comments && !comments.isEmpty()) {
+            workFlow.setComments(comments);
+        }
+        if (null != typeId){
+            if (null == comments) {
+                String tmpStr = " 更改工单类型,从" + workOrder.getTypeId().toString() + " 到 " + typeId.toString();
+                String oldComments = workFlow.getComments();
+                workFlow.setComments(oldComments + tmpStr);
+            }
+            workOrder.setTypeId(typeId);
+            if (WorkOrderType.EXCHANGE.getCode().equals(typeId)){
+                workOrder.setRefundAmount(0.00F);
+            }else {
+                workOrder.setRefundAmount(refund);
+            }
+        }
+
+        if (null != username && !username.isEmpty()) {
+            workFlow.setCreatedBy(username);
+        }
+
+        //workOrder.setRefundNo("");
+        //workOrder.setExpressNo("");
+        try{
+            updateFlowAndWorkorder(workOrder,workFlow,true);
+        }catch (Exception e){
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        result.id = workFlow.getId();
+        response.setStatus(MyErrorMap.e201.getCode());
+        log.info("特别处理重新打开工单 success");
+        return result;
+    }
+
+
 
     @ApiOperation(value = "创建工单流程信息", notes = "创建工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
@@ -309,7 +437,7 @@ public class WorkFlowController {
 
         if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){//直接关闭工单
             try{
-                updateFlowAndWorkorder(workOrder,workFlow);
+                updateFlowAndWorkorder(workOrder,workFlow,false);
             }catch (Exception e){
                 StringUtil.throw400Exp(response, "400006:"+e.getMessage());
                 return null;
@@ -380,7 +508,7 @@ public class WorkFlowController {
         }
 
         try{
-            updateFlowAndWorkorder(workOrder,workFlow);
+            updateFlowAndWorkorder(workOrder,workFlow,false);
         }catch (Exception e){
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

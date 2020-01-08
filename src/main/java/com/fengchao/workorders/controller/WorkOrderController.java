@@ -687,7 +687,7 @@ public class WorkOrderController {
             return null;
         }
         if (null == guanAiTongTradeNo) {
-            StringUtil.throw400Exp(response, "400003: failed to find work-order");
+            StringUtil.throw400Exp(response, "400003: 关爱通退款接口没有返回关爱通退款单号");
             return result;
         } else {
             if (guanAiTongTradeNo.isEmpty()) {

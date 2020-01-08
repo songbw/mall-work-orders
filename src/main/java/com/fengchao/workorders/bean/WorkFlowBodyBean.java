@@ -32,4 +32,6 @@ public class WorkFlowBodyBean {
     @ApiModelProperty(value="快递单号", example="2019111111",required=false)
     private String expressNo;
 
+    @ApiModelProperty(value="工单类型ID", example="1",required=false)
+    private Integer typeId;
 }

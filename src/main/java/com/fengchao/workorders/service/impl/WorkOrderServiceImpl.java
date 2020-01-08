@@ -561,19 +561,23 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             throw new Exception(errMsgSb.toString());
         }
 
-        wo.setRefundAmount(refundAmount);
-        wo.setRefundNo(refundNo);
-        wo.setGuanaitongTradeNo(guanAiTongNo);
-        wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
-        if (null == handleFare || 0 == handleFare) {
-            //since we will check fare when create work-order. and set it by query order info.
-            //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
-            wo.setFare(0.00f);
-        }
-
         try {
-            wo.setUpdateTime(new Date());
-            workOrderDao.updateByPrimaryKey(wo);
+            wo = workOrderDao.selectByPrimaryKey(workOrderId);
+            if (null != wo) {
+                if (!WorkOrderStatusType.CLOSED.getCode().equals(wo.getStatus())){
+                    wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
+                }
+                wo.setRefundAmount(refundAmount);
+                wo.setRefundNo(refundNo);
+                wo.setGuanaitongTradeNo(guanAiTongNo);
+                if (null == handleFare || 0 == handleFare) {
+                    //since we will check fare when create work-order. and set it by query order info.
+                    //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
+                    wo.setFare(0.00f);
+                }
+                wo.setUpdateTime(new Date());
+                workOrderDao.updateByPrimaryKey(wo);
+            }
         } catch (Exception ex) {
             log.error("update work-order sql error: {}", ex.getMessage(),ex);
             throw new Exception(ex);
