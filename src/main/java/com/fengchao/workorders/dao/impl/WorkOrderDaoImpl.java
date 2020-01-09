@@ -85,6 +85,26 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
+    public List<WorkOrder> selectByOrderIdList(List<String> orderIdList){
+        log.info("selectByOrderIdList param : {} ",JSON.toJSONString(orderIdList));
+
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andOrderIdIn(orderIdList);
+        example.setOrderByClause("id DESC");
+        List<WorkOrder> list;
+        try {
+            list = mapper.selectByExample(example);
+        } catch (Exception ex) {
+            log.error("workOrderMapper exception {}",ex.getMessage(),ex);
+            throw ex;
+        }
+        log.info("selectByOrderIdList exit: {}", JSON.toJSONString(list));
+        return list;
+    }
+
+
+    @Override
     public PageInfo<WorkOrder> selectRange(int pageIndex, int pageSize,String sort, String order,
                                            String iAppId,
                                            String title, String receiverId,
@@ -269,7 +289,6 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample.Criteria criteria = example.createCriteria();
 
         List<Integer> statusList = new ArrayList<>();
-        statusList.add(WorkOrderStatusType.REFUNDING.getCode());
         statusList.add(WorkOrderStatusType.CLOSED.getCode());
         criteria.andStatusIn(statusList);
 

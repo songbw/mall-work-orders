@@ -387,7 +387,7 @@ public class CustomerWorkOrderController {
             StringUtil.throw400Exp(response, "400005:工单类型错误");
             return result;
         }
-
+        BigDecimal decCouponDiscount = new BigDecimal(0);
         WorkOrder workOrder = new WorkOrder();
 
         WorkOrder selectedWO = null;
@@ -427,13 +427,17 @@ public class CustomerWorkOrderController {
                 workOrder.setTradeNo(paymentNo);
             }
 
-            Float salePrice = json.getFloat("salePrice");
-            if (null == salePrice) {
+            Float unitPrice = json.getFloat("unitPrice");
+            Integer skuCouponDiscount = json.getInteger("skuCouponDiscount");
+            if (null == unitPrice) {
                 log.info("searchOrder info: salePrice is null");
             } else {
-                workOrder.setSalePrice(salePrice);
+                workOrder.setSalePrice(unitPrice);
             }
-
+            if (null != skuCouponDiscount){
+                Float floatDiscount = Float.valueOf(FeeUtil.Fen2Yuan(String.valueOf(skuCouponDiscount)));
+                decCouponDiscount = new BigDecimal(floatDiscount);
+            }
             Integer orderNum = json.getInteger("num");
             if (null == orderNum) {
                 log.error("searchOrder info: num is null");
@@ -487,9 +491,10 @@ public class CustomerWorkOrderController {
         if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
             workOrder.setRefundAmount(0.00f);
         }else {
-            BigDecimal decSalePrice = new BigDecimal(workOrder.getSalePrice());
+            BigDecimal decUnitPrice = new BigDecimal(workOrder.getSalePrice());
             BigDecimal decNum = new BigDecimal(num);
-            workOrder.setRefundAmount(decSalePrice.multiply(decNum).floatValue());
+            BigDecimal decRefundAmount = decUnitPrice.multiply(decNum).subtract(decCouponDiscount);
+            workOrder.setRefundAmount(decRefundAmount.floatValue());
         }
         workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);

@@ -1,8 +1,9 @@
 package com.fengchao.workorders.util;
 
 public enum WorkOrderStatusType {
+    /**/
     EDITING(1, "待审核"),
-    PENDING1(2, "审核中"),
+    PENDING(2, "审核中"),
     ACCEPTED(3, "审核通过"),
     REJECT(4, "审核有问题"),
     HANDLING(5, "处理中"),

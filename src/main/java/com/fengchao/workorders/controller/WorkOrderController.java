@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.BeanUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 //import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
@@ -161,7 +162,7 @@ public class WorkOrderController {
         }
     }
 
-    @ApiOperation(value = "获取指定工单信息", notes = "工单信息")
+    @ApiOperation(value = "获取指定工单信息", notes = "获取指定工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/{id}")
@@ -202,7 +203,8 @@ public class WorkOrderController {
 
         String outRefundNo = workOrder.getGuanaitongTradeNo();
         if (null != outRefundNo
-                && WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus())) {
+                && (WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus()) ||
+                WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus()))) {
             log.info("调用查询聚合支付退款状态接口 outRefundNo={}", outRefundNo);
 
             ResultMessage<List<AggPayRefundQueryBean>> aggPayResult;
@@ -230,6 +232,55 @@ public class WorkOrderController {
 
     }
 
+    @ApiOperation(value = "根据订单号列表获取工单信息", notes = "根据订单号列表获取工单信息")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @PostMapping("work_orders/byOrderList")
+    public List<WorkOrderBean> getWorkOrderByOrderIdList(HttpServletResponse response,
+                                          @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
+                                          @ApiParam(value="idList",required=true) @Valid @RequestBody List<String> idList) {
+
+        String functionDescription = "根据订单号列表获取工单信息";
+
+        String username = JwtTokenUtil.getUsername(authentication);
+
+        if (username.isEmpty()) {
+            log.warn("can not find username in token");
+        }
+
+        if (null == idList || 0 == idList.size()) {
+            StringUtil.throw400Exp(response, "400002: 订单号列表缺失");
+            return null;
+        }
+
+        List<WorkOrder> workOrders;
+        try {
+            workOrders = workOrderService.selectByOrderIdList(idList);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        if (null == workOrders || 0 == workOrders.size()) {
+            StringUtil.throw400Exp(response, "400003:Failed to find work_order");
+            return null;
+        }
+
+        List<WorkOrderBean> list = new ArrayList<>();
+        for(WorkOrder w: workOrders) {
+            WorkOrderBean bean = new WorkOrderBean();
+            BeanUtils.copyProperties(w, bean);
+            if (null != w.getGuanaitongRefundAmount()) {
+                bean.setRealRefundAmount(w.getGuanaitongRefundAmount());
+            }
+            list.add(bean);
+        }
+        response.setStatus(MyErrorMap.e200.getCode());
+        log.info("{} 查询到={} 条",functionDescription,list.size());
+        return list;
+
+    }
+
 
     @ApiOperation(value = "查询退款异常工单", notes = "查询退款异常工单")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -245,8 +296,7 @@ public class WorkOrderController {
                                                    @ApiParam(value="商户ID")@RequestParam(required=false) Long merchantId,
                                                    @ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
                                                    @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd
-
-    ) {
+                                                    ) {
 
         java.util.Date dateCreateTimeStart ;
         java.util.Date dateCreateTimeEnd ;
@@ -290,7 +340,8 @@ public class WorkOrderController {
         List<WorkOrderBean> list = new ArrayList<>();
 
         if ((index -1) * pages.getPageSize() <= pages.getTotal()) {
-            for (WorkOrder a : pages.getRows()) {
+            List<WorkOrder> workOrders = batchQueryAggPay(pages.getRows());
+            for (WorkOrder a : workOrders) {
                 WorkOrderBean b = new WorkOrderBean();
                 BeanUtils.copyProperties(a, b);
 
@@ -303,8 +354,6 @@ public class WorkOrderController {
         return result;
 
     }
-
-
 
     @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
@@ -373,21 +422,15 @@ public class WorkOrderController {
             return null;
         }
         List<WorkOrderBean> list = new ArrayList<>();
-
+        List<WorkOrder> workOrders = batchQueryAggPay(pages.getRows());
         if ((index -1) * pages.getPageSize() <= pages.getTotal()) {
-            for (WorkOrder a : pages.getRows()) {
+            for (WorkOrder a : workOrders) {
                 WorkOrderBean b = new WorkOrderBean();
                 BeanUtils.copyProperties(a, b);
                 if (null != a.getGuanaitongRefundAmount()) {
                     b.setRealRefundAmount(a.getGuanaitongRefundAmount());
                 }
 
-                /*if (null != a.getGuanaitongTradeNo()) {
-                    String comments = getCommnets(a.getGuanaitongTradeNo());
-                    if (null != comments){
-                        b.setComments(comments);
-                    }
-                }*/
                 list.add(b);
             }
         }
@@ -552,7 +595,7 @@ public class WorkOrderController {
         return result;
     }
 
-    @ApiOperation(value = "更新工单流程信息", notes = "更新工单流程信息")
+    @ApiOperation(value = "更新工单信息", notes = "更新工单信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to update record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PutMapping("work_orders/{id}")

@@ -25,7 +25,7 @@ public interface IWorkOrderService {
                                    String orderId, Integer typeId, Long merchantId,Integer status,
                                    Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd) throws Exception;
 
-    List<WorkOrder> selectByOrderId(String orderId) throws Exception;
+    List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception;
 
     List<WorkOrder> selectByParentOrderId(Integer parentOrderId) throws Exception;
 

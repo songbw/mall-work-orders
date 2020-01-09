@@ -128,15 +128,10 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public List<WorkOrder> selectByOrderId(String orderId) throws Exception{
-        orderId = orderId.trim();
-        List<WorkOrder> list = null;
-        try {
-            list = workOrderDao.selectByOrderId(orderId);
-        } catch (Exception ex) {
-            throw new Exception(ex);
-        }
-        return list;
+    public List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception{
+
+        return workOrderDao.selectByOrderIdList(orderIdList);
+
     }
 
     @Override

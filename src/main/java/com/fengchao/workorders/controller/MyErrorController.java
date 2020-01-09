@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ public class MyErrorController {
 
     @ResponseBody
     @ExceptionHandler(value = Exception.class)
-    public Map<String,Object> errorHandle(Exception e){
+    public Map<String,Object> errorHandle(Exception e, HttpServletResponse response){
         Map<String,Object> map = new HashMap<>();
 
         if (null != e && null != e.getCause()) {
@@ -33,6 +34,7 @@ public class MyErrorController {
                 }
             }
         }
+        response.setStatus(400);
         return map;
     }
 
