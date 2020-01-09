@@ -64,7 +64,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public List<WorkOrder> selectByOrderId(String orderId) throws Exception{
+    public List<WorkOrder> selectValidByOrderId(String orderId) throws Exception{
         log.info("selectByOrderId param : {} ",orderId);
         if (null == orderId) {
             return null;
@@ -72,6 +72,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andOrderIdEqualTo(orderId);
+        criteria.andStatusNotEqualTo(WorkOrderStatusType.REJECT.getCode());
         example.setOrderByClause("id DESC");
         List<WorkOrder> list;
         try {

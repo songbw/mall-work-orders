@@ -334,7 +334,7 @@ public class CustomerWorkOrderController {
                                           //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
                                           @RequestBody CustomerWorkOrderBean data) {
 
-        log.info("app side createWorkOrder: {}" , JSON.toJSONString(data));
+        log.info("app side createWorkOrder: {}", JSON.toJSONString(data));
         IdResponseData result = new IdResponseData();
 
         String orderId = data.getOrderId();
@@ -347,11 +347,11 @@ public class CustomerWorkOrderController {
         String iAppId = data.getiAppId();
         String tAppId = data.gettAppId();
 
-        if (null == orderId || orderId.isEmpty() ) {
+        if (null == orderId || orderId.isEmpty()) {
             StringUtil.throw400Exp(response, "400002:所属订单不能空缺");
             return result;
         }
-        if (null == iAppId || iAppId.isEmpty() ) {
+        if (null == iAppId || iAppId.isEmpty()) {
             StringUtil.throw400Exp(response, "400007:iAppId不能空缺");
             return result;
         }
@@ -363,12 +363,12 @@ public class CustomerWorkOrderController {
         }
 
         if (isGat) {//GuanAiTong order
-            if (null == tAppId || tAppId.isEmpty() ) {
+            if (null == tAppId || tAppId.isEmpty()) {
                 StringUtil.throw400Exp(response, "400007: 关爱通AppId不能空缺");
                 return result;
             }
         }
-        if (null == customer || customer.isEmpty() ) {
+        if (null == customer || customer.isEmpty()) {
             StringUtil.throw400Exp(response, "400003:客户不能空缺");
             return result;
         }
@@ -390,94 +390,89 @@ public class CustomerWorkOrderController {
         BigDecimal decCouponDiscount = new BigDecimal(0);
         WorkOrder workOrder = new WorkOrder();
 
-        WorkOrder selectedWO = null;
+        WorkOrder selectedWO;
         try {
             selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400009:"+e.getMessage());
+        } catch (Exception e) {
+            StringUtil.throw400Exp(response, "400009:" + e.getMessage());
             return result;
         }
 
-        if (null == selectedWO) {//totally new order
-            log.info("准备新建工单, 子订单号= " + orderId);
-            JSONObject json;
-            try {
-                json = workOrderService.getOrderInfo(customer, orderId, merchantId);
-            }catch (Exception e) {
-                StringUtil.throw400Exp(response, "400007:"+e.getMessage());
-                return result;
-            }
-            if (null == json) {
-                StringUtil.throw400Exp(response, "400007: searchOrder失败");
-                return result;
-            }
+        boolean isFull = (null != selectedWO) &&
+                (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum());
+        if (isFull) {
+            StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
+            return result;
+        }
 
-            Integer parentOrderId = json.getInteger("id");
-            if (null == parentOrderId) {
-                StringUtil.throw400Exp(response, "400008: searchOrder, 获取id失败");
-                return result;
-            } else {
-                workOrder.setParentOrderId(parentOrderId);
-            }
+        log.info("准备新建工单, 子订单号= " + orderId);
+        JSONObject json;
+        try {
+            json = workOrderService.getOrderInfo(customer, orderId, merchantId);
+        } catch (Exception e) {
+            StringUtil.throw400Exp(response, "400007:" + e.getMessage());
+            return result;
+        }
+        if (null == json) {
+            StringUtil.throw400Exp(response, "400007: searchOrder失败");
+            return result;
+        }
 
-            String paymentNo = json.getString("paymentNo");
-            if (null == paymentNo) {
-                log.info("searchOrder info: paymentNo is null");
-            } else {
-                workOrder.setTradeNo(paymentNo);
-            }
-
-            Float unitPrice = json.getFloat("unitPrice");
-            Integer skuCouponDiscount = json.getInteger("skuCouponDiscount");
-            if (null == unitPrice) {
-                log.info("searchOrder info: salePrice is null");
-            } else {
-                workOrder.setSalePrice(unitPrice);
-            }
-            if (null != skuCouponDiscount){
-                Float floatDiscount = Float.valueOf(FeeUtil.Fen2Yuan(String.valueOf(skuCouponDiscount)));
-                decCouponDiscount = new BigDecimal(floatDiscount);
-            }
-            Integer orderNum = json.getInteger("num");
-            if (null == orderNum) {
-                log.error("searchOrder info: num is null");
-                StringUtil.throw400Exp(response, "400008: searchOrder info: num is null");
-                return result;
-            } else {
-                workOrder.setOrderGoodsNum(orderNum);
-            }
-
-            String mobile = json.getString("mobile");
-            if (null != mobile) {
-                workOrder.setReceiverPhone(mobile);
-            }
-            String receiverName = json.getString("receiverName");
-            if (null != receiverName) {
-                workOrder.setReceiverName(receiverName);
-            }
-            Float fare = json.getFloat("servFee");
-            if (null != fare) {
-                workOrder.setFare(fare);
-            }
-            Integer paymentAmount = json.getInteger("paymentAmount");
-            if (null != paymentAmount) {
-                workOrder.setPaymentAmount(paymentAmount);
-            }
+        Integer parentOrderId = json.getInteger("id");
+        if (null == parentOrderId) {
+            StringUtil.throw400Exp(response, "400008: searchOrder, 获取id失败");
+            return result;
         } else {
-            if (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum()) {
-                StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
-                return result;
-            }
+            workOrder.setParentOrderId(parentOrderId);
+        }
 
-            workOrder.setFare(selectedWO.getFare());
-            workOrder.setParentOrderId(selectedWO.getParentOrderId());
-            workOrder.setPaymentAmount(selectedWO.getPaymentAmount());
-            workOrder.setTradeNo(selectedWO.getTradeNo());
-            workOrder.setSalePrice(selectedWO.getSalePrice());
-            workOrder.setOrderGoodsNum(selectedWO.getOrderGoodsNum());
-            workOrder.setReceiverPhone(selectedWO.getReceiverPhone());
-            workOrder.setReceiverName(selectedWO.getReceiverName());
+        String paymentNo = json.getString("paymentNo");
+        if (null == paymentNo) {
+            log.info("searchOrder info: paymentNo is null");
+        } else {
+            workOrder.setTradeNo(paymentNo);
+        }
 
+        Float unitPrice = json.getFloat("unitPrice");
+        Integer skuCouponDiscount = json.getInteger("skuCouponDiscount");
+        if (null == unitPrice) {
+            log.info("searchOrder info: salePrice is null");
+        } else {
+            workOrder.setSalePrice(unitPrice);
+        }
+        if (null != skuCouponDiscount) {
+            Float floatDiscount = Float.valueOf(FeeUtil.Fen2Yuan(String.valueOf(skuCouponDiscount)));
+            //log.info("== floatDiscount = {}", floatDiscount);
+            BigDecimal decRealCouponDiscount = new BigDecimal(floatDiscount);
+            decCouponDiscount = decCouponDiscount.add(decRealCouponDiscount);
+            //log.info("=== decCouponDiscount = {}", decCouponDiscount);
+        } else {
+            log.warn("订单中没找到 skuCouponDiscount");
+        }
+        Integer orderNum = json.getInteger("num");
+        if (null == orderNum) {
+            log.error("searchOrder info: num is null");
+            StringUtil.throw400Exp(response, "400008: searchOrder info: num is null");
+            return result;
+        } else {
+            workOrder.setOrderGoodsNum(orderNum);
+        }
+
+        String mobile = json.getString("mobile");
+        if (null != mobile) {
+            workOrder.setReceiverPhone(mobile);
+        }
+        String receiverName = json.getString("receiverName");
+        if (null != receiverName) {
+            workOrder.setReceiverName(receiverName);
+        }
+        Float fare = json.getFloat("servFee");
+        if (null != fare) {
+            workOrder.setFare(fare);
+        }
+        Integer paymentAmount = json.getInteger("paymentAmount");
+        if (null != paymentAmount) {
+            workOrder.setPaymentAmount(paymentAmount);
         }
 
         workOrder.setiAppId(iAppId);
@@ -490,10 +485,13 @@ public class CustomerWorkOrderController {
         workOrder.setReturnedNum(num);
         if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
             workOrder.setRefundAmount(0.00f);
-        }else {
+        } else {
             BigDecimal decUnitPrice = new BigDecimal(workOrder.getSalePrice());
             BigDecimal decNum = new BigDecimal(num);
-            BigDecimal decRefundAmount = decUnitPrice.multiply(decNum).subtract(decCouponDiscount);
+            BigDecimal decRefundAmount = decUnitPrice.multiply(decNum);
+            //log.info("=== decRefundAmount = {}", decRefundAmount);
+            decRefundAmount = decRefundAmount.subtract(decCouponDiscount);
+            //log.info("=== decRefundAmount = {}", decRefundAmount);
             workOrder.setRefundAmount(decRefundAmount.floatValue());
         }
         workOrder.setTypeId(typeId);
@@ -502,7 +500,6 @@ public class CustomerWorkOrderController {
         workOrder.setReceiverId(customer);
         workOrder.setCreateTime(new Date());
         workOrder.setUpdateTime(new Date());
-
 
         //String username = null;//JwtTokenUtil.getUsername(authentication);
         //if (null != username) {
@@ -513,7 +510,7 @@ public class CustomerWorkOrderController {
         try {
             result.id = workOrderService.insert(workOrder);
         } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response,"400006:"+ ex.getMessage());
+            StringUtil.throw400Exp(response, "400006:" + ex.getMessage());
         }
 
         if (0 == result.id) {
@@ -521,7 +518,7 @@ public class CustomerWorkOrderController {
         }
         response.setStatus(MyErrorMap.e201.getCode());
 
-        log.info("createWorkOrder success, id = " +result.id.toString());
+        log.info("createWorkOrder success {} ", JSON.toJSONString(workOrder));
         return result;
 
     }
@@ -689,7 +686,7 @@ public class CustomerWorkOrderController {
             for (WorkOrder a : pages.getRows()) {
                 CustomerQueryWorkOrderBean b = new CustomerQueryWorkOrderBean();
                 BeanUtils.copyProperties(a, b);
-                CustomerQueryWorkOrderBean remoteBean = null;
+                CustomerQueryWorkOrderBean remoteBean;
                 try {
                     remoteBean = fillbeanByOrderInfo(a);
                 }catch (Exception e){

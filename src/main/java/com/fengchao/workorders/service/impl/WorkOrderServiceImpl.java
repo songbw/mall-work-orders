@@ -204,7 +204,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         orderId = orderId.trim();
         List<WorkOrder> list;
         try {
-            list = workOrderDao.selectByOrderId(orderId);
+            list = workOrderDao.selectValidByOrderId(orderId);
         } catch (Exception ex) {
             throw new Exception(ex);
         }
@@ -226,7 +226,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                     && wo.getReceiverId().equals(openId)
                     && null != wo.getReturnedNum()
                     && null != wo.getStatus()
-                    && !WorkOrderStatusType.REJECT.getCode().equals(wo.getStatus())) {
+                    ) {
                 usedNum += wo.getReturnedNum();
             }
         }

@@ -20,7 +20,7 @@ public interface WorkOrderDao {
 
     int updateByPrimaryKey(WorkOrder record);
 
-    List<WorkOrder> selectByOrderId(String orderId) throws Exception;
+    List<WorkOrder> selectValidByOrderId(String orderId) throws Exception;
 
     List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception;
 
