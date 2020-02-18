@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.model.*;
 import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
@@ -37,6 +38,7 @@ public class CustomerWorkOrderController {
 
     private WorkOrderServiceImpl workOrderService;
     private WorkFlowServiceImpl workFlowService;
+    private IAoYiClient aoYiClient;
 
     @ApiModel(value = "工单信息ID")
     private class IdResponseData implements Serializable {
@@ -150,10 +152,13 @@ public class CustomerWorkOrderController {
     }
 
     @Autowired
-    public CustomerWorkOrderController(WorkFlowServiceImpl workFlowService,WorkOrderServiceImpl workOrderService
+    public CustomerWorkOrderController(WorkFlowServiceImpl workFlowService,
+                                       IAoYiClient aoYiClient,
+                                       WorkOrderServiceImpl workOrderService
                                         ) {
         this.workOrderService = workOrderService;
         this.workFlowService = workFlowService;
+        this.aoYiClient = aoYiClient;
     }
 
     @ApiOperation(value = "APP查询工单流程", notes = "APP查询工单流程信息")
@@ -405,7 +410,7 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        log.info("准备新建工单, 子订单号= " + orderId);
+        log.info("准备新建工单, 子订单号= {}" ,orderId);
         JSONObject json;
         try {
             json = workOrderService.getOrderInfo(customer, orderId, merchantId);
@@ -483,6 +488,35 @@ public class CustomerWorkOrderController {
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
         workOrder.setReturnedNum(num);
+        /*对怡亚通订单需要特别处理
+        * merchantId = 4 为怡亚通订单
+        * 如果subStatus = 1, 调用postRefundOnly 未发货退款
+        *    subStatus = 2|3, postRefundReturn 退货退款
+        * 其他值, 生成工单失败
+        *
+        * 返回成功，需要将serviceSn 计入 工单refundNo
+        * 返回失败，生成工单失败
+        * */
+
+        Long orderMerchantId = json.getLong("merchantId");
+        if (null != orderMerchantId && 4 == orderMerchantId){
+
+            try {
+                String yiYaTongRefundNo = getYiYaTongRefundNo(title, json);
+                if (null != yiYaTongRefundNo) {
+                    workOrder.setRefundNo(yiYaTongRefundNo);
+                    workOrder.setMerchantId(orderMerchantId);
+                } else {
+                    StringUtil.throw400Exp(response, "420001:所属订单状态不符和退款要求");
+                    return result;
+                }
+            }catch (Exception e){
+                log.error(e.getMessage());
+                StringUtil.throw400Exp(response, e.getMessage());
+                return result;
+            }
+        }
+        /*对怡亚通订单需要特别处理 end*/
         if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
             workOrder.setRefundAmount(0.00f);
         } else {
@@ -847,6 +881,79 @@ public class CustomerWorkOrderController {
         }
 
         return new ResultObject<>(200,"success",result);
+
+    }
+
+    private String
+    getYiYaTongRefundNo(String reason,JSONObject json) throws Exception {
+
+        log.info("处理怡亚通订单退款申请 enter");
+        Integer subStatus = json.getInteger("subStatus");
+        if (null == subStatus) {
+            throw new RuntimeException("420003:所属订单缺失subStatus");
+        }
+        if (1 != subStatus && 2 != subStatus && 3 != subStatus) {
+            throw new RuntimeException("420004:所属订单缺失subStatus不符合退款要求");
+        }
+
+        String thirdOrderSn = json.getString("thirdOrderSn");
+        if (null == thirdOrderSn) {
+            throw new RuntimeException("420002:所属订单缺失thirdOrderSn");
+        }
+
+        String skuId = json.getString("skuId");
+        if (null == skuId) {
+            throw new RuntimeException("420005:所属订单缺失skuId");
+        }
+
+        if (null == reason) {
+            reason = "退款";
+        }
+
+        //AoYiClientResponseObject<AoYiRefundResponseBean> resp;
+        String resp;
+        try {
+            if (1 == subStatus) {
+                AoYiRefundOnlyPostBean bean = new AoYiRefundOnlyPostBean();
+                bean.setOrderSn(thirdOrderSn);
+                bean.setReason(reason);
+                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
+                resp = aoYiClient.postRefundOnly(bean);
+            } else {
+                AoYiRefundReturnPostBean bean = new AoYiRefundReturnPostBean();
+                bean.setOrderSn(thirdOrderSn);
+                bean.setReason(reason);
+                bean.setCode(skuId);
+                //0：退货退款, 1：仅退款
+                bean.setReturnType("0");
+                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
+                resp = aoYiClient.postRefundReturn(bean);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+
+        log.info("处理怡亚通订单退款申请 response = {}",JSON.toJSONString(resp));
+        if (null == resp){
+            throw new RuntimeException("420006:怡亚通退货退款申请无回应");
+        }
+        JSONObject aoyiJson = JSONObject.parseObject(resp);
+
+        Integer code = aoyiJson.getInteger("code");
+        if (null == code){
+            throw new RuntimeException("420006:怡亚通退货退款申请失败,code缺失");
+        }
+
+        if (200 != code){
+            throw new RuntimeException("420007:订单状态不符和退款条件,"+aoyiJson.getString("message"));
+        }
+
+        JSONObject aoyiData = aoyiJson.getJSONObject("data");
+        if (null != aoyiData) {
+            return aoyiData.getString("serviceSn");
+        }else {
+            return null;
+        }
 
     }
 }

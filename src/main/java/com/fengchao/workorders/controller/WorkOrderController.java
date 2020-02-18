@@ -689,6 +689,62 @@ public class WorkOrderController {
         return result;
     }
 
+    @ApiOperation(value = "怡亚通退款申请回调", notes = "怡亚通退款申请回调，来自服务aoyi ")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to update record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @PostMapping("work_orders/aoyi/refund/status")
+    public ResultMessage<String> callBackAoyiRefund(HttpServletResponse response,
+                                @RequestBody AoYiRefundCallBackPostBean data) {
+
+        String functionName = "怡亚通退款申请回调";
+        log.info("{} {}",functionName,JSON.toJSONString(data));
+
+        ResultMessage<String> failedResult = new ResultMessage<>(400,"failed",null);
+        ResultMessage<String> successResult = new ResultMessage<>(200,"success",null);
+
+        String aoyiRefundNo = data.getServiceSn();
+        String aoyiRefundStatus = data.getNewStatus();
+
+        if (null == aoyiRefundNo || aoyiRefundNo.isEmpty()){
+            failedResult.setMessage("serviceSn 缺失");
+            return failedResult;
+        }
+        if (null == aoyiRefundStatus || aoyiRefundStatus.isEmpty()){
+            failedResult.setMessage("newStatus 缺失");
+            return failedResult;
+        }
+
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectByRefundNo(aoyiRefundNo);
+        }catch (Exception e) {
+            failedResult.setMessage("工单内部错误");
+            return failedResult;
+        }
+
+        if (null == workOrder) {
+            failedResult.setMessage("工单不存在");
+            return failedResult;
+        }
+
+        if (AoYiRefundCallBackPostBean.isPassedStatus(aoyiRefundStatus)){
+            workOrder.setStatus(WorkOrderStatusType.ACCEPTED.getCode());
+        }else {
+            workOrder.setStatus(WorkOrderStatusType.REJECT.getCode());
+        }
+
+        workOrder.setUpdateTime(new Date());
+
+        try {
+            workOrderService.update(workOrder);
+        }catch (Exception e) {
+            failedResult.setMessage("工单内部错误");
+            return failedResult;
+        }
+
+        log.info("{} done {}",functionName,JSON.toJSONString(successResult));
+        return successResult;
+    }
 
     @ApiOperation(value = "删除工单流程信息", notes = "删除工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to delete WorkOrder's profile") })

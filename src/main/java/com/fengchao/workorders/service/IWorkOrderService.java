@@ -18,6 +18,8 @@ public interface IWorkOrderService {
 
     WorkOrder selectById(Long id) throws Exception;
 
+    WorkOrder selectByRefundNo(String refundNo) throws Exception;
+
     void update(WorkOrder workOrder) throws Exception;
 
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order,String iAppId,

@@ -80,6 +80,12 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
+    public WorkOrder
+    selectByRefundNo(String refundNo){
+        return workOrderDao.selectByRefundNo(refundNo);
+    }
+
+    @Override
     public void update(WorkOrder workOrder) {
         if (null == workOrder) {
             return;
@@ -605,7 +611,10 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                 if (!WorkOrderStatusType.CLOSED.getCode().equals(wo.getStatus())){
                     wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                 }
-                wo.setRefundNo(refundNo);
+                if (null == wo.getRefundNo()) {
+                    //怡亚通的订单,退款号来自申请接口返回的serviceSn
+                    wo.setRefundNo(refundNo);
+                }
                 wo.setGuanaitongTradeNo(guanAiTongNo);
                 wo.setRefundAmount(refundAmount);
                 if (null == handleFare || 0 == handleFare) {

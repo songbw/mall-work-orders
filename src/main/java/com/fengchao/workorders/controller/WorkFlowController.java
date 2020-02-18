@@ -368,8 +368,6 @@ public class WorkFlowController {
             workFlow.setCreatedBy(username);
         }
 
-        //workOrder.setRefundNo("");
-        //workOrder.setExpressNo("");
         try{
             updateFlowAndWorkorder(workOrder,workFlow,true);
         }catch (Exception e){
@@ -591,7 +589,10 @@ public class WorkFlowController {
                                 if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
                                     workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                                 }
-                                workOrder.setRefundNo(outerRefundNo);
+                                if (null == workOrder.getRefundNo()) {
+                                    //怡亚通的订单,退款号来自申请接口返回的serviceSn
+                                    workOrder.setRefundNo(outerRefundNo);
+                                }
                                 workOrder.setGuanaitongTradeNo(aggpayRefundNo);
                                 workOrder.setUpdateTime(new Date());
                                 workOrder.setRefundAmount(refund);
