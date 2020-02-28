@@ -211,7 +211,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         }
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
-        criteria.andGuanaitongTradeNoEqualTo(refundNo);
+        criteria.andRefundNoEqualTo(refundNo);
 
         try {
             List<WorkOrder> list = mapper.selectByExample(example);
