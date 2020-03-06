@@ -3,12 +3,10 @@ package com.fengchao.workorders.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.fengchao.workorders.bean.AggPayNotifyBean;
-import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
-import com.fengchao.workorders.bean.GuanAiTongRefundBean;
-import com.fengchao.workorders.bean.QueryOrderBodyBean;
+import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
 import com.fengchao.workorders.feign.IAggPayClient;
+import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
@@ -42,7 +40,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     private WorkOrderDaoImpl workOrderDao;
     //private RestTemplate restTemplate;
     private WorkOrderMapper mapper;
-
+    private IAoYiClient aoYiClient;
     // @Autowired
     // private RedisTemplate<Object, Object> redisTemplate;
 
@@ -50,6 +48,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     public WorkOrderServiceImpl(WorkOrderDaoImpl workOrderDao,
                                 WorkOrderMapper mapper,
                                 IGuanAiTongClient guanAiTongClient,
+                                IAoYiClient aoYiClient,
                                 OrderService orderService
                               ) {
         this.workOrderDao = workOrderDao;
@@ -57,6 +56,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         this.orderService = orderService;
         this.guanAiTongClient = guanAiTongClient;
         this.mapper = mapper;
+        this.aoYiClient = aoYiClient;
     }
 
     @Override
@@ -208,17 +208,35 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         openId = openId.trim();
         orderId = orderId.trim();
-        List<WorkOrder> list;
+        List<WorkOrder> workOrders;
         try {
-            list = workOrderDao.selectValidByOrderId(orderId);
+            workOrders = workOrderDao.selectValidByOrderId(orderId);
         } catch (Exception ex) {
             throw new Exception(ex);
         }
 
-        if (null == list || 0 == list.size()) {
+        if (null == workOrders || 0 == workOrders.size()) {
+            return null;
+        }
+        List<WorkOrder> list = new ArrayList<>();
+        for(WorkOrder w: workOrders){
+            //已关闭,且没有退款完成的工单不影响提交新的工单(当前列表里已经没有拒绝状态的工单)
+            String validDate = "2000-01-01 00:00:00";
+            String refundTime = StringUtil.Date2String(w.getRefundTime());
+
+            boolean isRefunding = !WorkOrderStatusType.CLOSED.getCode().equals(w.getStatus());
+            boolean isRefundedAndClose = WorkOrderStatusType.CLOSED.getCode().equals(w.getStatus()) &&
+                    (0 > validDate.compareTo(refundTime));
+            if (isRefunding || isRefundedAndClose){
+                list.add(w);
+            }
+        }
+        if (0 == list.size()){
+            //不存在已经退款的工单
             return null;
         }
 
+        //list中第一个记录作为传递信息对象
         WorkOrder baseWO = list.get(0);
 
         int usedNum = 0;
@@ -242,7 +260,9 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             validNum = 0;
         }
         WorkOrder workOrder = list.get(0);
-        workOrder.setReturnedNum(validNum);//可退货数量
+        //list中第一个记录作为传递信息对象，临时复用returnedNum存储可申请退款的商品数量
+        //该返回对象不可用于判定申请退款的商品数量外的其他目的
+        workOrder.setReturnedNum(validNum);
         log.info("getValidNumOfOrder : {}",JSON.toJSONString(workOrder));
         return workOrder;
 
@@ -649,5 +669,34 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         return workOrderList;
+    }
+
+    @Override
+    public void sendExpressInfo(WorkOrder workOrder, String comments) {
+
+        YiYaTongReturnGoodsBean bean = YiYaTong.parseReturnGoodsComments(comments);
+        if (null == bean){
+            return;
+        }
+
+        bean.setDeliverySn(workOrder.getExpressNo());
+        bean.setServiceSn(workOrder.getRefundNo());
+        bean.setOrderSn(workOrder.getGuanaitongTradeNo());
+
+        log.info("怡亚通买家退货发物流 {}",JSON.toJSONString(bean));
+        String response = aoYiClient.postReturnGoods(bean);
+        log.info("怡亚通买家退货发物流 返回 response = {}",JSON.toJSONString(response));
+        AoYiRefundResponseBean responseBean = YiYaTong.parseRefundReturnResponse(response);
+        if (null != responseBean) {
+            if (workOrder.getGuanaitongTradeNo().equals(responseBean.getOrderSn()) &&
+                    workOrder.getRefundNo().equals(responseBean.getServiceSn())){
+                log.info("怡亚通买家退货发物流 返回信息正常");
+            }else {
+                log.error("怡亚通买家退货发物流 返回信息{},{} ： 与工单记录不符 {}, {}",
+                        responseBean.getServiceSn(),responseBean.getOrderSn(),workOrder.getRefundNo(),workOrder.getGuanaitongTradeNo());
+            }
+        }else {
+            log.error("怡亚通买家退货发物流 返回信息缺失");
+        }
     }
 }

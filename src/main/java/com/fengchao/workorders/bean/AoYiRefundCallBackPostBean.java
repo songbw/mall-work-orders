@@ -1,5 +1,6 @@
 package com.fengchao.workorders.bean;
 
+import com.fengchao.workorders.util.WebSideWorkFlowStatusEnum;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
@@ -41,7 +42,7 @@ public class AoYiRefundCallBackPostBean {
     /*
     *
 变更提醒类型	oldStatus	oldStatusName   newStatus	newStatusName	updateType
-供应商发货	   20	    已支付待发货	        30	   已发货待收货	        1
+
 财务审核不通过	3	  商审核通过,待平台退款	12	   财务审核不通过	        2
 财务审核不通过	5	供应商确认收货,待平台退款	12	   财务审核不通过     	2
 供应商审核通过	1	    供应商审核退款中	     3     供应商审核通过      	2
@@ -52,10 +53,42 @@ public class AoYiRefundCallBackPostBean {
 财务审核通过	    5	    商家确认收货	        13	   财务审核通过       	2
     * */
 
-    public static boolean isPassedStatus(String status){
-        return ("3".equals(status) || "13".equals(status) || "5".equals(status));
+    public static boolean
+    isReturnGoodsStatus(String newStatus){
+        return ("5".equals(newStatus));
     }
-    public static boolean isRejectedStatus(String status){
+
+    public static boolean
+    isPassedStatus(String status){
+
+        return ("3".equals(status) || "13".equals(status));
+    }
+    public static boolean
+    isRejectedStatus(String status){
+
         return ("12".equals(status) || "2".equals(status));
+    }
+
+    public static
+    WebSideWorkFlowStatusEnum convert2workflowCommentsCode(String newStatus){
+
+        switch(newStatus){
+            case "3":
+                return WebSideWorkFlowStatusEnum.NOTIFY_APPROVED;
+            case "5":
+                return WebSideWorkFlowStatusEnum.NOTIFY_RETURN_RECEIVED;
+            case "13":
+                return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_APPROVED;
+            case "2":
+                return WebSideWorkFlowStatusEnum.NOTIFY_REJECT;
+            case "12":
+                return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_REJECT;
+            case "10":
+                return WebSideWorkFlowStatusEnum.NOTIFY_TIMEOUT;
+            case "30":
+                return WebSideWorkFlowStatusEnum.NOTIFY_GOODS_SENDING;
+            default:
+                return WebSideWorkFlowStatusEnum.UNKNOWN;
+        }
     }
 }

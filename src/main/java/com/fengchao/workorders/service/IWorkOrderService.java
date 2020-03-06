@@ -69,4 +69,6 @@ public interface IWorkOrderService {
 
     String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception;
 
+    void sendExpressInfo(WorkOrder workOrder, String comments);
+
 }

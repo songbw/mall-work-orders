@@ -1,5 +1,6 @@
 package com.fengchao.workorders.service.impl;
 
+import com.fengchao.workorders.util.WorkOrderStatusType;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.fengchao.workorders.model.*;
@@ -118,4 +119,23 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
         }
     }
 
+    @Override
+    public List<WorkFlow>
+    selectByWorkOrderIdExcludeReserved(Long workOrderId) {
+        if (null == workOrderId) {
+            throw new RuntimeException("selectByWorkOrderIdExcludeReserved, workOrderId is null");
+        }
+        WorkFlowExample example = new WorkFlowExample();
+        WorkFlowExample.Criteria criteria = example.createCriteria();
+        criteria.andWorkOrderIdEqualTo(workOrderId);
+        criteria.andStatusNotEqualTo(WorkOrderStatusType.RESERVED.getCode());
+
+        example.setOrderByClause("update_time DESC");
+        try {
+            return workFlowMapper.selectByExample(example);
+        }catch (Exception e){
+            log.error("selectByWorkOrderIdExcludeReserved error {}",e.getMessage());
+            return null;
+        }
+    }
 }

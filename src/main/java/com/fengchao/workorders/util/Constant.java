@@ -42,4 +42,9 @@ public class Constant {
     public static final String PERMISSION_SELECT_CODE = "select";
 
     public static final String NORMAL_SELLER_STRING = "vendor";
+
+    public static final int YI_YA_TONG_MERCHANT_ID = 4;
+    public static final String API_TYPE_GUAN_AI_TONG = "10";
+    public static final String API_TYPE_AGGPAY = "11";
+
 }

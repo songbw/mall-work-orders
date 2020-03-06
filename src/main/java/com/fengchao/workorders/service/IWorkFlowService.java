@@ -24,4 +24,6 @@ public interface IWorkFlowService {
 
     List<WorkFlow> selectByWorkOrderId(Long workOrderId, Integer status) throws Exception;
 
+    List<WorkFlow>
+    selectByWorkOrderIdExcludeReserved(Long workOrderId);
 }

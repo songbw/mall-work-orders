@@ -40,6 +40,7 @@ public class WorkOrderController {
 
     private WorkOrderServiceImpl workOrderService;
     private IAggPayClient aggPayClient;
+    private WorkFlowServiceImpl workFlowService;
 
     @ApiModel(value = "工单信息ID")
     private class IdData implements Serializable {
@@ -70,10 +71,13 @@ public class WorkOrderController {
     }
 
     @Autowired
-    public WorkOrderController(IAggPayClient aggPayClient,WorkOrderServiceImpl workOrderService
+    public WorkOrderController(IAggPayClient aggPayClient,
+                               WorkFlowServiceImpl workFlowService,
+                               WorkOrderServiceImpl workOrderService
                              ) {
         this.workOrderService = workOrderService;
         this.aggPayClient = aggPayClient;
+        this.workFlowService = workFlowService;
     }
 
     private Date getDateType(String timeStr, boolean isEnd) throws Exception{
@@ -714,6 +718,7 @@ public class WorkOrderController {
             return failedResult;
         }
 
+
         WorkOrder workOrder;
         try {
             workOrder = workOrderService.selectByRefundNo(aoyiRefundNo);
@@ -727,25 +732,91 @@ public class WorkOrderController {
             return failedResult;
         }
 
-        if (AoYiRefundCallBackPostBean.isPassedStatus(aoyiRefundStatus)){
-            workOrder.setStatus(WorkOrderStatusType.ACCEPTED.getCode());
+        WorkFlow workFlow = new WorkFlow();
+        workFlow.setWorkOrderId(workOrder.getId());
+        workFlow.setCreatedBy("怡亚通通知");
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(workFlow.getCreateTime());
+        workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus)));
+        /*
+        if (AoYiRefundCallBackPostBean.isPassedStatus(aoyiRefundStatus)) {
+            workFlow.setStatus(WorkOrderStatusType.EDITING.getCode());
+        }else if (AoYiRefundCallBackPostBean.isRejectedStatus(aoyiRefundStatus)){
+            workFlow.setStatus(WorkOrderStatusType.REJECT.getCode());
+        }else if (AoYiRefundCallBackPostBean.isReturnGoodsStatus(aoyiRefundStatus)){
+            workFlow.setStatus(WorkOrderStatusType.HANDLING.getCode());
         }else {
-            workOrder.setStatus(WorkOrderStatusType.REJECT.getCode());
+            log.error("无法处理的回调状态: {}",aoyiRefundStatus);
+        }*/
+        workFlow.setStatus(WorkOrderStatusType.RESERVED.getCode());
+        try {
+            workFlowService.insert(workFlow);
+        }catch (Exception e){
+            log.error("数据库操作异常 {}",e.getMessage(),e);
         }
 
-        workOrder.setUpdateTime(new Date());
+        log.info("{} 新建工作流记录 {}", functionName, JSON.toJSONString(workFlow));
+        return successResult;
+    }
 
+/*
+    @ApiOperation(value = "怡亚通发送退货物流回调", notes = "怡亚通退货物流回调，来自服务aoyi ")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to update record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @PostMapping("work_orders/notify/returnGoods")
+    public ResultMessage<String> callBackReturnGoods(HttpServletResponse response,
+                                                   @RequestBody AoYiRefundCallBackPostBean data) {
+
+        String functionName = "怡亚通发送退货物流回调";
+        log.info("{} {}",functionName,JSON.toJSONString(data));
+
+        ResultMessage<String> failedResult = new ResultMessage<>(400,"failed",null);
+        ResultMessage<String> successResult = new ResultMessage<>(200,"success",null);
+
+        String aoyiRefundNo = data.getServiceSn();
+        String aoyiRefundStatus = data.getNewStatus();
+
+        if (null == aoyiRefundNo || aoyiRefundNo.isEmpty()){
+            failedResult.setMessage("serviceSn 缺失");
+            return failedResult;
+        }
+        if (null == aoyiRefundStatus || aoyiRefundStatus.isEmpty()){
+            failedResult.setMessage("newStatus 缺失");
+            return failedResult;
+        }
+
+        WorkOrder workOrder;
         try {
-            workOrderService.update(workOrder);
+            workOrder = workOrderService.selectByRefundNo(aoyiRefundNo);
         }catch (Exception e) {
             failedResult.setMessage("工单内部错误");
             return failedResult;
         }
 
-        log.info("{} done {}",functionName,JSON.toJSONString(successResult));
+        if (null == workOrder) {
+            failedResult.setMessage("工单不存在");
+            return failedResult;
+        }
+
+        WorkFlow workFlow = new WorkFlow();
+        workFlow.setWorkOrderId(workOrder.getId());
+        workFlow.setCreatedBy("怡亚通通知");
+        workFlow.setStatus(WorkOrderStatusType.HANDLING.getCode());
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(workFlow.getCreateTime());
+        workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus)));
+
+        try {
+            workFlowService.insert(workFlow);
+        }catch (Exception e){
+            log.error("数据库操作异常 {}",e.getMessage(),e);
+        }
+
+
+        log.info("{} done {}", functionName, JSON.toJSONString(successResult));
         return successResult;
     }
-
+*/
     @ApiOperation(value = "删除工单流程信息", notes = "删除工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to delete WorkOrder's profile") })
     @ResponseStatus(code = HttpStatus.NO_CONTENT)

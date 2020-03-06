@@ -32,6 +32,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Api(tags="WorkFlowAPI", description = "工单流程管理相关", produces = "application/json;charset=UTF-8")
@@ -63,6 +64,17 @@ public class WorkFlowController {
         this.workOrderService = workOrderService;
         this.aggPayClient = aggPayClient;
         this.refundConfig = refundConfig;
+    }
+
+    @ApiOperation(value = "获取工单流程备注码信息", notes = "用于前端解析工单流程备注JSON")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping("work_flows/commentsCode")
+    public Map
+    getCommentsCodeMap() {
+
+        return WebSideWorkFlowStatusEnum.getMap();
+
     }
 
     /*
@@ -424,7 +436,6 @@ public class WorkFlowController {
         }
         log.info("工单： {}",JSON.toJSONString(workOrder));
         String iAppId = workOrder.getiAppId();
-        //String tAppId = workOrder.gettAppId();
         Integer orderStatus = workOrder.getStatus();
         if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)
                 || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
@@ -447,6 +458,26 @@ public class WorkFlowController {
         workFlow.setUpdateTime(new Date());
         if (null != username && !username.isEmpty()) {
             workFlow.setCreatedBy(username);
+        }
+
+        if (WorkOrderStatusType.HANDLING.getCode().equals(nextStatus)){
+            //上传退货物流信息
+            if (YiYaTong.MERCHANT_ID == workOrder.getMerchantId()){
+                //怡亚通的订单,需要发送物流信息
+                workOrderService.sendExpressInfo(workOrder,comments);
+            }
+            try{
+                updateFlowAndWorkorder(workOrder,workFlow,false);
+            }catch (Exception e){
+                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+                return null;
+            }
+
+            result.id = workFlow.getId();
+            response.setStatus(MyErrorMap.e201.getCode());
+            log.info("create WorkFlow and update workOrder {} success ",workOrder.getId().toString());
+            return result;
+
         }
 
         if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){
@@ -502,10 +533,10 @@ public class WorkFlowController {
         boolean isGat = false;
         boolean isAggPay = false;
         if (null != iAppId && null != configIAppIds && !configIAppIds.isEmpty() && !iAppId.isEmpty()){
-            if ("10".equals(configBean.getApiType())){
+            if (Constant.API_TYPE_GUAN_AI_TONG.equals(configBean.getApiType())){
                 isGat = true;
             }else{
-                if ("11".equals(configBean.getApiType())){
+                if (Constant.API_TYPE_AGGPAY.equals(configBean.getApiType())){
                     isAggPay = true;
                 }
             }
@@ -552,6 +583,14 @@ public class WorkFlowController {
                     StringUtil.throw400Exp(response, "400008:退款金额缺失");
                     return null;
                 }
+                /** 怡亚通退货退款流程检查
+                if (YiYaTong.MERCHANT_ID == workOrder.getMerchantId()){
+                    if (!WorkOrderStatusType.HANDLING.getCode().equals(workOrder.getStatus()) &&
+                        WorkOrderType.RETURN.getCode().equals(workOrder.getTypeId())){
+                        StringUtil.throw400Exp(response,"420101:需要先上传退货物流信息");
+                    }
+                }
+                **/
                 AggPayRefundBean aBean = new AggPayRefundBean();
                 aBean.setOrderNo(workOrder.getTradeNo());
                 NumberFormat formatter = new DecimalFormat("0");
@@ -589,8 +628,11 @@ public class WorkFlowController {
                                 if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
                                     workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                                 }
-                                if (null == workOrder.getRefundNo()) {
-                                    //怡亚通的订单,退款号来自申请接口返回的serviceSn
+                                if (null == workOrder.getRefundNo()
+                                       // && Constant.YI_YA_TONG_MERCHANT_ID == workOrder.getMerchantId()
+                                ) {
+                                    //怡亚通的订单,退款号来自申请接口返回的serviceSn,不需要更新
+                                    //其他商家工单,此处记录工单系统生成的退款号
                                     workOrder.setRefundNo(outerRefundNo);
                                 }
                                 workOrder.setGuanaitongTradeNo(aggpayRefundNo);

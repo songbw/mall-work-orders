@@ -198,7 +198,7 @@ public class CustomerWorkOrderController {
 
         List<WorkFlow> list;
         try {
-            list = workFlowService.selectByWorkOrderId(workOrderId,null);
+            list = workFlowService.selectByWorkOrderIdExcludeReserved(workOrderId);
         }catch (Exception e) {
             response.setStatus(MyErrorMap.e400.getCode());
             return new ResultObject<>(400006,e.getMessage(),null);
@@ -222,7 +222,7 @@ public class CustomerWorkOrderController {
 
     }
 
-    @ApiOperation(value = "APP创建工单处理流程信息", notes = "创建工单处理信息")
+    @ApiOperation(value = "APP创建工单处理流程信息", notes = "APP创建工单处理流程信息,添加退货物流信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_flows")
@@ -294,6 +294,10 @@ public class CustomerWorkOrderController {
 
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
+            if (Constant.YI_YA_TONG_MERCHANT_ID == workOrder.getMerchantId()){
+                //怡亚通的订单,需要发送物流信息
+                workOrderService.sendExpressInfo(workOrder,comments);
+            }
         }
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(new Date());
@@ -499,12 +503,14 @@ public class CustomerWorkOrderController {
         * */
 
         Long orderMerchantId = json.getLong("merchantId");
-        if (null != orderMerchantId && 4 == orderMerchantId){
+        if (null != orderMerchantId && Constant.YI_YA_TONG_MERCHANT_ID == orderMerchantId){
 
             try {
-                String yiYaTongRefundNo = getYiYaTongRefundNo(title, json);
-                if (null != yiYaTongRefundNo) {
-                    workOrder.setRefundNo(yiYaTongRefundNo);
+                AoYiRefundResponseBean bean = getYiYaTongRefundNo(title, json);
+                if (null != bean) {
+                    workOrder.setRefundNo(bean.getServiceSn());
+                    //复用该字段保存星链子订单sn
+                    workOrder.setGuanaitongTradeNo(bean.getOrderSn());
                     workOrder.setMerchantId(orderMerchantId);
                 } else {
                     StringUtil.throw400Exp(response, "420001:所属订单状态不符和退款要求");
@@ -515,6 +521,7 @@ public class CustomerWorkOrderController {
                 StringUtil.throw400Exp(response, e.getMessage());
                 return result;
             }
+
         }
         /*对怡亚通订单需要特别处理 end*/
         if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
@@ -549,6 +556,23 @@ public class CustomerWorkOrderController {
 
         if (0 == result.id) {
             StringUtil.throw400Exp(response, "400008:Failed to create work_order");
+        }
+        if (null != orderMerchantId && Constant.YI_YA_TONG_MERCHANT_ID == orderMerchantId){
+            //怡亚通需要记录处理流程
+            WorkFlow workFlow = new WorkFlow();
+            workFlow.setWorkOrderId(result.id);
+            workFlow.setCreatedBy("怡亚通调用");
+            workFlow.setStatus(WorkOrderStatusType.RESERVED.getCode());
+            workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.NOTIFY_PENDING));
+            workFlow.setCreateTime(new Date());
+            workFlow.setUpdateTime(workFlow.getCreateTime());
+            try {
+                workFlowService.insert(workFlow);
+                log.info("发送请求到怡亚通后创建工作流 {}",JSON.toJSONString(workFlow));
+            }catch (Exception e){
+                log.error("数据库操作异常 {}",e.getMessage(),e);
+            }
+
         }
         response.setStatus(MyErrorMap.e201.getCode());
 
@@ -884,7 +908,7 @@ public class CustomerWorkOrderController {
 
     }
 
-    private String
+    private AoYiRefundResponseBean
     getYiYaTongRefundNo(String reason,JSONObject json) throws Exception {
 
         log.info("处理怡亚通订单退款申请 enter");
@@ -892,6 +916,15 @@ public class CustomerWorkOrderController {
         if (null == subStatus) {
             throw new RuntimeException("420003:所属订单缺失subStatus");
         }
+        /*对怡亚通订单需要特别处理
+         * merchantId = 4 为怡亚通订单
+         * 如果subStatus = 1, 调用postRefundOnly 未发货退款
+         *    subStatus = 2|3, postRefundReturn 退货退款
+         * 其他值, 生成工单失败
+         *
+         * 返回成功，需要将serviceSn 计入 工单refundNo
+         * 返回失败，生成工单失败
+         * */
         if (1 != subStatus && 2 != subStatus && 3 != subStatus) {
             throw new RuntimeException("420004:所属订单缺失subStatus不符合退款要求");
         }
@@ -934,26 +967,12 @@ public class CustomerWorkOrderController {
         }
 
         log.info("处理怡亚通订单退款申请 response = {}",JSON.toJSONString(resp));
-        if (null == resp){
+        AoYiRefundResponseBean responseBean = YiYaTong.parseRefundReturnResponse(resp);
+        if (null == responseBean) {
             throw new RuntimeException("420006:怡亚通退货退款申请无回应");
         }
-        JSONObject aoyiJson = JSONObject.parseObject(resp);
-
-        Integer code = aoyiJson.getInteger("code");
-        if (null == code){
-            throw new RuntimeException("420006:怡亚通退货退款申请失败,code缺失");
-        }
-
-        if (200 != code){
-            throw new RuntimeException("420007:订单状态不符和退款条件,"+aoyiJson.getString("message"));
-        }
-
-        JSONObject aoyiData = aoyiJson.getJSONObject("data");
-        if (null != aoyiData) {
-            return aoyiData.getString("serviceSn");
-        }else {
-            return null;
-        }
+        return responseBean;
 
     }
+
 }
