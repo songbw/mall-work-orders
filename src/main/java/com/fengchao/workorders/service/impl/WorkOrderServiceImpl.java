@@ -216,6 +216,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         if (null == workOrders || 0 == workOrders.size()) {
+            log.info("getValidNumOfOrder : 该订单尚无工单，可生成新工单");
             return null;
         }
         List<WorkOrder> list = new ArrayList<>();
@@ -233,6 +234,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
         if (0 == list.size()){
             //不存在已经退款的工单
+            log.info("getValidNumOfOrder : 该订单尚无退款工单，可生成新工单");
             return null;
         }
 

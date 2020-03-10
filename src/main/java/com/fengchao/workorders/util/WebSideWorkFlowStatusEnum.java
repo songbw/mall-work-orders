@@ -54,6 +54,9 @@ comments = { remark: "备注", operation: 1 }
     NOTIFY_FINANCE_APPROVED(313, "怡亚通反馈：财务审核通过"),
     NOTIFY_RETURN_RECEIVED(314, "怡亚通反馈：供应商确认收货"),
     NOTIFY_GOODS_SENDING(330, "怡亚通反馈：供应商已发货待收货"),
+
+    THIRD_SN_BLANK(401, "怡亚通订单缺失怡亚通下订单信息,需要与怡亚通确认下单信息"),
+
     UNKNOWN(888, "无法处理状态"),
     ;
 
