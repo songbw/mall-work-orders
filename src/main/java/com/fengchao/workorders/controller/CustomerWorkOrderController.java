@@ -507,7 +507,7 @@ public class CustomerWorkOrderController {
         Integer subStatus = json.getInteger("subStatus");
         String thirdOrderSn = json.getString("thirdOrderSn");
         String skuId = json.getString("skuId");
-        boolean  needYiYaTongHandle = canSendYiYaTong(subStatus,thirdOrderSn,skuId);
+        boolean  needYiYaTongHandle = canSendYiYaTong(orderMerchantId,subStatus,thirdOrderSn,skuId);
         if (null != orderMerchantId &&
                 Constant.YI_YA_TONG_MERCHANT_ID == orderMerchantId &&
                 needYiYaTongHandle) {
@@ -925,7 +925,12 @@ public class CustomerWorkOrderController {
     }
 
     private boolean
-    canSendYiYaTong(Integer subStatus,String thirdOrderSn,String skuId){
+    canSendYiYaTong(Long orderMerchantId,Integer subStatus,String thirdOrderSn,String skuId){
+
+        if (null == orderMerchantId ||
+             Constant.YI_YA_TONG_MERCHANT_ID != orderMerchantId){
+            return false;
+        }
 
         boolean result = true;
         if (null == subStatus) {
