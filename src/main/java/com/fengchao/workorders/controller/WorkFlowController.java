@@ -21,6 +21,9 @@ import org.springframework.beans.BeanUtils;
 import javax.servlet.http.HttpServletResponse;
 //import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -410,8 +413,22 @@ public class WorkFlowController {
             }
         }
 
-        if (null != refund && 0 < refund){
-            if (workOrder.getRefundAmount() + workOrder.getFare() < refund){
+        if (null != refund && 0 < refund) {
+            BigDecimal decRefund = new BigDecimal(refund);
+            BigDecimal decRefundStored = new BigDecimal(workOrder.getRefundAmount());
+            Float fare = workOrder.getFare();
+            boolean hasFare = (null != fare) && (0.009 < fare);
+            if (hasFare) {
+                BigDecimal decFare = new BigDecimal(workOrder.getFare());
+                decRefundStored = decRefundStored.add(decFare);
+            }
+            NumberFormat formatter = new DecimalFormat("0");
+            BigDecimal dec100f = new BigDecimal("100");
+            String strRefundStored = formatter.format(decRefundStored.multiply(dec100f).floatValue());
+            String strRefund = formatter.format(decRefund.multiply(dec100f).floatValue());
+            log.info("工单：{} 可退款最高额度={}分 , 本次要求退款额度={}分",
+                    workOrder.getId().toString(), strRefundStored, strRefund);
+            if (0 < strRefund.compareTo(strRefundStored)) {
                 StringUtil.throw400Exp(response, "400008:退款金额超出合理范围");
                 return result;
             }
