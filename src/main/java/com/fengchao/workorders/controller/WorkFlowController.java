@@ -508,7 +508,22 @@ public class WorkFlowController {
         }
 
         if (null != refund && 0 < refund){
-            if (workOrder.getRefundAmount() + workOrder.getFare() < refund){
+
+            BigDecimal decRefund = new BigDecimal(refund);
+            BigDecimal decRefundStored = new BigDecimal(workOrder.getRefundAmount());
+            Float fare = workOrder.getFare();
+            boolean hasFare = (null != fare) && (0.009 < fare);
+            if (hasFare){
+                BigDecimal decFare = new BigDecimal(workOrder.getFare());
+                decRefundStored = decRefundStored.add(decFare);
+            }
+            NumberFormat formatter = new DecimalFormat("0");
+            BigDecimal dec100f = new BigDecimal("100");
+            String strRefundStored = formatter.format(decRefundStored.multiply(dec100f).floatValue());
+            String strRefund = formatter.format(decRefund.multiply(dec100f).floatValue());
+            log.info("工单：{} 可退款最高额度={}分 , 本次要求退款额度={}分",
+                    workOrder.getId().toString(),strRefundStored,strRefund);
+            if (0 < strRefund.compareTo(strRefundStored)){
                 StringUtil.throw400Exp(response, "400008:退款金额超出合理范围");
                 return result;
             }
@@ -583,14 +598,14 @@ public class WorkFlowController {
                     StringUtil.throw400Exp(response, "400008:退款金额缺失");
                     return null;
                 }
-                /** 怡亚通退货退款流程检查
+                // 怡亚通退货退款流程检查
                 if (YiYaTong.MERCHANT_ID == workOrder.getMerchantId()){
                     if (!WorkOrderStatusType.HANDLING.getCode().equals(workOrder.getStatus()) &&
                         WorkOrderType.RETURN.getCode().equals(workOrder.getTypeId())){
                         StringUtil.throw400Exp(response,"420101:需要先上传退货物流信息");
                     }
                 }
-                **/
+                // end
                 AggPayRefundBean aBean = new AggPayRefundBean();
                 aBean.setOrderNo(workOrder.getTradeNo());
                 NumberFormat formatter = new DecimalFormat("0");
@@ -664,6 +679,7 @@ public class WorkFlowController {
         response.setStatus(MyErrorMap.e201.getCode());
         log.info("create WorkFlow and update workOrder {} success ",workOrder.getId().toString());
         return result;
+
     }
 
     @ApiOperation(value = "更新工单流程信息", notes = "更新工单流程信息")
