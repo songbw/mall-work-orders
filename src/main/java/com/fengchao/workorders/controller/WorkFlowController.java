@@ -599,12 +599,12 @@ public class WorkFlowController {
                     return null;
                 }
                 // 怡亚通退货退款流程检查
-                if (YiYaTong.MERCHANT_ID == workOrder.getMerchantId()){
-                    if (!WorkOrderStatusType.HANDLING.getCode().equals(workOrder.getStatus()) &&
-                        WorkOrderType.RETURN.getCode().equals(workOrder.getTypeId())){
-                        StringUtil.throw400Exp(response,"420101:需要先上传退货物流信息");
-                    }
-                }
+                //if (YiYaTong.MERCHANT_ID == workOrder.getMerchantId()){
+                //    if (!WorkOrderStatusType.HANDLING.getCode().equals(workOrder.getStatus()) &&
+                //        WorkOrderType.RETURN.getCode().equals(workOrder.getTypeId())){
+                //        StringUtil.throw400Exp(response,"420101:需要先上传退货物流信息");
+                //    }
+                //}
                 // end
                 AggPayRefundBean aBean = new AggPayRefundBean();
                 aBean.setOrderNo(workOrder.getTradeNo());
