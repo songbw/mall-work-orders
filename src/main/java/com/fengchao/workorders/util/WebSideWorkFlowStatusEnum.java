@@ -57,7 +57,7 @@ comments = { remark: "备注", operation: 1 }
 
     THIRD_SN_BLANK(401, "怡亚通订单缺失怡亚通下订单信息,需要与怡亚通确认下单信息"),
 
-    UNKNOWN(888, "无法处理状态"),
+    UNKNOWN(888, "回调状态记录"),
     ;
 
     private Integer code;
@@ -69,18 +69,13 @@ comments = { remark: "备注", operation: 1 }
     }
 
     public static
-    String buildComments(WebSideWorkFlowStatusEnum status){
-       return buildComments(status,null);
-    }
-
-    public static
     String buildComments(WebSideWorkFlowStatusEnum status, String remark){
 
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         sb.append("\"remark\":\"");
         sb.append(status.getMsg());
-        if (null != remark){
+        if (WebSideWorkFlowStatusEnum.UNKNOWN.equals(status) && null != remark){
             sb.append(" ");
             sb.append(remark);
         }

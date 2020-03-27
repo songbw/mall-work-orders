@@ -572,9 +572,9 @@ public class CustomerWorkOrderController {
             workFlow.setCreatedBy("怡亚通调用");
             workFlow.setStatus(WorkOrderStatusType.RESERVED.getCode());
             if (needYiYaTongHandle) {
-                workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.NOTIFY_PENDING));
+                workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.NOTIFY_PENDING,"等待回调通知"));
             }else{
-                workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.THIRD_SN_BLANK));
+                workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.THIRD_SN_BLANK,"需要与怡亚通确认下单信息"));
             }
             workFlow.setCreateTime(new Date());
             workFlow.setUpdateTime(workFlow.getCreateTime());

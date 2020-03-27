@@ -73,18 +73,20 @@ public class AoYiRefundCallBackPostBean {
     WebSideWorkFlowStatusEnum convert2workflowCommentsCode(String newStatus){
 
         switch(newStatus){
+            case "2":
+                return WebSideWorkFlowStatusEnum.NOTIFY_REJECT;
             case "3":
                 return WebSideWorkFlowStatusEnum.NOTIFY_APPROVED;
             case "5":
                 return WebSideWorkFlowStatusEnum.NOTIFY_RETURN_RECEIVED;
-            case "13":
-                return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_APPROVED;
-            case "2":
-                return WebSideWorkFlowStatusEnum.NOTIFY_REJECT;
-            case "12":
-                return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_REJECT;
+            case "7":
+                return WebSideWorkFlowStatusEnum.NOTIFY_REFUNDED;
             case "10":
                 return WebSideWorkFlowStatusEnum.NOTIFY_TIMEOUT;
+            case "12":
+                return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_REJECT;
+            case "13":
+                return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_APPROVED;
             case "30":
                 return WebSideWorkFlowStatusEnum.NOTIFY_GOODS_SENDING;
             default:

@@ -737,7 +737,7 @@ public class WorkOrderController {
         workFlow.setCreatedBy("怡亚通通知");
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(workFlow.getCreateTime());
-        workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus)));
+        workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus),JSON.toJSONString(data)));
         /*
         if (AoYiRefundCallBackPostBean.isPassedStatus(aoyiRefundStatus)) {
             workFlow.setStatus(WorkOrderStatusType.EDITING.getCode());
