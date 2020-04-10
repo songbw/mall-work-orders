@@ -42,15 +42,17 @@ public class AoYiRefundCallBackPostBean {
     /*
     *
 变更提醒类型	oldStatus	oldStatusName   newStatus	newStatusName	updateType
+供应商审核不通过  1	    供应商审核中   	    10	   退货/退款关闭	        2
+退货供应商审核通过	1	 供应商审核中(待买家发货)   3     供应商审核通过      	2
+买家发货	        3	供应商审核通过（待买家发货） 4     买家发货供应商待收货   	2
+供应商拒绝收货	4	 待供应商确认收货(待平台退款)3	   供应商审核(拒绝收货),待买家发货   2
+供应商确认收货	4	    供应商审核通过	     5	   确认收货，待平台退款	2
 
+财务审核通过	    3	  商审核通过,待平台退款     7	   退款成功   	        2
+财务审核通过(单据确认) 5 商审核通过,待平台退款	 7	   退货成功            	2
+//below items has been removed
 财务审核不通过	3	  商审核通过,待平台退款	12	   财务审核不通过	        2
 财务审核不通过	5	供应商确认收货,待平台退款	12	   财务审核不通过     	2
-供应商审核通过	1	    供应商审核退款中	     3     供应商审核通过      	2
-供应商审核不通过	1	    供应商审核退款中	     2	   供应商审核不通过	    2
-供应商确认收货	3	    供应商审核通过	     5	   确认收货，待平台退款	2
-退货关闭	        3	    供应商审核通过	    10	   退货关闭	            2
-财务审核通过	    3	    供应商审核通过	    13	   财务审核通过	        2
-财务审核通过	    5	    商家确认收货	        13	   财务审核通过       	2
     * */
 
     public static boolean
@@ -61,34 +63,45 @@ public class AoYiRefundCallBackPostBean {
     public static boolean
     isPassedStatus(String status){
 
-        return ("3".equals(status) || "13".equals(status));
+        return ("3".equals(status) || "5".equals(status));
     }
     public static boolean
     isRejectedStatus(String status){
 
-        return ("12".equals(status) || "2".equals(status));
+        return ("12".equals(status) || "10".equals(status));
     }
 
     public static
-    WebSideWorkFlowStatusEnum convert2workflowCommentsCode(String newStatus){
+    WebSideWorkFlowStatusEnum convert2workflowCommentsCode(String newStatus,String oldStatus){
 
         switch(newStatus){
-            case "2":
-                return WebSideWorkFlowStatusEnum.NOTIFY_REJECT;
+            case "4":
+                return WebSideWorkFlowStatusEnum.NOTIFY_WAITING_RETURN_RECEIVED;
             case "3":
-                return WebSideWorkFlowStatusEnum.NOTIFY_APPROVED;
+                if ("4".equals(oldStatus)){
+                    return WebSideWorkFlowStatusEnum.NOTIFY_NEED_RETURN;
+                }else {
+                    return WebSideWorkFlowStatusEnum.NOTIFY_APPROVED;
+                }
             case "5":
                 return WebSideWorkFlowStatusEnum.NOTIFY_RETURN_RECEIVED;
             case "7":
-                return WebSideWorkFlowStatusEnum.NOTIFY_REFUNDED;
+                if("5".equals(oldStatus)){
+                    return WebSideWorkFlowStatusEnum.NOTIFY_REFUNDED_RETURN;
+                }else {
+                    return WebSideWorkFlowStatusEnum.NOTIFY_REFUNDED;
+                }
             case "10":
                 return WebSideWorkFlowStatusEnum.NOTIFY_TIMEOUT;
+
+            /*
             case "12":
                 return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_REJECT;
             case "13":
                 return WebSideWorkFlowStatusEnum.NOTIFY_FINANCE_APPROVED;
             case "30":
                 return WebSideWorkFlowStatusEnum.NOTIFY_GOODS_SENDING;
+                */
             default:
                 return WebSideWorkFlowStatusEnum.UNKNOWN;
         }

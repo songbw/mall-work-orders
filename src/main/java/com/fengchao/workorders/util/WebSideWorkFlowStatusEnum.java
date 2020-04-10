@@ -53,6 +53,10 @@ comments = { remark: "备注", operation: 1 }
     NOTIFY_FINANCE_REJECT(312, "怡亚通反馈：财务审核不通过"),
     NOTIFY_FINANCE_APPROVED(313, "怡亚通反馈：财务审核通过"),
     NOTIFY_RETURN_RECEIVED(314, "怡亚通反馈：供应商确认收货"),
+    NOTIFY_NEED_RETURN(315, "怡亚通反馈：供应商审核(拒绝收货),待买家发货"),
+    NOTIFY_REFUNDED_RETURN(316, "怡亚通反馈：退货成功"),
+    NOTIFY_WAITING_RETURN_RECEIVED(317, "怡亚通反馈：待供应商收货"),
+
     NOTIFY_GOODS_SENDING(330, "怡亚通反馈：供应商已发货待收货"),
 
     THIRD_SN_BLANK(401, "怡亚通订单缺失怡亚通下订单信息,需要与怡亚通确认下单信息"),

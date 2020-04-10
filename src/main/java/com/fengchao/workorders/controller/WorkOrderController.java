@@ -708,6 +708,7 @@ public class WorkOrderController {
 
         String aoyiRefundNo = data.getServiceSn();
         String aoyiRefundStatus = data.getNewStatus();
+        String oldStatus = data.getOldStatus();
 
         if (null == aoyiRefundNo || aoyiRefundNo.isEmpty()){
             failedResult.setMessage("serviceSn 缺失");
@@ -737,7 +738,7 @@ public class WorkOrderController {
         workFlow.setCreatedBy("怡亚通通知");
         workFlow.setCreateTime(new Date());
         workFlow.setUpdateTime(workFlow.getCreateTime());
-        workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus),JSON.toJSONString(data)));
+        workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus,oldStatus),JSON.toJSONString(data)));
         /*
         if (AoYiRefundCallBackPostBean.isPassedStatus(aoyiRefundStatus)) {
             workFlow.setStatus(WorkOrderStatusType.EDITING.getCode());
