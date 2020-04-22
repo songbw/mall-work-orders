@@ -643,7 +643,7 @@ public class WorkFlowController {
                                 if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
                                     workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                                 }
-                                if (null == workOrder.getRefundNo()) {
+                                if (null == workOrder.getRefundNo() || workOrder.getRefundNo().isEmpty()) {
                                     //怡亚通的订单,退款号来自申请接口返回的serviceSn,不需要更新
                                     //其他商家工单,或怡亚通的订单没有成功下单到怡亚通的, 此处记录工单系统生成的退款号
                                     workOrder.setRefundNo(outerRefundNo);
