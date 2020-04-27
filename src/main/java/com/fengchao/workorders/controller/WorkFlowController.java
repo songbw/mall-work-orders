@@ -428,7 +428,10 @@ public class WorkFlowController {
             String strRefund = formatter.format(decRefund.multiply(dec100f).floatValue());
             log.info("工单：{} 可退款最高额度={}分 , 本次要求退款额度={}分",
                     workOrder.getId().toString(), strRefundStored, strRefund);
-            if (0 < strRefund.compareTo(strRefundStored)) {
+
+            Integer canRefundAmountFen = Integer.valueOf(strRefundStored);
+            Integer requestRefundAmountFen = Integer.valueOf(strRefund);
+            if (requestRefundAmountFen > canRefundAmountFen){
                 StringUtil.throw400Exp(response, "400008:退款金额超出合理范围");
                 return result;
             }
