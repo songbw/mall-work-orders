@@ -42,6 +42,7 @@ public interface WorkOrderDao {
                   Date createTimeEnd);
 
     WorkOrder selectByRefundNo(String refundNo);
+    WorkOrder selectByOutRefundNo(String outRefundNo);
 
     /**
      * 获取商户的退货人数

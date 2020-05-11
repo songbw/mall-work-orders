@@ -387,10 +387,13 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             log.error("聚合支付退款回调 post body is wrong, refundFee is null");
             return result;
         }
-        WorkOrder wo = workOrderDao.selectByRefundNo(outerRefundNo);
+        WorkOrder wo = workOrderDao.selectByOutRefundNo(outerRefundNo);
         if (null == wo) {
-            log.warn("聚合支付退款回调 handle notify, but not found work-order by refundNo: " + outerRefundNo);
-            return result;
+            wo = workOrderDao.selectByRefundNo(outerRefundNo);
+            if(null == wo) {
+                log.warn("聚合支付退款回调 handle notify, but not found work-order by refundNo: " + outerRefundNo);
+                return result;
+            }
         }
 
         BigDecimal decRefundFee = new BigDecimal(refundFeeStr);

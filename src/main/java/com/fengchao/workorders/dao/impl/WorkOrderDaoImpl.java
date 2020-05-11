@@ -232,6 +232,34 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
+    public WorkOrder selectByOutRefundNo(String outRefundNo) {
+        log.info("selectByOuterRefundNo: " + outRefundNo);
+        if (null == outRefundNo) {
+            return null;
+        }
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andGuanaitongTradeNoEqualTo(outRefundNo);
+
+        try {
+            List<WorkOrder> list = mapper.selectByExample(example);
+            if (null == list) {
+                log.warn(" Not found record by example");
+            } else {
+                return list.get(0);
+            }
+            return null;
+        } catch (Exception ex) {
+            if (null != ex.getMessage()) {
+                log.warn(" sql failed: {}", ex.getMessage() );
+            } else {
+                log.warn(" sql failed");
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Integer selectRefundUserCountByMerchantId(Long merchantId) throws Exception{
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
