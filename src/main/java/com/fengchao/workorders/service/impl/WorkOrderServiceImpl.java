@@ -606,7 +606,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         bean.setReason(reason);
         bean.setRefund_amount(refundAmount);
 
-        ResultObject<String> gResult = guanAiTongClient.postRefund(bean);
+        ResultObject<String> gResult = guanAiTongClient.postRefund(wo.getiAppId(),bean);
         if (null == gResult) {
             log.warn("post to GuanAiTong refund failed");
             throw new Exception("post to GuanAiTong refund failed");

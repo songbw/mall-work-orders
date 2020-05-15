@@ -4,9 +4,12 @@ import com.fengchao.workorders.bean.GuanAiTongRefundBean;
 import com.fengchao.workorders.feign.hystric.GuanAiTongClient;
 //import com.fengchao.workorders.util.OperaResult;
 import com.fengchao.workorders.util.ResultObject;
+import com.netflix.ribbon.proxy.annotation.Http;
+import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 //import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -15,6 +18,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public interface IGuanAiTongClient {
 
     @RequestMapping(value = "seller/pay/syncRefund", method = RequestMethod.POST)
-    ResultObject<String> postRefund(@RequestBody GuanAiTongRefundBean body);
+    ResultObject<String> postRefund(@RequestHeader(name="appId") String appId, @RequestBody GuanAiTongRefundBean body);
 
 }
