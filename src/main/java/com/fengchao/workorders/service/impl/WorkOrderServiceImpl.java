@@ -704,4 +704,46 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             log.error("怡亚通买家退货发物流 返回信息缺失");
         }
     }
+
+    @Override
+    public AoYiRefundResponseBean
+    getYiYaTongRefundNo(String reason,Integer subStatus,String thirdOrderSn,String skuId) {
+
+        log.info("处理怡亚通订单退款申请 enter");
+
+        if (null == reason) {
+            reason = "退款";
+        }
+
+        //AoYiClientResponseObject<AoYiRefundResponseBean> resp;
+        String resp;
+        try {
+            if (1 == subStatus) {
+                AoYiRefundOnlyPostBean bean = new AoYiRefundOnlyPostBean();
+                bean.setOrderSn(thirdOrderSn);
+                bean.setReason(reason);
+                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
+                resp = aoYiClient.postRefundOnly(bean);
+            } else {
+                AoYiRefundReturnPostBean bean = new AoYiRefundReturnPostBean();
+                bean.setOrderSn(thirdOrderSn);
+                bean.setReason(reason);
+                bean.setCode(skuId);
+                //0：退货退款, 1：仅退款
+                bean.setReturnType("0");
+                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
+                resp = aoYiClient.postRefundReturn(bean);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+
+        log.info("处理怡亚通订单退款申请 response = {}",JSON.toJSONString(resp));
+        AoYiRefundResponseBean responseBean = YiYaTong.parseRefundReturnResponse(resp);
+        if (null == responseBean) {
+            throw new RuntimeException("420006:怡亚通退货退款申请无回应,请重试");
+        }
+        return responseBean;
+
+    }
 }
