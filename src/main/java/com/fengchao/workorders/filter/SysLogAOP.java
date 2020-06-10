@@ -1,14 +1,9 @@
 package com.fengchao.workorders.filter;
 
-//import com.fengchao.workorders.model.SysLog;
-//import com.fengchao.workorders.service.impl.SystemServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -22,18 +17,11 @@ import javax.servlet.http.HttpServletRequest;
 @Order(1)
 public class SysLogAOP {
     //private static final Logger log = LoggerFactory.getLogger(SysLogAOP.class);
-/*
-    private SystemServiceImpl systemService;
-    @Autowired
-    SysLogAOP(SystemServiceImpl systemService) {
-        this.systemService = systemService;
-    }
-*/
+
     @Around("@within(org.springframework.web.bind.annotation.RequestMapping)")
     public Object recordLog(ProceedingJoinPoint p) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         Object httpData;
-        //SysLog sysLog = new SysLog();
 
         long t1 = System.currentTimeMillis();
         try {
