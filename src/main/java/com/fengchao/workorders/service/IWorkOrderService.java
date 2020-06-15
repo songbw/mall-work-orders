@@ -2,6 +2,7 @@ package com.fengchao.workorders.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.AggPayNotifyBean;
+import com.fengchao.workorders.bean.AoYiRefundResponseBean;
 import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
@@ -69,6 +70,22 @@ public interface IWorkOrderService {
 
     String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception;
 
+    /**
+     * 向怡亚通发送退货物流信息
+     * @param workOrder 工单信息
+     * @param comments 注释
+     * */
     void sendExpressInfo(WorkOrder workOrder, String comments);
 
-}
+    /**
+     * 向怡亚通发送退款申请
+     * @param reason 退货原因说明
+     * @param subStatus 怡亚通订单状态
+     * @param thirdOrderSn 怡亚通订单id
+     * @param skuId 商品id
+     * @return  AoYiRefundResponseBean 怡亚通返回信息
+     * */
+    AoYiRefundResponseBean
+    getYiYaTongRefundNo(String reason,Integer subStatus,String thirdOrderSn,String skuId);
+
+    }

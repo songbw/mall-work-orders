@@ -9,6 +9,7 @@ public enum WorkOrderStatusType {
     HANDLING(5, "处理中"),
     CLOSED(6, "处理完成"),
     REFUNDING(7, "退款处理中"),
+    REFUND_FAILED(8, "退款失败"),
 
     RESERVED(888, "工单工作流记录"),
     ;
@@ -36,6 +37,11 @@ public enum WorkOrderStatusType {
     public void setMsg(String msg) {
         this.msg = msg;
     }
+
+    public static boolean isClosedStatus(Integer code){
+        return CLOSED.getCode().equals(code)||REFUND_FAILED.getCode().equals(code);
+    }
+
 
     public static Integer String2Int(String status) {
         if (null != status && !status.isEmpty()) {

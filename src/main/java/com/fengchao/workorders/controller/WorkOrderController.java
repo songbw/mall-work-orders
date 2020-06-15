@@ -154,8 +154,12 @@ public class WorkOrderController {
             String comments = workOrder.getComments();
             try {
                 workOrder = workOrderService.selectById(recordId);
-                if (null != workOrder && !WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
-                    workOrder.setStatus(WorkOrderStatusType.CLOSED.getCode());
+                if (null != workOrder && !WorkOrderStatusType.isClosedStatus(workOrder.getStatus())) {
+                    if(itemCount == itemOk) {
+                        workOrder.setStatus(WorkOrderStatusType.CLOSED.getCode());
+                    }else{
+                        workOrder.setStatus(WorkOrderStatusType.REFUND_FAILED.getCode());
+                    }
                     workOrder.setRefundTime(StringUtil.String2Date(endTime));
                     workOrder.setComments(comments);
                     workOrderService.update(workOrder);
@@ -208,7 +212,7 @@ public class WorkOrderController {
         String outRefundNo = workOrder.getGuanaitongTradeNo();
         if (null != outRefundNo
                 && (WorkOrderStatusType.REFUNDING.getCode().equals(workOrder.getStatus()) ||
-                WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus()))) {
+                WorkOrderStatusType.isClosedStatus(workOrder.getStatus()))) {
             log.info("调用查询聚合支付退款状态接口 outRefundNo={}", outRefundNo);
 
             ResultMessage<List<AggPayRefundQueryBean>> aggPayResult;

@@ -274,7 +274,7 @@ public class WorkFlowController {
                 } else {
                     workOrder = workOrderService.selectById(workOrderId);
                     if (null != workOrder) {
-                        if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
+                        if (!WorkOrderStatusType.isClosedStatus(workOrder.getStatus())) {
                             workOrder.setStatus(workFlow.getStatus());
                         }
                         workOrder.setUpdateTime(new Date());
@@ -344,7 +344,7 @@ public class WorkFlowController {
         log.info("特别处理重新打开工单： {}",JSON.toJSONString(workOrder));
 
         Integer orderStatus = workOrder.getStatus();
-        if (!WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)) {
+        if (!WorkOrderStatusType.isClosedStatus(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为处理完成时才可以重新打开");
             return result;
         }
@@ -437,7 +437,7 @@ public class WorkFlowController {
         log.info("工单： {}",JSON.toJSONString(workOrder));
         String iAppId = workOrder.getiAppId();
         Integer orderStatus = workOrder.getStatus();
-        if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)
+        if (WorkOrderStatusType.isClosedStatus(orderStatus)
                 || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
             return result;
@@ -480,7 +480,7 @@ public class WorkFlowController {
 
         }
 
-        if (WorkOrderStatusType.CLOSED.getCode().equals(nextStatus)){
+        if (WorkOrderStatusType.isClosedStatus(nextStatus)){
             // 直接关闭工单
             try{
                 updateFlowAndWorkorder(workOrder,workFlow,false);
@@ -642,7 +642,7 @@ public class WorkFlowController {
                         try {
                             workOrder = workOrderService.selectById(workOrderId);
                             if (null != workOrder) {
-                                if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
+                                if (!WorkOrderStatusType.isClosedStatus(workOrder.getStatus())) {
                                     workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                                 }
                                 if (null == workOrder.getRefundNo() || workOrder.getRefundNo().isEmpty()) {
@@ -784,5 +784,116 @@ public class WorkFlowController {
         log.info("delete WorkFlow success");
 
     }
+
+    private static final String YIYATONG_RESEND_REFUND = "为怡亚通工单补发退款请求";
+    @ApiOperation(value = YIYATONG_RESEND_REFUND, notes = "仅仅对怡亚通工单可用")
+    @ApiResponses({ @ApiResponse(code = 400, message = "为怡亚通工单补发退款请求失败") })
+    @ResponseStatus(code = HttpStatus.OK)
+    @PostMapping("work_flows/yiyatong/{workOrderId}")
+    public ResultObject<String>
+    reSendYiYaTongRefund(HttpServletResponse response,
+                        @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                        @PathVariable Long workOrderId) {
+
+        String functionDesc = YIYATONG_RESEND_REFUND;
+        log.info("{} 开始",functionDesc);
+
+        String operator = JwtTokenUtil.getUsername(authentication);
+
+        WorkOrder workOrder;
+        try {
+            workOrder = workOrderService.selectById(workOrderId);
+        }catch (Exception e) {
+            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
+            return null;
+        }
+
+        if (null == workOrder) {
+            StringUtil.throw400Exp(response, "400004:工单号不存在");
+        }
+        log.info("所属工单： {}",JSON.toJSONString(workOrder));
+
+        Long merchantId = workOrder.getMerchantId();
+        /// 只对对怡亚通订单需要特别处理
+        //  * merchantId = 4 为怡亚通订单
+        if(Constant.YI_YA_TONG_MERCHANT_ID != merchantId){
+            StringUtil.throw400Exp(response, "400104:非怡亚通订单");
+        }
+        boolean canNotResendStatus = !(WorkOrderStatusType.isClosedStatus(workOrder.getStatus()));
+        if (canNotResendStatus) {
+            StringUtil.throw400Exp(response, "400107:工单状态为关闭的才可以补发退款请求");
+        }
+
+        WorkFlow workFlow = new WorkFlow();
+        workFlow.setWorkOrderId(workOrderId);
+        workFlow.setUpdatedBy(operator);
+        workFlow.setCreatedBy(operator);
+        workFlow.setStatus(WorkOrderStatusType.RESERVED.getCode());
+
+        String customer = workOrder.getReceiverId();
+        String orderId = workOrder.getOrderId();
+        String comments = "工单原来记录怡亚通退款号:"+workOrder.getGuanaitongTradeNo();
+
+        JSONObject json = null;
+        try {
+            json = workOrderService.getOrderInfo(customer, orderId, merchantId);
+        } catch (Exception e) {
+            StringUtil.throw400Exp(response, "400007:" + e.getMessage());
+        }
+        if (null == json) {
+            StringUtil.throw400Exp(response, "400007: searchOrder失败");
+        }
+
+        try {
+            AoYiRefundResponseBean bean =
+                    workOrderService.getYiYaTongRefundNo("重发退款申请",
+                            json.getInteger("subStatus"),
+                            json.getString("thirdOrderSn"),
+                            json.getString("skuId")
+                            );
+            if (null != bean) {
+                workOrder.setRefundNo(bean.getServiceSn());
+                //复用该字段保存星链子订单sn
+                workOrder.setGuanaitongTradeNo(bean.getOrderSn());
+            } else {
+                workFlow.setCreateTime(new Date());
+                workFlow.setUpdateTime(new Date());
+                JSONObject commentsJson = new JSONObject();
+                commentsJson.put("remark","怡亚通退款申请失败");
+                commentsJson.put("operation",WebSideWorkFlowStatusEnum.UNKNOWN.getCode());
+                workFlow.setComments(commentsJson.toJSONString());
+                workFlowService.insert(workFlow);
+                StringUtil.throw400Exp(response, "420101:怡亚通退款申请失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            workFlow.setCreateTime(new Date());
+            workFlow.setUpdateTime(new Date());
+            JSONObject commentsJson = new JSONObject();
+            commentsJson.put("remark",e.getMessage());
+            commentsJson.put("operation",WebSideWorkFlowStatusEnum.UNKNOWN.getCode());
+            workFlow.setComments(commentsJson.toJSONString());
+            workFlowService.insert(workFlow);
+
+            StringUtil.throw400Exp(response, e.getMessage());
+        }
+
+        JSONObject commentsJson = new JSONObject();
+        commentsJson.put("remark",comments+" 新申请怡亚通退款号："+workOrder.getGuanaitongTradeNo());
+        commentsJson.put("operation",WebSideWorkFlowStatusEnum.UNKNOWN.getCode());
+        workFlow.setComments(commentsJson.toJSONString());
+        workFlow.setCreateTime(new Date());
+        workFlow.setUpdateTime(new Date());
+
+        try {
+            workFlowService.insert(workFlow);
+            log.info("未发送请求到怡亚通,仅创建工作流 {}", JSON.toJSONString(workFlow));
+        }catch (Exception e){
+            log.error("数据库操作异常 {}",e.getMessage(),e);
+        }
+
+        return new ResultObject<>(200,"success","为怡亚通工单补发退款请求 成功");
+    }
+
 
 }

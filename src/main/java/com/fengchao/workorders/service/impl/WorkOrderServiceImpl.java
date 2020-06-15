@@ -225,8 +225,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             String validDate = "2000-01-01 00:00:00";
             String refundTime = StringUtil.Date2String(w.getRefundTime());
 
-            boolean isRefunding = !WorkOrderStatusType.CLOSED.getCode().equals(w.getStatus());
-            boolean isRefundedAndClose = WorkOrderStatusType.CLOSED.getCode().equals(w.getStatus()) &&
+            boolean isRefunding = !WorkOrderStatusType.isClosedStatus(w.getStatus());
+            boolean isRefundedAndClose = WorkOrderStatusType.isClosedStatus(w.getStatus()) &&
                     (0 > validDate.compareTo(refundTime));
             if (isRefunding || isRefundedAndClose){
                 list.add(w);
@@ -418,19 +418,21 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                 String msg = outerRefundNo+" 聚合支付退款成功";
                 log.info(msg);
                 wo.setComments(msg);
+                wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
             } else if (3 == status) {
                 wo.setGuanaitongRefundAmount(refundFee);
                 String msg = outerRefundNo + " 聚合支付退款,部分成功";
                 log.info(msg);
                 wo.setComments(msg);
+                wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
             } else {
                 String msg = outerRefundNo + " 聚合支付退款失败";
                 log.error(msg);
                 wo.setComments(msg);
+                wo.setStatus(WorkOrderStatusType.REFUND_FAILED.getCode());
             }
         }
 
-        wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
         wo.setUpdateTime(new Date());
         try {
             workOrderDao.updateByPrimaryKey(wo);
@@ -523,7 +525,10 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             criteria.andOrderIdEqualTo(wo.getOrderId());
         }
         criteria.andFareGreaterThan(0f);
-        criteria.andStatusEqualTo(WorkOrderStatusType.CLOSED.getCode());
+        List<Integer> statusList = new ArrayList<>();
+        statusList.add(WorkOrderStatusType.CLOSED.getCode());
+        statusList.add(WorkOrderStatusType.REFUND_FAILED.getCode());
+        criteria.andStatusIn(statusList);
 
         List<WorkOrder> list;
         try{
@@ -633,7 +638,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         try {
             wo = workOrderDao.selectByPrimaryKey(workOrderId);
             if (null != wo) {
-                if (!WorkOrderStatusType.CLOSED.getCode().equals(wo.getStatus())){
+                if (!WorkOrderStatusType.isClosedStatus(wo.getStatus())){
                     wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
                 }
                 if (null == wo.getRefundNo()) {
@@ -703,5 +708,47 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }else {
             log.error("怡亚通买家退货发物流 返回信息缺失");
         }
+    }
+
+    @Override
+    public AoYiRefundResponseBean
+    getYiYaTongRefundNo(String reason,Integer subStatus,String thirdOrderSn,String skuId) {
+
+        log.info("处理怡亚通订单退款申请 enter");
+
+        if (null == reason) {
+            reason = "退款";
+        }
+
+        //AoYiClientResponseObject<AoYiRefundResponseBean> resp;
+        String resp;
+        try {
+            if (1 == subStatus) {
+                AoYiRefundOnlyPostBean bean = new AoYiRefundOnlyPostBean();
+                bean.setOrderSn(thirdOrderSn);
+                bean.setReason(reason);
+                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
+                resp = aoYiClient.postRefundOnly(bean);
+            } else {
+                AoYiRefundReturnPostBean bean = new AoYiRefundReturnPostBean();
+                bean.setOrderSn(thirdOrderSn);
+                bean.setReason(reason);
+                bean.setCode(skuId);
+                //0：退货退款, 1：仅退款
+                bean.setReturnType("0");
+                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
+                resp = aoYiClient.postRefundReturn(bean);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+
+        log.info("处理怡亚通订单退款申请 response = {}",JSON.toJSONString(resp));
+        AoYiRefundResponseBean responseBean = YiYaTong.parseRefundReturnResponse(resp);
+        if (null == responseBean) {
+            throw new RuntimeException("420006:怡亚通退货退款申请无回应,请重试");
+        }
+        return responseBean;
+
     }
 }

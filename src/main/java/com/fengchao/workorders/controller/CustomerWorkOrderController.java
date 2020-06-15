@@ -266,7 +266,7 @@ public class CustomerWorkOrderController {
         if (!WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus)
                 && !WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)) {
             String msg;
-            if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)){
+            if (WorkOrderStatusType.isClosedStatus(orderStatus)){
                 msg = "工单已经处理完成";
             }else{
                 msg = "工单必须审核通过才能进行处理";
@@ -513,7 +513,7 @@ public class CustomerWorkOrderController {
                 needYiYaTongHandle) {
 
             try {
-                AoYiRefundResponseBean bean = getYiYaTongRefundNo(title, subStatus,thirdOrderSn,skuId);
+                AoYiRefundResponseBean bean = workOrderService.getYiYaTongRefundNo(title, subStatus,thirdOrderSn,skuId);
                 if (null != bean) {
                     workOrder.setRefundNo(bean.getServiceSn());
                     //复用该字段保存星链子订单sn
@@ -962,45 +962,5 @@ public class CustomerWorkOrderController {
         return result;
     }
 
-    private AoYiRefundResponseBean
-    getYiYaTongRefundNo(String reason,Integer subStatus,String thirdOrderSn,String skuId) {
-
-        log.info("处理怡亚通订单退款申请 enter");
-
-        if (null == reason) {
-            reason = "退款";
-        }
-
-        //AoYiClientResponseObject<AoYiRefundResponseBean> resp;
-        String resp;
-        try {
-            if (1 == subStatus) {
-                AoYiRefundOnlyPostBean bean = new AoYiRefundOnlyPostBean();
-                bean.setOrderSn(thirdOrderSn);
-                bean.setReason(reason);
-                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
-                resp = aoYiClient.postRefundOnly(bean);
-            } else {
-                AoYiRefundReturnPostBean bean = new AoYiRefundReturnPostBean();
-                bean.setOrderSn(thirdOrderSn);
-                bean.setReason(reason);
-                bean.setCode(skuId);
-                //0：退货退款, 1：仅退款
-                bean.setReturnType("0");
-                log.info("处理怡亚通订单退款申请 try request aoyi client {}",JSON.toJSONString(bean));
-                resp = aoYiClient.postRefundReturn(bean);
-            }
-        } catch (Exception e) {
-            throw e;
-        }
-
-        log.info("处理怡亚通订单退款申请 response = {}",JSON.toJSONString(resp));
-        AoYiRefundResponseBean responseBean = YiYaTong.parseRefundReturnResponse(resp);
-        if (null == responseBean) {
-            throw new RuntimeException("420006:怡亚通退货退款申请无回应,请重试");
-        }
-        return responseBean;
-
-    }
 
 }
