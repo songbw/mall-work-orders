@@ -819,10 +819,10 @@ public class WorkFlowController {
         if(Constant.YI_YA_TONG_MERCHANT_ID != merchantId){
             StringUtil.throw400Exp(response, "400104:非怡亚通订单");
         }
-        boolean canNotResendStatus = !(WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus()));
-        if (canNotResendStatus) {
-            StringUtil.throw400Exp(response, "400107:工单状态为关闭的才可以补发退款请求");
-        }
+        ///boolean canNotResendStatus = !(WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus()));
+        ///if (canNotResendStatus) {
+        ///    StringUtil.throw400Exp(response, "400107:工单状态为关闭的才可以补发退款请求");
+        ///}
 
         WorkFlow workFlow = new WorkFlow();
         workFlow.setWorkOrderId(workOrderId);
@@ -832,8 +832,13 @@ public class WorkFlowController {
 
         String customer = workOrder.getReceiverId();
         String orderId = workOrder.getOrderId();
-        String comments = "工单原来记录怡亚通退款号:"+workOrder.getGuanaitongTradeNo();
-
+        String oldYiyatongNo = workOrder.getGuanaitongTradeNo();
+        String comments;
+        if(null == oldYiyatongNo || oldYiyatongNo.isEmpty()){
+            comments= " ";
+        }else {
+            comments="工单原来记录怡亚通退款号:" + workOrder.getGuanaitongTradeNo();
+        }
         JSONObject json = null;
         try {
             json = workOrderService.getOrderInfo(customer, orderId, merchantId);
