@@ -74,8 +74,7 @@ public class JwtTokenUtil {
     }
 
     public static String getUsername(String authentication) {
-        return "user001";
-/*
+
         if (null == authentication || authentication.isEmpty()) {
             return "";
         }
@@ -87,6 +86,6 @@ public class JwtTokenUtil {
         String username = claims.getSubject();
         //System.out.println("==JWT Util= get user name : " + username);
         return username;
-*/
+
     }
 }

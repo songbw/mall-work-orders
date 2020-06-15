@@ -266,7 +266,7 @@ public class CustomerWorkOrderController {
         if (!WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus)
                 && !WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)) {
             String msg;
-            if (WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)){
+            if (WorkOrderStatusType.isClosedStatus(orderStatus)){
                 msg = "工单已经处理完成";
             }else{
                 msg = "工单必须审核通过才能进行处理";
