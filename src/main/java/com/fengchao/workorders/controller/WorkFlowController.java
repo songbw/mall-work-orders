@@ -819,10 +819,12 @@ public class WorkFlowController {
         if(Constant.YI_YA_TONG_MERCHANT_ID != merchantId){
             StringUtil.throw400Exp(response, "400104:非怡亚通订单");
         }
-        boolean canNotResendStatus = !(WorkOrderStatusType.isClosedStatus(workOrder.getStatus()));
-        if (canNotResendStatus) {
-            StringUtil.throw400Exp(response, "400107:工单状态为关闭的才可以补发退款请求");
-        }
+
+        ///不再限制工单状态
+        ///boolean canNotResendStatus = !(WorkOrderStatusType.isClosedStatus(workOrder.getStatus()));
+        //if (canNotResendStatus) {
+        //    StringUtil.throw400Exp(response, "400107:工单状态为关闭的才可以补发退款请求");
+        //}
 
         WorkFlow workFlow = new WorkFlow();
         workFlow.setWorkOrderId(workOrderId);
