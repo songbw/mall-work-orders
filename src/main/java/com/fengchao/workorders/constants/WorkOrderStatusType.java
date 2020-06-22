@@ -1,7 +1,10 @@
-package com.fengchao.workorders.util;
+package com.fengchao.workorders.constants;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
 
 public enum WorkOrderStatusType {
-    /**/
+    /**
+     * */
     EDITING(1, "待审核"),
     PENDING(2, "审核中"),
     ACCEPTED(3, "审核通过"),
@@ -14,8 +17,10 @@ public enum WorkOrderStatusType {
     RESERVED(888, "工单工作流记录"),
     ;
 
-    private Integer code;
-    private String msg;
+    @EnumValue
+    private final Integer code;
+
+    private final String msg;
 
     WorkOrderStatusType(Integer code, String msg) {
         this.code = code;
@@ -26,20 +31,13 @@ public enum WorkOrderStatusType {
         return code;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
     public String getMsg() {
         return msg;
     }
 
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
 
-    public static boolean isClosedStatus(Integer code){
-        return CLOSED.getCode().equals(code)||REFUND_FAILED.getCode().equals(code);
+    public static boolean isClosedStatus(WorkOrderStatusType status){
+        return CLOSED.equals(status)||REFUND_FAILED.equals(status);
     }
 
 
@@ -65,5 +63,25 @@ public enum WorkOrderStatusType {
             }
         }
         return "";
+    }
+
+    public static WorkOrderStatusType checkByCode(Integer code) {
+        if (null != code && 0 != code) {
+            for (WorkOrderStatusType theEnum : WorkOrderStatusType.values()) {
+                if (theEnum.getCode().equals(code)) {
+                    return theEnum;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static WorkOrderStatusType checkByName(String name) {
+        for (WorkOrderStatusType theEnum : WorkOrderStatusType.values()) {
+            if (name.equals(theEnum.name())) {
+                return theEnum;
+            }
+        }
+        return null;
     }
 }

@@ -1,109 +1,124 @@
 package com.fengchao.workorders.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fengchao.workorders.constants.AsDefaultEnum;
+import com.fengchao.workorders.constants.MyErrorEnum;
+import com.fengchao.workorders.entity.DefaultAddress;
+import com.fengchao.workorders.exception.MyException;
 import com.fengchao.workorders.mapper.DefaultAddressMapper;
-import com.fengchao.workorders.model.DefaultAddress;
-import com.fengchao.workorders.model.DefaultAddressExample;
 import com.fengchao.workorders.service.IDefaultAddressService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+
+/**
+ * @author Clark
+ * */
 
 @Slf4j
 @Transactional
 @Service
-public class DefaultAddressServiceImpl implements IDefaultAddressService {
+public class DefaultAddressServiceImpl extends ServiceImpl<DefaultAddressMapper, DefaultAddress> implements IDefaultAddressService {
 
-    private DefaultAddressMapper mapper;
+    @Override
+    public DefaultAddress
+    createRecord(DefaultAddress address){
+        if(AsDefaultEnum.YES == address.getAsDefault()){
+            checkDefaultExisted();
+        }
 
-    @Autowired
-    public DefaultAddressServiceImpl(DefaultAddressMapper mapper){
-        this.mapper = mapper;
+        this.save(address);
+        return address;
     }
 
     @Override
-    public Long insert(DefaultAddress record) throws Exception{
-        int newId;
-
-        try {
-            newId =mapper.insert(record);
-        }catch (Exception e){
-            log.error("defaultAddressMapper exception {}",e.getMessage());
-            throw new Exception(e);
+    public DefaultAddress
+    updateRecordById(DefaultAddress address,Long id){
+        DefaultAddress storedRecord = selectById(id);
+        if(AsDefaultEnum.YES == address.getAsDefault() && AsDefaultEnum.NO == storedRecord.getAsDefault()){
+            checkDefaultExisted();
         }
-
-        if (0 == newId){
-            log.error("defaultAddressMapper insert failed");
-            throw new Exception("defaultAddressMapper insert failed");
+        DefaultAddress updateRecord = new DefaultAddress();
+        updateRecord.setId(storedRecord.getId());
+        if(null != address.getContent()){
+            updateRecord.setContent(address.getContent());
         }
+        if(address.getAsDefault() != storedRecord.getAsDefault()){
+            updateRecord.setAsDefault(address.getAsDefault());
+        }
+        updateById(updateRecord);
 
-        return record.getId();
+        return getById(id);
     }
 
     @Override
-    public void deleteById(long id) throws Exception{
-        try {
-            mapper.deleteByPrimaryKey(id);
+    public DefaultAddress
+    selectById(Long id){
+        DefaultAddress record;
+        try{
+            record = getById(id);
         }catch (Exception e){
-            log.error("defaultAddressMapper exception {}",e.getMessage());
-            throw new Exception(e);
+            log.error(e.getMessage(),e);
+            throw new MyException(MyErrorEnum.COMMON_DB_SELECT_ERROR);
         }
+
+        if(null == record){
+            throw new MyException(MyErrorEnum.COMMON_DB_GET_RECORD_RESULT_NULL);
+        }
+
+        return record;
     }
 
     @Override
-    public DefaultAddress selectById(long id) throws Exception{
-        try {
-            return mapper.selectByPrimaryKey(id);
-        }catch (Exception e){
-            log.error("defaultAddressMapper exception {}",e.getMessage());
-            throw new Exception(e);
-        }
-    }
-
-    @Override
-    public void update(DefaultAddress record) throws Exception{
-        try {
-            mapper.updateByPrimaryKeySelective(record);
-        }catch (Exception e){
-            log.error("defaultAddressMapper exception {}",e.getMessage());
-            throw new Exception(e);
-        }
-    }
-
-    @Override
-    public List<DefaultAddress> selectAll() throws Exception{
-        DefaultAddressExample example = new DefaultAddressExample();
-        DefaultAddressExample.Criteria criteria = example.createCriteria();
-        criteria.andIdIsNotNull();
+    public List<DefaultAddress> selectAll(){
+        QueryWrapper<DefaultAddress> wrapper = new QueryWrapper<>();
+        wrapper.orderByDesc(DefaultAddress.CREATE_TIME);
+        wrapper.isNotNull(DefaultAddress.ID);
 
         try {
-            return mapper.selectByExample(example);
+            return list(wrapper);
         }catch (Exception e){
-            log.error("defaultAddressMapper exception {}",e.getMessage());
-            throw new Exception(e);
+            log.error(e.getMessage(),e);
+            return new ArrayList<>();
         }
     }
 
     @Override
-    public DefaultAddress selectDefault() throws Exception{
-        DefaultAddressExample example = new DefaultAddressExample();
-        DefaultAddressExample.Criteria criteria = example.createCriteria();
-        criteria.andAsDefaultEqualTo(1);
-        List<DefaultAddress> list;
+    public DefaultAddress selectDefault() {
+        QueryWrapper<DefaultAddress> wrapper = new QueryWrapper<>();
+        wrapper.eq(DefaultAddress.AS_DEFAULT, AsDefaultEnum.YES);
+        List<DefaultAddress> defaultAddressList;
         try {
-            list = mapper.selectByExample(example);
+            defaultAddressList = list(wrapper);
         }catch (Exception e){
-            log.error("defaultAddressMapper exception {}",e.getMessage());
-            throw new Exception(e);
+            log.error(e.getMessage(),e);
+            throw new MyException(MyErrorEnum.COMMON_DB_GET_RECORD_RESULT_NULL);
         }
-        if (null != list && 0 < list.size()){
-            return list.get(0);
-        } else {
-            throw new Exception("failed to find default address");
+        if(null != defaultAddressList && 0 < defaultAddressList.size()){
+            return defaultAddressList.get(0);
+        }else {
+            throw new MyException(MyErrorEnum.COMMON_DB_GET_RECORD_RESULT_NULL);
         }
+    }
 
+    private void
+    checkDefaultExisted(){
+        QueryWrapper<DefaultAddress> wrapper = new QueryWrapper<>();
+        wrapper.eq(DefaultAddress.AS_DEFAULT, AsDefaultEnum.YES);
+        List<DefaultAddress> defaultAddressList;
+        try {
+            defaultAddressList = list(wrapper);
+        }catch (Exception e){
+            log.error(e.getMessage(),e);
+            throw new MyException(MyErrorEnum.MYSQL_ERROR);
+        }
+        if(null != defaultAddressList && 0 < defaultAddressList.size()){
+            throw new MyException(MyErrorEnum.DEFAULT_ADDRESS_EXISTED);
+        }
     }
 
 }

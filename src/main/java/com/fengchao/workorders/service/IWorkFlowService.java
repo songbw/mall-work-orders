@@ -1,26 +1,18 @@
 package com.fengchao.workorders.service;
 
-import com.fengchao.workorders.model.WorkFlow;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.fengchao.workorders.entity.WorkFlow;
 import com.fengchao.workorders.util.PageInfo;
 
-//import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-//import java.util.Map;
 
-public interface IWorkFlowService {
-
-    Long insert(WorkFlow workFlow) throws Exception;
-
-    void deleteById(long id) throws Exception;
-
-    WorkFlow selectById(long id) throws Exception;
-
-    void update(WorkFlow workFlow) throws Exception;
+public interface IWorkFlowService extends IService<WorkFlow> {
 
 
-    PageInfo<WorkFlow> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                  Long workOrderId, Date createTimeStart, Date createTimeEnd) throws Exception;
+    PageInfo<WorkFlow>
+    selectPage(int pageIndex, int pageSize,
+               Long workOrderId, String createTimeStart, String createTimeEnd);
 
     List<WorkFlow> selectByWorkOrderId(Long workOrderId, Integer status) throws Exception;
 

@@ -1,9 +1,11 @@
 package com.fengchao.workorders.bean;
 
+import com.fengchao.workorders.entity.WorkOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.BeanUtils;
 
 import java.util.Date;
 
@@ -71,4 +73,14 @@ public class WorkOrderBean {
 
     @ApiModelProperty(value="备注", example="退款失败",required=false)
     private String comments;
+
+    public static WorkOrderBean
+    convert(WorkOrder workOrder){
+        WorkOrderBean b = new WorkOrderBean();
+        BeanUtils.copyProperties(workOrder, b);
+        if (null != workOrder.getGuanaitongRefundAmount()) {
+            b.setRealRefundAmount(workOrder.getGuanaitongRefundAmount());
+        }
+        return b;
+    }
 }

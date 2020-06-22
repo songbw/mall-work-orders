@@ -38,9 +38,7 @@
         <!--table tableName="work_flow" domainObjectName="WorkFlow" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true" selectByExampleQueryId="true">
         <generatedKey column="ID" sqlStatement="MySql" identity="true" />
         </table-->
-        <!--table tableName="default_address" domainObjectName="DefaultAddress" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true" selectByExampleQueryId="true">
-            <generatedKey column="ID" sqlStatement="MySql" identity="true" />
-        </table-->
+
 
     </context>
 </generatorConfiguration>

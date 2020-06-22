@@ -1,9 +1,12 @@
 package com.fengchao.workorders.bean;
 
+import com.fengchao.workorders.constants.AsDefaultEnum;
+import com.fengchao.workorders.entity.DefaultAddress;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDate;
 import java.util.Date;
@@ -21,4 +24,15 @@ public class AddressBean {
     @ApiModelProperty(value="地址", example="北京市朝阳区建外街道88号",required=true)
     private String content;
 
+    public static AddressBean
+    convert(DefaultAddress defaultAddress){
+        AddressBean bean = new AddressBean();
+        BeanUtils.copyProperties(defaultAddress, bean);
+        if (AsDefaultEnum.YES == defaultAddress.getAsDefault()){
+            bean.setIsDefault(true);
+        }else {
+            bean.setIsDefault(false);
+        }
+        return bean;
+    }
 }

@@ -18,6 +18,14 @@ pagehelper:
     supportMethodsArguments: true
     params: count=countSql
 
+# 配置sql打印日志
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: false
+  ##mapper-locations: classpath:com/fengchao/workorders/mapper/*.xml
+  typeEnumsPackage: com.fengchao.workorders.constants
+
 feign:
   compression:
     response:

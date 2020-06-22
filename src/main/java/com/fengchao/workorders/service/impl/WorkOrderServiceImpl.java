@@ -3,16 +3,20 @@ package com.fengchao.workorders.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
-import com.fengchao.workorders.feign.IAggPayClient;
+import com.fengchao.workorders.constants.WorkOrderStatusType;
+import com.fengchao.workorders.constants.WorkOrderType;
 import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.util.*;
-import com.fengchao.workorders.model.*;
-import com.fengchao.workorders.dao.impl.WorkOrderDaoImpl;
+import com.fengchao.workorders.entity.*;
 import com.fengchao.workorders.service.IWorkOrderService;
 //import org.joda.time.DateTime;
 //import org.springframework.beans.BeanUtils;
@@ -28,16 +32,19 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ *
+ * */
 @Slf4j
 @Service(value="WorkOrderServiceImpl")
-@Transactional
-public class WorkOrderServiceImpl implements IWorkOrderService {
+@Transactional(rollbackFor = Exception.class)
+public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder> implements IWorkOrderService {
 
 
     private OrderService orderService;
     private IGuanAiTongClient guanAiTongClient;
-    private WorkOrderDaoImpl workOrderDao;
     //private RestTemplate restTemplate;
     private WorkOrderMapper mapper;
     private IAoYiClient aoYiClient;
@@ -45,13 +52,13 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     // private RedisTemplate<Object, Object> redisTemplate;
 
     @Autowired
-    public WorkOrderServiceImpl(WorkOrderDaoImpl workOrderDao,
+    public WorkOrderServiceImpl(
                                 WorkOrderMapper mapper,
                                 IGuanAiTongClient guanAiTongClient,
                                 IAoYiClient aoYiClient,
                                 OrderService orderService
                               ) {
-        this.workOrderDao = workOrderDao;
+
         //this.restTemplate = restTemplate;
         this.orderService = orderService;
         this.guanAiTongClient = guanAiTongClient;
@@ -59,161 +66,218 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         this.aoYiClient = aoYiClient;
     }
 
-    @Override
-    public Long insert(WorkOrder workOrder) {
-        int rst = workOrderDao.insert(workOrder);
-        if (0 < rst) {
-            return workOrder.getId();
-        } else {
-            return 0L;
-        }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        workOrderDao.deleteByPrimaryKey(id);
-    }
-
-    @Override
-    public WorkOrder selectById(Long id) {
-        return workOrderDao.selectByPrimaryKey(id);
-    }
 
     @Override
     public WorkOrder
     selectByRefundNo(String refundNo){
-        return workOrderDao.selectByRefundNo(refundNo);
+        if(null == refundNo || refundNo.isEmpty()){
+            return null;
+        }
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.eq(WorkOrder.REFUND_NO,refundNo);
+        return getOne(wrapper);
     }
 
     @Override
-    public void update(WorkOrder workOrder) {
-        if (null == workOrder) {
-            return;
+    public PageInfo<WorkOrder>
+    selectPage(int pageIndex, int pageSize, String iAppId,
+               String title, String receiverId, String receiverName, String receiverPhone,
+               String orderId, Integer typeId, Long merchantId,Integer statusCode,
+               String createTimeStart, String createTimeEnd,String refundTimeBegin, String refundTimeEnd) throws Exception{
+
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.orderByDesc(WorkOrder.CREATE_TIME);
+
+        if(null != title){
+            wrapper.eq(WorkOrder.TITLE,title);
         }
-        workOrderDao.updateByPrimaryKeySelective(workOrder);
-        //System.out.println("updated workOrder for: " + workOrder.getId());
-        log.info("updated user for: " + workOrder.getId());
+        if(null != receiverId){
+            wrapper.eq(WorkOrder.RECEIVER_ID,receiverId);
+        }
+        if(null != receiverName){
+            wrapper.like(WorkOrder.RECEIVER_NAME,receiverName);
+        }
+        if(null != orderId){
+            wrapper.eq(WorkOrder.ORDER_ID,orderId);
+        }
+        if(null != typeId){
+            WorkOrderType workOrderType = WorkOrderType.checkByCode(typeId);
+            if(null != workOrderType) {
+                wrapper.eq(WorkOrder.TYPE_ID, workOrderType);
+            }
+        }
+        if (null != merchantId){
+            wrapper.eq(WorkOrder.MERCHANT_ID,merchantId);
+        }
+        if (null != statusCode){
+            WorkOrderStatusType status = WorkOrderStatusType.checkByCode(statusCode);
+            if(null != status){
+                wrapper.eq(WorkOrder.STATUS,status);
+            }
+        }
+        if (null != createTimeStart){
+            LocalDateTime createStart = getDateTimeByDate(createTimeStart,false);
+            if(null != createStart) {
+                wrapper.ge(WorkOrder.CREATE_TIME, createStart);
+            }
+        }
+        if (null != createTimeEnd){
+            LocalDateTime createEnd = getDateTimeByDate(createTimeEnd,true);
+            if(null != createEnd) {
+                wrapper.le(WorkOrder.CREATE_TIME, createEnd);
+            }
+        }
+        if (null != refundTimeBegin){
+            LocalDateTime refundStart = getDateTimeByDate(refundTimeBegin,false);
+            if(null != refundStart) {
+                wrapper.ge(WorkOrder.REFUND_TIME, refundStart);
+            }
+        }
+        if (null != refundTimeEnd){
+            LocalDateTime refundEnd = getDateTimeByDate(refundTimeEnd,true);
+            if(null != refundEnd) {
+                wrapper.le(WorkOrder.REFUND_TIME, refundEnd);
+            }
+        }
+
+        IPage<WorkOrder> pages = page(new Page<>(pageIndex, pageSize), wrapper);
+        return new PageInfo<>((int)pages.getTotal(), pageSize, pageIndex, pages.getRecords());
     }
 
     @Override
-    public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,String iAppId,
-                                          String title, String receiverId, String receiverName, String receiverPhone,
-                                          String orderId, Integer typeId, Long merchantId,Integer status,
-                                         Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd) throws Exception{
+    public PageInfo<WorkOrder>
+    selectAbnormalRefundList(int pageIndex, int pageSize,
+                             String iAppId,
+                             String orderId, Long merchantId,
+                             String createTimeStart, String createTimeEnd){
 
-        PageInfo<WorkOrder> pageInfo;
-        try {
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.orderByDesc(WorkOrder.CREATE_TIME);
 
-            pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,iAppId,
-                    title, receiverId, receiverPhone, receiverName,
-                    orderId, merchantId, typeId, status,
-                    createTimeStart, createTimeEnd, refundTimeBegin, refundTimeEnd);
-        }catch (Exception e) {
-            throw new Exception(e);
+        if(null != iAppId){
+            wrapper.eq(WorkOrder.I_APP_ID,iAppId);
         }
-        return pageInfo;
-    }
 
-    @Override
-    public PageInfo<WorkOrder> selectAbnormalRefundList(int pageIndex, int pageSize,String sort, String order,
-                                                 String iAppId,
-                                                 String orderId, Long merchantId,
-                                                 Date createTimeStart, Date createTimeEnd
-                                    ) throws Exception{
-
-        PageInfo<WorkOrder> pageInfo;
-        try {
-
-            pageInfo = workOrderDao.selectAbnormalRefund(pageIndex, pageSize,sort, order,
-                    iAppId, orderId, merchantId,
-                    createTimeStart, createTimeEnd);
-        }catch (Exception e) {
-            throw new Exception(e);
+        if(null != orderId){
+            wrapper.eq(WorkOrder.ORDER_ID,orderId);
         }
-        return pageInfo;
+
+        if (null != merchantId){
+            wrapper.eq(WorkOrder.MERCHANT_ID,merchantId);
+        }
+
+        if (null != createTimeStart){
+            LocalDateTime createStart = getDateTimeByDate(createTimeStart,false);
+            if(null != createStart) {
+                wrapper.ge(WorkOrder.CREATE_TIME, createStart);
+            }
+        }
+        if (null != createTimeEnd){
+            LocalDateTime createEnd = getDateTimeByDate(createTimeEnd,true);
+            if(null != createEnd) {
+                wrapper.le(WorkOrder.CREATE_TIME, createEnd);
+            }
+        }
+
+        IPage<WorkOrder> pages = page(new Page<>(pageIndex, pageSize), wrapper);
+        return new PageInfo<>((int)pages.getTotal(), pageSize, pageIndex, pages.getRecords());
     }
 
     @Override
     public List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception{
 
-        return workOrderDao.selectByOrderIdList(orderIdList);
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.in(WorkOrder.ORDER_ID,orderIdList);
+
+        return list(wrapper);
 
     }
 
     @Override
-    public List<WorkOrder> selectByParentOrderId(Integer parentOrderId) throws Exception{
+    public List<WorkOrder>
+    selectByParentOrderId(Integer parentOrderId) {
         log.info("selectByParentOrderId param {}",parentOrderId);
-        List<WorkOrder> list;
-        WorkOrderExample example = new WorkOrderExample();
-        WorkOrderExample.Criteria criteria = example.createCriteria();
-        criteria.andParentOrderIdEqualTo(parentOrderId);
-        criteria.andOrderIdIsNotNull();
-        criteria.andStatusNotEqualTo(WorkOrderStatusType.REJECT.getCode());
-        try {
-            list = mapper.selectByExample(example);
-        } catch (Exception ex) {
-            throw new Exception(ex);
+        if(null == parentOrderId){ return new ArrayList<>();}
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.orderByDesc(WorkOrder.CREATE_TIME);
+        wrapper.isNotNull(WorkOrder.ORDER_ID);
+        wrapper.eq(WorkOrder.PARENT_ORDER_ID,parentOrderId);
+        wrapper.ne(WorkOrder.STATUS,WorkOrderStatusType.REJECT);
+
+        return list(wrapper);
+    }
+
+    @Override
+    public int countReturn(String createTimeStart, String createTimeEnd) {
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.orderByDesc(WorkOrder.CREATE_TIME);
+        if(null != createTimeStart){
+            wrapper.ge(WorkOrder.CREATE_TIME, StringUtil.String2Date(createTimeStart));
         }
-        log.info("selectByParentOrderId success {}",JSON.toJSONString(list));
-        return list;
-    }
-
-    @Override
-    public int countReturn(Date createTimeStart, Date createTimeEnd) {
-        int typeId;
-
-        typeId = WorkOrderType.RETURN.getCode();
-        int c1 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
-
-        typeId = WorkOrderType.REFUND.getCode();
-        int c2 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
-
-        typeId = WorkOrderType.EXCHANGE.getCode();
-        int c3 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
-
-        return c1 + c2 + c3;
-    }
-
-    @Override
-    public List<WorkOrder> selectByTimeRange(Date createTimeStart, Date createTimeEnd) {
-        WorkOrderExample example = new WorkOrderExample();
-        WorkOrderExample.Criteria criteria = example.createCriteria();
-
-        if (null != createTimeStart && null != createTimeEnd) {
-            criteria.andCreateTimeBetween(createTimeStart, createTimeEnd);
+        if(null != createTimeEnd){
+            wrapper.le(WorkOrder.CREATE_TIME, StringUtil.String2Date(createTimeEnd));
         }
 
-        return mapper.selectByExample(example);
+        return count(wrapper);
     }
 
     @Override
-    public Integer queryRefundUserCount(Long merchantId) throws Exception{
+    public List<WorkOrder> selectByTimeRange(String dateStart, String dateEnd) {
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.orderByDesc(WorkOrder.CREATE_TIME);
+        if (null != dateStart) {
+            wrapper.ge(WorkOrder.CREATE_TIME, getDateTimeByDate(StringUtil.Date2String(LocalDateTime.now()).substring(0,10), false));
+        }
+        if(null != dateEnd) {
+            wrapper.le(WorkOrder.CREATE_TIME, getDateTimeByDate(StringUtil.Date2String(LocalDateTime.now()).substring(0,10), true));
+        }
+        return list(wrapper);
+    }
+
+    @Override
+    public Integer
+    queryRefundUserCount(Long merchantId){
         log.info("获取商户的退货人数 数据库入参:{}", merchantId);
 
-        Integer count;
-        try {
-            count = workOrderDao.selectRefundUserCountByMerchantId(merchantId);
-        }catch (Exception e) {
-            throw new Exception(e);
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.isNotNull(WorkOrder.RECEIVER_ID);
+        if(null != merchantId){
+            wrapper.eq(WorkOrder.MERCHANT_ID,merchantId);
         }
-        log.info("获取商户的退货人数 数据库返回:{}", count);
 
-        return count;
+        List<WorkOrder> workOrders = list(wrapper);
+        if(null == workOrders || 0 == workOrders.size()){
+            return 0;
+        }
+
+        Map<String, List<WorkOrder>> groupMap = workOrders.stream().collect(Collectors.groupingBy(WorkOrder::getReceiverId));
+        int total = 0;
+        for(Map.Entry<String,List<WorkOrder>> m: groupMap.entrySet()){
+            if (!m.getKey().isEmpty()) {
+                total++;
+            }
+        }
+        log.info("获取商户的退货人数 数据库返回:{}",total);
+        return total;
     }
 
     @Override
-    public WorkOrder getValidNumOfOrder(String openId, String orderId) throws Exception {
+    public WorkOrder
+    getValidNumOfOrder(String openId, String orderId) throws Exception {
         log.info("getValidNumOfOrder param: openId={}, orderId={}",openId,orderId);
         int validNum;
 
+        if(null == orderId || null == openId){
+
+        }
+
         openId = openId.trim();
         orderId = orderId.trim();
-        List<WorkOrder> workOrders;
-        try {
-            workOrders = workOrderDao.selectValidByOrderId(orderId);
-        } catch (Exception ex) {
-            throw new Exception(ex);
-        }
+
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+        wrapper.eq(WorkOrder.ORDER_ID,orderId);
+        wrapper.ne(WorkOrder.STATUS,WorkOrderStatusType.REJECT);
+        List<WorkOrder> workOrders = list(wrapper);
 
         if (null == workOrders || 0 == workOrders.size()) {
             log.info("getValidNumOfOrder : 该订单尚无工单，可生成新工单");
@@ -362,11 +426,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Override
     public String handleAggPaysNotify(AggPayNotifyBean bean) {
 
-        //JSONObject json = JSON.parseObject(body);
         String result = "fail";
         String outerRefundNo = bean.getOutRefundNo();//json.getString("outRefundNo");
-        // tradeNo = bean.getSourceOutTradeNo();//json.getString("sourceOutTradeNo");//
-        //Float refundAmount = json.getFloat("totalFee");//Float.valueOf(bean.getRefundFee());
         String refundTimeStr = bean.getTradeDate();//json.getString("tradeDate");//
         Integer status = bean.getStatus();//json.getInteger("status");//
         String refundFeeStr = bean.getRefundFee();//json.getFloat("refundFee");
@@ -379,89 +440,68 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             log.error("聚合支付退款回调 post body is wrong, outerRefundNo is null");
             return result;
         }
-        //if ( null == tradeNo || tradeNo.isEmpty()) {
-        ////    log.error("aggpays notify post body is wrong, tradeNo is null");
-        //   return result;
-        //}
+
         if (null == refundFeeStr) {
             log.error("聚合支付退款回调 post body is wrong, refundFee is null");
             return result;
         }
-        WorkOrder wo = workOrderDao.selectByOutRefundNo(outerRefundNo);
-        if (null == wo) {
-            wo = workOrderDao.selectByRefundNo(outerRefundNo);
-            if(null == wo) {
-                log.warn("聚合支付退款回调 handle notify, but not found work-order by refundNo: " + outerRefundNo);
-                return result;
-            }
+
+        WorkOrder wo = getOne(
+                       new QueryWrapper<WorkOrder>()
+                        .eq(WorkOrder.GUANAITONG_TRADE_NO,outerRefundNo)
+                        .or()
+                        .eq(WorkOrder.REFUND_NO,outerRefundNo)
+                        );
+        if(null == wo) {
+            log.error("聚合支付退款回调 handle notify, but not found work-order by refundNo: {}", outerRefundNo);
+            return result;
         }
 
         BigDecimal decRefundFee = new BigDecimal(refundFeeStr);
         BigDecimal dec100f = new BigDecimal("100");
         Float refundFee = decRefundFee.divide(dec100f).floatValue();
         if (0 > refundFee) {
-            log.warn("notify parameters refund_amount abnormal");
+            log.warn("聚合支付退款回调 refund_amount 异常");
             return result;
         }
 
+        WorkOrder updateRecord = new WorkOrder();
+        updateRecord.setId(wo.getId());
         //2:退款失败, 1:成功； 3：部分成功
         if (1 == status || 3 == status || 2 == status) {
             if (null != refundTimeStr && !refundTimeStr.isEmpty() && 1 == status) {
                 try {
-                    wo.setRefundTime(StringUtil.String2Date(refundTimeStr));
+                    updateRecord.setRefundTime(StringUtil.String2Date(refundTimeStr));
                 } catch (Exception ex) {
                     log.error("convert refundTime error {}", ex.getMessage());
                 }
             }
             if (1 == status) {
-                wo.setGuanaitongRefundAmount(refundFee);
-                String msg = outerRefundNo+" 聚合支付退款成功";
+                updateRecord.setGuanaitongRefundAmount(refundFee);
+                String msg = "聚合支付退款编码="+outerRefundNo+", 聚合支付退款成功";
                 log.info(msg);
-                wo.setComments(msg);
-                wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
+                updateRecord.setComments(msg);
+                updateRecord.setStatus(WorkOrderStatusType.CLOSED);
             } else if (3 == status) {
-                wo.setGuanaitongRefundAmount(refundFee);
-                String msg = outerRefundNo + " 聚合支付退款,部分成功";
+                updateRecord.setGuanaitongRefundAmount(refundFee);
+                String msg = "聚合支付退款编码="+outerRefundNo + ", 聚合支付退款,部分成功";
                 log.info(msg);
-                wo.setComments(msg);
-                wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
+                updateRecord.setComments(msg);
+                updateRecord.setStatus(WorkOrderStatusType.CLOSED);
             } else {
-                String msg = outerRefundNo + " 聚合支付退款失败";
+                String msg = "聚合支付退款编码="+outerRefundNo + ", 聚合支付退款失败";
                 log.error(msg);
-                wo.setComments(msg);
-                wo.setStatus(WorkOrderStatusType.REFUND_FAILED.getCode());
+                updateRecord.setComments(msg);
+                updateRecord.setStatus(WorkOrderStatusType.REFUND_FAILED);
             }
         }
 
-        wo.setUpdateTime(new Date());
-        try {
-            workOrderDao.updateByPrimaryKey(wo);
-        } catch (Exception ex) {
-            log.error("sql error when insert work-order " + ex.getMessage());
-            return result;
-        }
-        log.info("聚合支付退款回调 处理完成 {}",JSON.toJSONString(wo));
+        updateRecord.setUpdateTime(LocalDateTime.now());
+        updateById(updateRecord);
+
+        log.info("聚合支付退款回调 处理完成 {}",JSON.toJSONString(getById(wo.getId())));
 
         return "success";
-    }
-
-    private WorkOrder verifyWorkOrderStatus(WorkOrder wo, String outer_refund_no){
-        if (!wo.getStatus().equals(WorkOrderStatusType.REFUNDING.getCode())){
-            int timeOut = 3;
-            for(int i = 0; i < timeOut; i++) {
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-                //再次确认工单状态
-                wo = workOrderDao.selectByRefundNo(outer_refund_no);
-                if (null != wo && wo.getStatus().equals(WorkOrderStatusType.REFUNDING.getCode())){
-                    return wo;
-                }
-            }
-        }
-        return wo;
     }
 
     @Override
@@ -481,15 +521,15 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                 null == refund_amount) {
             return result;
         }
-        WorkOrder wo = workOrderDao.selectByRefundNo(outer_refund_no);
+
+        WorkOrder wo = getOne(
+                new QueryWrapper<WorkOrder>()
+                        .eq(WorkOrder.GUANAITONG_TRADE_NO,outer_refund_no)
+                        .or()
+                        .eq(WorkOrder.REFUND_NO,outer_refund_no)
+        );
         if (null == wo) {
             log.warn("handle notify, but not found work-order by refundNo: " + outer_refund_no);
-            return result;
-        }
-
-        if (!appid.equals(wo.gettAppId()) ||
-                !outer_trade_no.equals(wo.getTradeNo())) {
-            log.warn("notify parameters do not match work-order");
             return result;
         }
 
@@ -498,62 +538,29 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             return result;
         }
 
-        wo.setRefundTime(new Date());
-        wo.setGuanaitongRefundAmount(refund_amount);
-        wo.setGuanaitongTradeNo(trade_no);
-        wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-        wo.setUpdateTime(new Date());
-        try {
-            workOrderDao.updateByPrimaryKey(wo);
-        } catch (Exception ex) {
-            log.error("sql error when insert work-order " + ex.getMessage());
-            return result;
-        }
+        WorkOrder updateRecord = new WorkOrder();
+        updateRecord.setId(wo.getId());
+
+        updateRecord.setRefundTime(LocalDateTime.now());
+        updateRecord.setGuanaitongRefundAmount(refund_amount);
+        updateRecord.setGuanaitongTradeNo(trade_no);
+        updateRecord.setStatus(WorkOrderStatusType.CLOSED);
+        updateRecord.setUpdateTime(LocalDateTime.now());
+        updateById(updateRecord);
 
         log.info("关爱通 refund notify handle success");
 
         return "success";
     }
 
-    private boolean hasHandledFare(WorkOrder wo) throws Exception{
-
-        WorkOrderExample example = new WorkOrderExample();
-        WorkOrderExample.Criteria criteria = example.createCriteria();
-        if (null != wo.getParentOrderId()) {
-            criteria.andParentOrderIdEqualTo(wo.getParentOrderId());
-        }else {
-            criteria.andOrderIdEqualTo(wo.getOrderId());
-        }
-        criteria.andFareGreaterThan(0f);
-        List<Integer> statusList = new ArrayList<>();
-        statusList.add(WorkOrderStatusType.CLOSED.getCode());
-        statusList.add(WorkOrderStatusType.REFUND_FAILED.getCode());
-        criteria.andStatusIn(statusList);
-
-        List<WorkOrder> list;
-        try{
-            list = mapper.selectByExample(example);
-        }catch (Exception e) {
-            log.error("workOrderMapper.selectByExample exception {}",e.getMessage());
-            throw new Exception(e);
-        }
-
-        if (null == list || 1 > list.size()) {
-            return false;
-        }else {
-            return true;
-        }
-
-    }
-
     @Override
-    public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception{
+    public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception {
 
         log.info("sendRefund2GuangAiTong enter : workOrderId = ", workOrderId);
-        WorkOrder wo = workOrderDao.selectByPrimaryKey(workOrderId);
+        WorkOrder wo = getById(workOrderId);
         if (null == wo) {
             log.info("failed to find work-order record by id : " + workOrderId);
-            throw new Exception("failed to find work-order record by id : "+workOrderId);
+            throw new Exception("failed to find work-order record by id : " + workOrderId);
         }
 
         log.info("find work-order: " + wo.toString());
@@ -563,8 +570,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         String tradeNo = wo.getTradeNo();
-        String appId = wo.gettAppId();
-        Float refundAmount = (null == refund)?wo.getRefundAmount():refund;
+        String appId = wo.getIAppId();
+        Float refundAmount = (null == refund) ? wo.getRefundAmount() : refund;
         String reason = wo.getTitle();
         if (null == tradeNo || null == appId || null == refundAmount || null == reason) {
             log.warn("tradeNo, appId, refundAmount or reason are missing ");
@@ -589,7 +596,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         String notifyUrl = GuanAiTongConfig.getConfigGatNotifyUrl();//"http://api.weesharing.com/v2/workorders/refund/notify";
 
         Long timeStampMs = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
-        Long timeStampS = timeStampMs/1000;
+        Long timeStampS = timeStampMs / 1000;
         String timeStamp = timeStampS.toString();
         Random random = new Random();
 
@@ -597,7 +604,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         StringBuilder sb = new StringBuilder();
         int randLength = triRandom.length();
         if (randLength < 3) {
-            for(int i = 1; i <= 3 - randLength; i++) {
+            for (int i = 1; i <= 3 - randLength; i++) {
                 sb.append("0");
             }
         }
@@ -611,7 +618,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         bean.setReason(reason);
         bean.setRefund_amount(refundAmount);
 
-        ResultObject<String> gResult = guanAiTongClient.postRefund(wo.getiAppId(),bean);
+        ResultObject<String> gResult = guanAiTongClient.postRefund(wo.getIAppId(), bean);
         if (null == gResult) {
             log.warn("post to GuanAiTong refund failed");
             throw new Exception("post to GuanAiTong refund failed");
@@ -619,7 +626,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         Integer code = gResult.getCode();
         String guanAiTongNo = gResult.getData();
-        if (null == code || null == guanAiTongNo ||200 != code || guanAiTongNo.isEmpty()) {
+        if (null == code || null == guanAiTongNo || 200 != code || guanAiTongNo.isEmpty()) {
             log.info("post to GuanAiTong refund failed : {}", gResult.getMsg());
             StringBuilder errMsgSb = new StringBuilder();
             errMsgSb.append("got error from Guan Ai Tong ");
@@ -635,42 +642,52 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             throw new Exception(errMsgSb.toString());
         }
 
-        try {
-            wo = workOrderDao.selectByPrimaryKey(workOrderId);
-            if (null != wo) {
-                if (!WorkOrderStatusType.isClosedStatus(wo.getStatus())){
-                    wo.setStatus(WorkOrderStatusType.REFUNDING.getCode());
-                }
-                if (null == wo.getRefundNo()) {
-                    //怡亚通的订单,退款号来自申请接口返回的serviceSn
-                    wo.setRefundNo(refundNo);
-                }
-                wo.setGuanaitongTradeNo(guanAiTongNo);
-                wo.setRefundAmount(refundAmount);
-                if (null == handleFare || 0 == handleFare) {
-                    //since we will check fare when create work-order. and set it by query order info.
-                    //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
-                    wo.setFare(0.00f);
-                }
-                wo.setUpdateTime(new Date());
-                workOrderDao.updateByPrimaryKey(wo);
+        wo = getById(workOrderId);
+        if (null != wo) {
+            WorkOrder updateRecord = new WorkOrder();
+            updateRecord.setId(wo.getId());
+            if (!WorkOrderStatusType.isClosedStatus(wo.getStatus())) {
+                updateRecord.setStatus(WorkOrderStatusType.REFUNDING);
             }
-        } catch (Exception ex) {
-            log.error("update work-order sql error: " + ex.getMessage());
-            throw new Exception(ex);
+            if (null == wo.getRefundNo()) {
+                //怡亚通的订单,退款号来自申请接口返回的serviceSn
+                updateRecord.setRefundNo(refundNo);
+            }
+            updateRecord.setGuanaitongTradeNo(guanAiTongNo);
+            updateRecord.setRefundAmount(refundAmount);
+            if (null == handleFare || 0 == handleFare) {
+                //since we will check fare when create work-order. and set it by query order info.
+                //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
+                updateRecord.setFare(0.00f);
+            }
+            updateRecord.setUpdateTime(LocalDateTime.now());
+            updateById(updateRecord);
         }
+
         log.info("sendRefund2GuangAiTong success ");
         return guanAiTongNo;
     }
 
     @Override
-    public List<WorkOrder> querySuccessRefundOrderDetailIdList(String iAppId,Long merchantId, Date startTime, Date endTime) throws Exception {
-        List<WorkOrder> workOrderList = new ArrayList<>();
-
+    public List<WorkOrder>
+    querySuccessRefundOrderDetailIdList(String iAppId,Long merchantId, String startTime, String endTime) {
+        List<WorkOrder> workOrderList ;
+        log.info("查询已退款的记录 数据库入参 iAppId={} ,merchantId:{}, startTime:{}, endTime:{}", iAppId,merchantId, startTime, endTime);
         try {
-            log.info("查询已退款的记录 数据库入参 iAppId={} ,merchantId:{}, startTime:{}, endTime:{}", iAppId,merchantId, startTime, endTime);
-            workOrderList =
-                    workOrderDao.selectRefundSuccessOrderDetailIdList(iAppId,merchantId, startTime, endTime);
+            QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+            if(null != iAppId){
+                wrapper.eq(WorkOrder.I_APP_ID,iAppId);
+            }
+            if(null != merchantId){
+                wrapper.eq(WorkOrder.MERCHANT_ID,merchantId);
+            }
+            if(null != startTime){
+                wrapper.ge(WorkOrder.REFUND_TIME,DateUtil.parseDateTime(startTime,DateUtil.DATE_YYYY_MM_DD_HH_MM_SS));
+            }
+            if(null != endTime){
+                wrapper.le(WorkOrder.REFUND_TIME,DateUtil.parseDateTime(endTime,DateUtil.DATE_YYYY_MM_DD_HH_MM_SS));
+            }
+            workOrderList = list(wrapper);
             log.info("查询已退款的记录 数据库返回:{}", JSONUtil.toJsonString(workOrderList));
         } catch (Exception e) {
             log.error("查询已退款的记录 异常:{}", e.getMessage(), e);
@@ -750,5 +767,58 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
         return responseBean;
 
+    }
+
+    private boolean hasHandledFare(WorkOrder wo){
+
+        List<WorkOrderStatusType> statusList = new ArrayList<>();
+        statusList.add(WorkOrderStatusType.CLOSED);
+        statusList.add(WorkOrderStatusType.REFUND_FAILED);
+
+        List<WorkOrder> workOrders = list(
+                new QueryWrapper<WorkOrder>()
+                        .eq(WorkOrder.PARENT_ORDER_ID,wo.getParentOrderId())
+                        .in(WorkOrder.STATUS,statusList)
+                        .gt(WorkOrder.FARE,0)
+        );
+
+        if (null == workOrders || 1 > workOrders.size()) {
+            return false;
+        }else {
+            return true;
+        }
+
+    }
+
+    private LocalDateTime
+    getDateTimeByDate(String dateStr, boolean isEnd){
+
+        if (null == dateStr || dateStr.isEmpty()) {
+            return null;
+        }
+
+        String timeString = dateStr.trim();
+        LocalDateTime dateTime;
+
+        if (10 > timeString.length()) {
+            return null;
+        }
+
+        if (10 == timeString.length()) {
+            if (isEnd) {
+                timeString += " 23:59:59";
+            }else {
+                timeString += " 00:00:00";
+            }
+        }
+
+        try {
+            dateTime = StringUtil.String2Date(timeString);
+        } catch (Exception ex) {
+            log.error("timeString is wrong {}",ex.getMessage());
+            return null;
+        }
+
+        return dateTime;
     }
 }

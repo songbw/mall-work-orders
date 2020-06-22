@@ -251,12 +251,8 @@ public class DateUtil {
      * @param dateTimeFormat
      * @return
      */
-    public static Date parseDateTime(String dateTime, String dateTimeFormat) {
-        LocalDateTime _localDateTime = LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern(dateTimeFormat));
-        Instant instant = _localDateTime.atZone(ZoneId.systemDefault()).toInstant();
-        Date date = Date.from(instant);
-
-        return date;
+    public static LocalDateTime parseDateTime(String dateTime, String dateTimeFormat) {
+        return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern(dateTimeFormat));
     }
 
     /**

@@ -1,12 +1,20 @@
-package com.fengchao.workorders.util;
+package com.fengchao.workorders.constants;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+
+/**
+ * @author Clark
+ * */
 public enum WorkOrderType {
+    /**
+     * */
     RETURN(1, "退货退款"),
     EXCHANGE(2, "换货"),
     REFUND(3, "仅退款");
 
-    private Integer code;
-    private String msg;
+    @EnumValue
+    private final Integer code;
+    private final String msg;
 
     WorkOrderType(Integer code, String msg) {
         this.code = code;
@@ -17,16 +25,8 @@ public enum WorkOrderType {
         return code;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
     public String getMsg() {
         return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
     }
 
     public static Integer String2Int(String status) {
@@ -45,12 +45,30 @@ public enum WorkOrderType {
         if (null != code && 0 != code) {
             int i;
             for (i = 0; i < WorkOrderType.values().length; i++) {
-                if (WorkOrderType.values()[i].getCode() == code) {
+                if (WorkOrderType.values()[i].getCode().equals(code)) {
                     return WorkOrderType.values()[i].toString();
                 }
             }
         }
         return "";
+    }
+
+    public static WorkOrderType checkByCode(Integer code) {
+        for (WorkOrderType workOrderType : WorkOrderType.values()) {
+            if (workOrderType.getCode().equals(code)) {
+                return workOrderType;
+            }
+        }
+        return null;
+    }
+
+    public static WorkOrderType checkByName(String name) {
+        for (WorkOrderType workOrderType : WorkOrderType.values()) {
+            if (name.equals(workOrderType.name())) {
+                return workOrderType;
+            }
+        }
+        return null;
     }
 }
 

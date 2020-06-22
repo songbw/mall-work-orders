@@ -1,35 +1,13 @@
 package com.fengchao.workorders.mapper;
 
-import com.fengchao.workorders.model.WorkOrder;
-import com.fengchao.workorders.model.WorkOrderExample;
-import java.util.List;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.fengchao.workorders.entity.WorkOrder;
 
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
 
 @Mapper
-@Component(value = "WorkOrderMapper")
-public interface WorkOrderMapper {
-    long countByExample(WorkOrderExample example);
+@Component
+public interface WorkOrderMapper extends BaseMapper<WorkOrder> {
 
-    int deleteByExample(WorkOrderExample example);
-
-    int deleteByPrimaryKey(Long id);
-
-    int insert(WorkOrder record);
-
-    int insertSelective(WorkOrder record);
-
-    List<WorkOrder> selectByExample(WorkOrderExample example);
-
-    WorkOrder selectByPrimaryKey(Long id);
-
-    int updateByExampleSelective(@Param("record") WorkOrder record, @Param("example") WorkOrderExample example);
-
-    int updateByExample(@Param("record") WorkOrder record, @Param("example") WorkOrderExample example);
-
-    int updateByPrimaryKeySelective(WorkOrder record);
-
-    int updateByPrimaryKey(WorkOrder record);
 }

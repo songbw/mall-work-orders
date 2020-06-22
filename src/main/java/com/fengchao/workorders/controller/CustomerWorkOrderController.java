@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.constants.WorkOrderStatusType;
+import com.fengchao.workorders.constants.WorkOrderType;
 import com.fengchao.workorders.feign.IAoYiClient;
-import com.fengchao.workorders.model.*;
+import com.fengchao.workorders.entity.*;
 import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
@@ -23,11 +25,16 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ *
+ * @author Clark
+ * */
 @Slf4j
 @Api(tags="CustomerWorkOrderAPI", description = "客户工单管理相关", produces = "application/json;charset=UTF-8")
 @RestController
@@ -87,10 +94,10 @@ public class CustomerWorkOrderController {
         public Integer status;
 
         @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
-        public Date updateTime;
+        public LocalDateTime updateTime;
 
         @ApiModelProperty(value="退款完成时间", example="2019-06-16 11:11:11",required=false)
-        public Date refundTime;
+        public LocalDateTime refundTime;
 
         @ApiModelProperty(value="快递单号", example="2019111111",required=false)
         public String expressNo;
@@ -109,7 +116,7 @@ public class CustomerWorkOrderController {
         b.description = a.getDescription();
         b.orderId = a.getOrderId();
         b.expressNo = a.getExpressNo();
-        b.iAppId = a.getiAppId();
+        b.iAppId = a.getIAppId();
         b.merchantId = a.getMerchantId();
         b.realRefundAmount = a.getGuanaitongRefundAmount();
         b.receiverId = a.getReceiverId();
@@ -118,11 +125,11 @@ public class CustomerWorkOrderController {
         b.refundAmount = a.getRefundAmount();
         b.returnedNum = a.getReturnedNum();
         b.refundTime = a.getRefundTime();
-        b.status = a.getStatus();
-        b.tAppId = a.gettAppId();
+        b.status = a.getStatus().getCode();
+        b.tAppId = a.getTAppId();
         b.title = a.getTitle();
         b.updateTime = a.getUpdateTime();
-        b.typeId = a.getTypeId();
+        b.typeId = a.getTypeId().getCode();
         return b;
     }
 
@@ -174,13 +181,7 @@ public class CustomerWorkOrderController {
             return new ResultObject<>(400002,"工单号不能为空",null);
         }
 
-        WorkOrder workOrder;
-        try {
-            workOrder = workOrderService.selectById(workOrderId);
-        } catch (Exception ex) {
-            StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
-            return null;
-        }
+        WorkOrder workOrder = workOrderService.getById(workOrderId);
 
         if (null == workOrder){
             StringUtil.throw400Exp(response, "400003:工单不存在");
@@ -209,7 +210,7 @@ public class CustomerWorkOrderController {
         for (WorkFlow a : list) {
             WorkFlowBean b = new WorkFlowBean();
             BeanUtils.copyProperties(a, b);
-            b.setOperator(a.getUpdatedBy());
+            b.setOperator(a.getCreatedBy());
             result.add(b);
         }
         result.add(workFlowZero);
@@ -233,7 +234,8 @@ public class CustomerWorkOrderController {
         IdResponseData result = new IdResponseData();
 
         Long workOrderId = data.getWorkOrderId();
-        Integer nextStatus = data.getStatus();
+        Integer nextStatusCode = data.getStatus();
+        WorkOrderStatusType nextStatus = WorkOrderStatusType.checkByCode(nextStatusCode);
         String comments = data.getComments();
         String operator = data.getOperator();
         String expressNo = data.getExpressNo();
@@ -249,22 +251,15 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        WorkOrder workOrder;
-        try {
-            workOrder = workOrderService.selectById(workOrderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
+        WorkOrder workOrder = workOrderService.getById(workOrderId);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
         }
 
-        Integer orderStatus = workOrder.getStatus();
-        if (!WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus)
-                && !WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)) {
+        WorkOrderStatusType orderStatus = workOrder.getStatus();
+        if (!WorkOrderStatusType.ACCEPTED.equals(orderStatus)
+                && !WorkOrderStatusType.HANDLING.equals(orderStatus)) {
             String msg;
             if (WorkOrderStatusType.isClosedStatus(orderStatus)){
                 msg = "工单已经处理完成";
@@ -275,8 +270,8 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty() ||
-            !WorkOrderStatusType.HANDLING.getCode().equals(nextStatus)) {
+        if (null == nextStatus ||
+            !WorkOrderStatusType.HANDLING.equals(nextStatus)) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
         }
@@ -288,7 +283,6 @@ public class CustomerWorkOrderController {
         WorkFlow workFlow = new WorkFlow();
 
         workFlow.setWorkOrderId(workOrderId);
-        workFlow.setUpdatedBy(operator);
 
         workFlow.setStatus(nextStatus);
 
@@ -299,29 +293,19 @@ public class CustomerWorkOrderController {
                 workOrderService.sendExpressInfo(workOrder,comments);
             }
         }
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
+
         if (!operator.isEmpty()) {
             workFlow.setCreatedBy(operator);
         }
 
-        try {
-            result.id = workFlowService.insert(workFlow);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
+       workFlowService.save(workFlow);
 
-        if (0 == result.id) {
-            StringUtil.throw400Exp(response, "400006:Failed to create work_flow");
-            return result;
-        }
 
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
             workOrder.setStatus(workFlow.getStatus());
-            workOrder.setUpdateTime(new Date());
+            workOrder.setUpdateTime(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
             try {
-                workOrderService.update(workOrder);
+                workOrderService.updateById(workOrder);
             }catch (Exception e) {
                 StringUtil.throw400Exp(response, "400006:"+e.getMessage());
                 return null;
@@ -350,7 +334,8 @@ public class CustomerWorkOrderController {
         String title = data.getTitle();
         String description = data.getDescription();
         String customer = data.getCustomer();
-        Integer typeId = data.getTypeId();
+        Integer typeIdCode = data.getTypeId();
+        WorkOrderType typeId = WorkOrderType.checkByCode(typeIdCode);
         Long merchantId = data.getMerchantId();
         Integer num = data.getNum();
         String iAppId = data.getiAppId();
@@ -387,13 +372,13 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        if (null == typeId || 0 == typeId ||
+        if (null == typeIdCode ||
                 null == title || title.isEmpty()) {
             StringUtil.throw400Exp(response, "400002:工单标题, 工单类型, 所属订单不能空缺");
             return result;
         }
 
-        if (WorkOrderType.Int2String(typeId).isEmpty()) {
+        if (null == typeId) {
             StringUtil.throw400Exp(response, "400005:工单类型错误");
             return result;
         }
@@ -485,9 +470,9 @@ public class CustomerWorkOrderController {
             workOrder.setPaymentAmount(paymentAmount);
         }
 
-        workOrder.setiAppId(iAppId);
+        workOrder.setIAppId(iAppId);
         if (null != tAppId && !tAppId.isEmpty()) {
-            workOrder.settAppId(tAppId);
+            workOrder.setTAppId(tAppId);
         }
         workOrder.setTitle(title);
         workOrder.setDescription(description);
@@ -543,10 +528,9 @@ public class CustomerWorkOrderController {
         }
         workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);
-        workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
+        workOrder.setStatus(WorkOrderStatusType.EDITING);
         workOrder.setReceiverId(customer);
-        workOrder.setCreateTime(new Date());
-        workOrder.setUpdateTime(new Date());
+
 
         //String username = null;//JwtTokenUtil.getUsername(authentication);
         //if (null != username) {
@@ -554,15 +538,10 @@ public class CustomerWorkOrderController {
         //    workOrder.setUpdatedBy(username);
         //}
 
-        try {
-            result.id = workOrderService.insert(workOrder);
-        } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response, "400006:" + ex.getMessage());
-        }
+        workOrderService.save(workOrder);
+        result.id = workOrder.getId();
 
-        if (0 == result.id) {
-            StringUtil.throw400Exp(response, "400008:Failed to create work_order");
-        }
+
         if (null != orderMerchantId &&
                 Constant.YI_YA_TONG_MERCHANT_ID == orderMerchantId){
 
@@ -570,16 +549,15 @@ public class CustomerWorkOrderController {
             WorkFlow workFlow = new WorkFlow();
             workFlow.setWorkOrderId(result.id);
             workFlow.setCreatedBy("怡亚通调用");
-            workFlow.setStatus(WorkOrderStatusType.RESERVED.getCode());
+            workFlow.setStatus(WorkOrderStatusType.RESERVED);
             if (needYiYaTongHandle) {
                 workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.NOTIFY_PENDING,"等待回调通知"));
             }else{
                 workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.THIRD_SN_BLANK,"需要与怡亚通确认下单信息"));
             }
-            workFlow.setCreateTime(new Date());
-            workFlow.setUpdateTime(workFlow.getCreateTime());
+
             try {
-                workFlowService.insert(workFlow);
+                workFlowService.save(workFlow);
                 if (needYiYaTongHandle) {
                     log.info("发送请求到怡亚通后创建工作流 {}", JSON.toJSONString(workFlow));
                 }else{
@@ -623,12 +601,8 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        try {
-            workOrder = workOrderService.selectById(id);
-        } catch (Exception ex) {
-            StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
-            return result;
-        }
+        workOrder = workOrderService.getById(id);
+
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400003:工单不存在");
             return result;
@@ -660,10 +634,10 @@ public class CustomerWorkOrderController {
             workOrder.setMerchantId(merchantId);
         }
         */
-        workOrder.setUpdateTime(new Date());
+        workOrder.setUpdateTime(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
         try {
-            workOrderService.update(workOrder);
+            workOrderService.updateById(workOrder);
         } catch (RuntimeException ex) {
             StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
         }
@@ -716,23 +690,13 @@ public class CustomerWorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders")
-    public PageInfo<CustomerQueryWorkOrderBean> appQueryWorkOrders(HttpServletResponse response,
-                                                   //@RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                   @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
-                                                   @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
-                                                   @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
-                                                   @ApiParam(value="订单ID")@RequestParam(required=false) String orderId) {
+    public PageInfo<CustomerQueryWorkOrderBean>
+    appQueryWorkOrders(HttpServletResponse response,
+                       @ApiParam(value="页码")@RequestParam(defaultValue = "1") Integer pageIndex,
+                       @ApiParam(value="每页记录数")@RequestParam(defaultValue = "10") Integer pageSize,
+                       @ApiParam(value="订单所属客户")@RequestParam(required=false) String customer,
+                       @ApiParam(value="订单ID")@RequestParam(required=false) String orderId) {
 
-/*
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (null == username) {
-            log.warn("can not find username in token");
-        }
-*/
-
-        int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
-        int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
 
         if (null != customer) {
             customer = customer.trim();
@@ -743,8 +707,8 @@ public class CustomerWorkOrderController {
 
         PageInfo<WorkOrder> pages;
         try {
-            pages = workOrderService.selectPage(index, limit,
-                    "id", "DESC", null, null,customer,
+            pages = workOrderService.selectPage(pageIndex, pageSize,
+                     null, null,customer,
                     null, null, orderId,
                     null, null, null,
                     null, null,
@@ -756,7 +720,7 @@ public class CustomerWorkOrderController {
 
         List<CustomerQueryWorkOrderBean> list = new ArrayList<>();
 
-        if ((index -1) * limit <= pages.getTotal()) {
+        if ((pageIndex -1) * pageSize <= pages.getTotal()) {
             for (WorkOrder a : pages.getRows()) {
                 CustomerQueryWorkOrderBean b = new CustomerQueryWorkOrderBean();
                 BeanUtils.copyProperties(a, b);
@@ -788,7 +752,7 @@ public class CustomerWorkOrderController {
                 list.add(b);
             }
         }
-        PageInfo<CustomerQueryWorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
+        PageInfo<CustomerQueryWorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),pageIndex, list);
 
         response.setStatus(MyErrorMap.e200.getCode());
         return result;

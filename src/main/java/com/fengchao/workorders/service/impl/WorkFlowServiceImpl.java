@@ -1,122 +1,77 @@
 package com.fengchao.workorders.service.impl;
 
-import com.fengchao.workorders.util.WorkOrderStatusType;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
-import com.fengchao.workorders.model.*;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fengchao.workorders.constants.WorkOrderStatusType;
+import com.fengchao.workorders.entity.WorkFlow;
 import com.fengchao.workorders.mapper.*;
 import com.fengchao.workorders.service.IWorkFlowService;
 import com.fengchao.workorders.util.PageInfo;
-//import org.joda.time.DateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-//import org.springframework.util.StringUtils;
-
-//import java.io.IOException;
-//import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
+/**
+ * 工作流
+ * @author Clark
+ * */
+
 @Slf4j
-@Service(value="WorkFlowServiceImpl")
-@Transactional
-public class WorkFlowServiceImpl implements IWorkFlowService {
+@Service
+public class WorkFlowServiceImpl extends ServiceImpl<WorkFlowMapper, WorkFlow> implements IWorkFlowService {
 
     private WorkFlowMapper workFlowMapper;
-    //private WorkOrderMapper workOrderMapper;
-
-    // @Autowired
-    // private RedisTemplate<Object, Object> redisTemplate;
 
     @Autowired
     public WorkFlowServiceImpl(WorkFlowMapper workFlowMapper
                               ) {
         this.workFlowMapper = workFlowMapper;
-        //this.workOrderMapper = workOrderMapper;
     }
 
     @Override
-    public Long insert(WorkFlow workFlow) {
-        int rst = workFlowMapper.insertSelective(workFlow);
-        if (0 < rst) {
-            return workFlow.getId();
-        } else {
-            return 0L;
-        }
-    }
+    public PageInfo<WorkFlow>
+    selectPage(int pageIndex, int pageSize,
+               Long workOrderId,
+               String createTimeStart,
+               String createTimeEnd){
 
-    @Override
-    public void deleteById(long id) {
-        workFlowMapper.deleteByPrimaryKey(id);
-    }
+        QueryWrapper<WorkFlow> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc(WorkFlow.CREATE_TIME);
 
-    @Override
-    public WorkFlow selectById(long id) {
-        return workFlowMapper.selectByPrimaryKey(id);
-    }
-
-    @Override
-    public void update(WorkFlow workFlow) {
-        if (null == workFlow) {
-            return;
-        }
-        workFlowMapper.updateByPrimaryKeySelective(workFlow);
-        log.info("updated user for: " + workFlow.getId());
-    }
-
-    @Override
-    public PageInfo<WorkFlow> selectPage(int pageIndex, int pageSize, String sort, String order,
-                                         Long workOrderId, Date createTimeStart, Date createTimeEnd) throws Exception{
-
-        WorkFlowExample example = new WorkFlowExample();
-        WorkFlowExample.Criteria criteria = example.createCriteria();
-
-        if (null != workOrderId) {
-            criteria.andWorkOrderIdEqualTo(workOrderId);
-        }
         if (null != createTimeStart){
-            criteria.andCreateTimeGreaterThanOrEqualTo(createTimeStart);
+            queryWrapper.ge(WorkFlow.CREATE_TIME,createTimeStart);
         }
         if (null != createTimeEnd){
-            criteria.andCreateTimeLessThanOrEqualTo(createTimeEnd);
+            queryWrapper.le(WorkFlow.CREATE_TIME,createTimeEnd);
         }
-        if (null != sort && null != order){
-            example.setOrderByClause(sort + " " + order);
+        if(null != workOrderId){
+            queryWrapper.eq(WorkFlow.WORK_ORDER_ID,workOrderId);
         }
 
-        Page pages;
-        List<WorkFlow> list;
+        IPage<WorkFlow> pages = page(new Page<>(pageIndex, pageSize), queryWrapper);
+        return new PageInfo<>((int)pages.getTotal(), pageSize, pageIndex, pages.getRecords());
 
-        try {
-            pages = PageHelper.startPage(pageIndex, pageSize, true);
-            list = workFlowMapper.selectByExample(example);
-        }catch (Exception e) {
-            log.error("workFlow selectByExample exception {}",e.getMessage());
-            throw new Exception(e);
-        }
-        return new PageInfo<>((int)pages.getTotal(), pages.getPageSize(),pageIndex,list);
     }
 
     @Override
-    public List<WorkFlow> selectByWorkOrderId(Long workOrderId, Integer status) throws Exception{
+    public List<WorkFlow>
+    selectByWorkOrderId(Long workOrderId, Integer status) throws Exception{
         if (null == workOrderId) {
             throw new Exception("selectByWorkOrderId, workOrderId is null");
         }
-        WorkFlowExample example = new WorkFlowExample();
-        WorkFlowExample.Criteria criteria = example.createCriteria();
-        criteria.andWorkOrderIdEqualTo(workOrderId);
+        QueryWrapper wrapper = new QueryWrapper();
+        wrapper.orderByDesc(WorkFlow.CREATE_TIME);
+
+        wrapper.eq(WorkFlow.WORK_ORDER_ID,workOrderId);
         if (null != status){
-            criteria.andStatusEqualTo(status);
+            wrapper.eq(WorkFlow.STATUS,status);
         }
-        example.setOrderByClause("update_time DESC");
-        try {
-            return workFlowMapper.selectByExample(example);
-        }catch (Exception e){
-            log.error("selectByWorkOrderId error {}",e.getMessage());
-            throw new Exception(e);
-        }
+
+        return list(wrapper);
+
     }
 
     @Override
@@ -125,17 +80,13 @@ public class WorkFlowServiceImpl implements IWorkFlowService {
         if (null == workOrderId) {
             throw new RuntimeException("selectByWorkOrderIdExcludeReserved, workOrderId is null");
         }
-        WorkFlowExample example = new WorkFlowExample();
-        WorkFlowExample.Criteria criteria = example.createCriteria();
-        criteria.andWorkOrderIdEqualTo(workOrderId);
-        criteria.andStatusNotEqualTo(WorkOrderStatusType.RESERVED.getCode());
 
-        example.setOrderByClause("update_time DESC");
-        try {
-            return workFlowMapper.selectByExample(example);
-        }catch (Exception e){
-            log.error("selectByWorkOrderIdExcludeReserved error {}",e.getMessage());
-            return null;
-        }
+        QueryWrapper wrapper = new QueryWrapper();
+        wrapper.orderByDesc(WorkFlow.CREATE_TIME);
+
+        wrapper.eq(WorkFlow.WORK_ORDER_ID,workOrderId);
+        wrapper.ne(WorkFlow.STATUS,WorkOrderStatusType.RESERVED.getCode());
+
+        return list(wrapper);
     }
 }

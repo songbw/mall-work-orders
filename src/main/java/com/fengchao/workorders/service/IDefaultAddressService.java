@@ -1,18 +1,18 @@
 package com.fengchao.workorders.service;
 
-import com.fengchao.workorders.model.DefaultAddress;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.fengchao.workorders.entity.DefaultAddress;
 
 import java.util.List;
 
 
-public interface IDefaultAddressService {
-    Long insert(DefaultAddress workFlow) throws Exception;
+public interface IDefaultAddressService extends IService<DefaultAddress> {
 
-    void deleteById(long id) throws Exception;
+    DefaultAddress createRecord(DefaultAddress address);
 
-    DefaultAddress selectById(long id) throws Exception;
+    DefaultAddress updateRecordById(DefaultAddress address,Long id);
 
-    void update(DefaultAddress workFlow) throws Exception;
+    DefaultAddress selectById(Long id);
 
     List<DefaultAddress> selectAll() throws Exception;
 

@@ -12,9 +12,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 
 @Slf4j
-@Component
-@Aspect
-@Order(1)
+//@Component
+//@Aspect
+//@Order(1)
 public class SysLogAOP {
     //private static final Logger log = LoggerFactory.getLogger(SysLogAOP.class);
 

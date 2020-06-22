@@ -8,6 +8,7 @@ import java.io.Writer;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 
 @Slf4j
 public class StringUtil {
+
+    public static final String DEFAULT_DATA_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     public static String exceptionDetail(Throwable throwable) {
         Writer writer = new StringWriter();
@@ -95,38 +98,15 @@ public class StringUtil {
         }
         return result.toString().toLowerCase();
     }
-/*
-    public static boolean isRightName(String name) {
-        if (null == name || name.isEmpty()) {
-            return false;
-        }
 
-        name = name.trim();
-        Pattern pattern = Pattern.compile("^[a-zA-Z0-9]{1}([a-zA-Z0-9]|[._]){3,19}$");
-        Matcher matcher = pattern.matcher(name);
-        if (!matcher.matches()) {
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean isRightPhone(String phone) {
-        if (null == phone || phone.isEmpty()) {
-            return false;
-        }
-
-        phone = phone.trim();
-        Pattern pattern = Pattern.compile("^((\\+86)|(86))?(1)\\d{10}$");
-        Matcher matcher = pattern.matcher(phone);
-        if (!matcher.matches()) {
-            return false;
-        }
-        return true;
-    }
-*/
     public static String Date2String(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat(DEFAULT_DATA_TIME_PATTERN);
         return sdf.format(date);
+    }
+
+    public static String Date2String(LocalDateTime dateTime) {
+        DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATA_TIME_PATTERN);
+        return df.format(dateTime);
     }
 
     public static Date string2DateNew(String stringDate) {
@@ -162,7 +142,7 @@ public class StringUtil {
         return returnDate;
     }
 
-    public static Date String2Date(String stringDate) {
+    public static LocalDateTime String2Date(String stringDate) {
         if (null == stringDate) {
             return null;
         }
@@ -170,16 +150,8 @@ public class StringUtil {
             return null;
         }
         //log.debug("==String2Date: " + stringDate);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date returnDate;
-        try {
-            Date tmpDate = sdf.parse(stringDate);
-            returnDate = tmpDate;
-            //log.debug("== tmpDate: " + tmpDate + " resultDate: " + returnDate);
-        } catch (ParseException ex) {
-            log.error(ex.getMessage(),ex);
-            returnDate = new Date();
-        }
+        DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATA_TIME_PATTERN);
+        LocalDateTime returnDate = LocalDateTime.parse(stringDate,df);
 
         return returnDate;
 

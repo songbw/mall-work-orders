@@ -1,10 +1,13 @@
 package com.fengchao.workorders.bean;
 
+import com.fengchao.workorders.entity.WorkFlow;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.BeanUtils;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -25,12 +28,19 @@ public class WorkFlowBean {
     private String comments;
 
     @ApiModelProperty(value="提交时间", example="2019-06-16 11:11:11",required=false)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     @ApiModelProperty(value="流程处理人名称", example="tom",required=true)
     private String operator;
 
+    public static WorkFlowBean
+    convert(WorkFlow workFlow){
+        WorkFlowBean bean = new WorkFlowBean();
+        BeanUtils.copyProperties(workFlow, bean);
+        bean.setOperator(workFlow.getCreatedBy());
+        return bean;
+    }
 }

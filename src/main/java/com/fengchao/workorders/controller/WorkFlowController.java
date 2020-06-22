@@ -5,8 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
 import com.fengchao.workorders.config.RefundConfig;
+import com.fengchao.workorders.constants.MyErrorEnum;
+import com.fengchao.workorders.constants.WorkOrderStatusType;
+import com.fengchao.workorders.constants.WorkOrderType;
+import com.fengchao.workorders.entity.WorkOrder;
+import com.fengchao.workorders.exception.MyException;
 import com.fengchao.workorders.feign.IAggPayClient;
-import com.fengchao.workorders.model.*;
+import com.fengchao.workorders.entity.WorkFlow;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
 import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
@@ -14,26 +19,23 @@ import com.fengchao.workorders.util.PageInfo;
 import io.swagger.annotations.*;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
-import io.swagger.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.BeanUtils;
-
 import javax.servlet.http.HttpServletResponse;
-//import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.time.ZoneId;
+import java.util.*;
 
+/**
+ * 工作流接口
+ * @author Clark
+ * */
 @Slf4j
 @Api(tags="WorkFlowAPI", description = "工单流程管理相关", produces = "application/json;charset=UTF-8")
 @RestController
@@ -72,222 +74,47 @@ public class WorkFlowController {
     @GetMapping("work_flows/commentsCode")
     public Map
     getCommentsCodeMap() {
-
         return WebSideWorkFlowStatusEnum.getMap();
-
     }
 
-    /*
-    @ApiOperation(value = "获取工单流程列表", notes = "获取工单流程列表")
-    @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
-    @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping("work_flows/list")
-    public ListData getList(HttpServletResponse response,
-                            @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication
-                            ) {
-
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (null == username) {
-            log.warn("can not find username in token");
-        }
-
-        List<WorkFlow> WorkFlows = workFlowService.selectAll();
-        List<WorkFlowBean> list = new ArrayList<>();
-        for (WorkFlow a : WorkFlows) {
-            WorkFlowBean b = new WorkFlowBean();
-            BeanUtils.copyProperties(a, b);
-            list.add(b);
-        }
-
-        ListData result = new ListData();
-        result.list = list;
-        response.setStatus(MyErrorMap.e200.getCode());
-        return result;
-
-    }
-*/
-    @ApiOperation(value = "获取指定工单流程信息", notes = "工单流程信息")
+    @ApiOperation(value = "获取指定工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_flows/{id}")
-    public WorkFlowBean getWorkFlowById(HttpServletResponse response,
-                                 @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
-
-        log.info("getWorkFlowById param : {}",id.toString());
-        WorkFlowBean bean = new WorkFlowBean();
-
-        if (0 == id) {
-            StringUtil.throw400Exp(response, "400002:ID is wrong");
-            return bean;
-        }
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (username.isEmpty()) {
-            log.warn("can not find username in token");
-        }
-        WorkFlow workFlow =null;
-        try {
-            workFlow = workFlowService.selectById(id);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-        }
-        if (null == workFlow) {
-            StringUtil.throw400Exp(response, "400003:Failed to find work_flow");
-            return bean;
-        }
-
-        BeanUtils.copyProperties(workFlow, bean);
-        bean.setOperator(workFlow.getUpdatedBy());
-
-        response.setStatus(MyErrorMap.e200.getCode());
-        log.info("getWorkFlowById exit success");
-        return bean;
-
+    public WorkFlowBean
+    getWorkFlowById(@ApiParam(value="id",required=true)@PathVariable("id") Long id) {
+        return WorkFlowBean.convert(Optional.ofNullable(workFlowService.getById(id)).orElse(new WorkFlow()));
     }
 
-    @ApiOperation(value = "条件查询工单流程", notes = "查询工单流程信息")
+    @ApiOperation(value = "条件查询工单流程")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_flows/pages")
-    public PageInfo<WorkFlowBean> queryWorkFlows(HttpServletResponse response,
-                                                     @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                                     @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
-                                                     @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
-                                                     @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
-                                                     @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
-                                                     @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
+    public PageInfo<WorkFlowBean>
+    queryWorkFlows(HttpServletResponse response,
+                   @ApiParam(value="页码")@RequestParam(defaultValue = "1") Integer pageIndex,
+                   @ApiParam(value="每页记录数")@RequestParam(defaultValue = "20") Integer pageSize,
+                   @ApiParam(value="创建开始时间")@RequestParam(required=false) String createTimeStart,
+                   @ApiParam(value="创建结束时间")@RequestParam(required=false) String createTimeEnd,
+                   @ApiParam(value="workOrderId")@RequestParam(required=false)Long workOrderId) {
 
-        log.info("queryWorkFlows workOrderId ={}",workOrderId);
-        java.util.Date dateCreateTimeStart = null;
-        java.util.Date dateCreateTimeEnd = null;
+        log.info("条件查询工单流程 入参： workOrderId ={} createTime range:{} {}",workOrderId,createTimeStart,createTimeEnd);
 
-        String username = JwtTokenUtil.getUsername(authentication);
+        PageInfo<WorkFlow> pages = workFlowService.selectPage(pageIndex, pageSize,
+                                                              workOrderId, createTimeStart, createTimeEnd);
 
-        int index = (null == pageIndex || 0 >= pageIndex)?1:pageIndex;
-        int limit = (null == pageSize || 0>= pageSize)?10:pageSize;
-        if (username.isEmpty()) {
-            log.warn("can not find username in token");
+        List<WorkFlowBean> beans = new ArrayList<>();
+        if(null != pages.getRows() && 0 < pages.getRows().size()){
+            pages.getRows().forEach(record->beans.add(WorkFlowBean.convert(record)));
         }
 
-        try {
-            if (null != createTimeStart && !createTimeStart.isEmpty()) {
-                dateCreateTimeStart = StringUtil.String2Date(createTimeStart);
-            }
-            if (null != createTimeEnd && !createTimeEnd.isEmpty()) {
-                dateCreateTimeEnd = StringUtil.String2Date(createTimeEnd);
-            }
-        } catch (Exception ex) {
-            StringUtil.throw400Exp(response,"400002:createTime format is wrong");
-        }
+        PageInfo<WorkFlowBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),pageIndex, beans);
 
-        PageInfo<WorkFlow> pages;
-        try {
-            pages = workFlowService.selectPage(index, limit,
-                    "id", "DESC", workOrderId, dateCreateTimeStart, dateCreateTimeEnd);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
-        List<WorkFlowBean> list = new ArrayList<>();
-
-        if ((index -1) * pages.getPageSize() <= pages.getTotal()) {
-            for (WorkFlow a : pages.getRows()) {
-                WorkFlowBean b = new WorkFlowBean();
-                BeanUtils.copyProperties(a, b);
-                b.setOperator(a.getUpdatedBy());
-                list.add(b);
-            }
-        }
-
-        PageInfo<WorkFlowBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),index, list);
-
-        response.setStatus(MyErrorMap.e200.getCode());
-        log.info("queryWorkFlows success");
+        log.info("条件查询工单流程 返回 {}",JSON.toJSONString(result));
         return result;
 
     }
 
-    private Long createWorkFlow(WorkOrder workOrder, WorkFlow workFlow){
-        Long flowId;
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
-        if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
-                && null != workOrder.getRefundNo()){
-            String oldComments = workFlow.getComments();
-            if (null == oldComments || oldComments.isEmpty()){
-                oldComments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
-            }
-            workFlow.setComments(oldComments);
-        }
-        try {
-            flowId = workFlowService.insert(workFlow);
-            log.info("create WorkFlow success, id = {}", flowId );
-        }catch (Exception e) {
-            log.error("数据库操作异常 {}",e.getMessage(),e);
-            return 0L;
-        }
-
-        if (0L == flowId) {
-            log.error("Failed to create work_flow");
-        }
-
-        log.info("create work_flow {}",JSON.toJSONString(workFlow));
-        return flowId;
-    }
-
-    private void
-    updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow,boolean canRollBackStatus) throws Exception{
-        Long flowId;
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
-        if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
-           && null != workOrder.getRefundNo()){
-            String comments = workFlow.getComments();
-            if (null == comments || comments.isEmpty()){
-                comments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
-            }
-            workFlow.setComments(comments);
-        }
-        try {
-            flowId = workFlowService.insert(workFlow);
-        }catch (Exception e) {
-            log.error("数据库操作异常 {}",e.getMessage());
-            throw e;
-        }
-
-        if (0 == flowId) {
-            throw new Exception("Failed to create work_flow");
-        }
-
-        log.info("create work_flow {}",JSON.toJSONString(workFlow));
-        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
-            Long workOrderId = workOrder.getId();
-            try {
-                if (canRollBackStatus) {
-                    //允许工单状态回退
-                    workOrder.setStatus(workFlow.getStatus());
-                    workOrder.setUpdateTime(new Date());
-                    workOrderService.update(workOrder);
-                } else {
-                    workOrder = workOrderService.selectById(workOrderId);
-                    if (null != workOrder) {
-                        if (!WorkOrderStatusType.isClosedStatus(workOrder.getStatus())) {
-                            workOrder.setStatus(workFlow.getStatus());
-                        }
-                        workOrder.setUpdateTime(new Date());
-                        workOrderService.update(workOrder);
-                    }
-                }
-            }catch (Exception e) {
-                log.error("数据库操作异常 {}",e.getMessage(),e);
-                throw e;
-            }
-        }
-        log.info("Update workOrder success {}",JSON.toJSONString(workOrder));
-    }
 
     @ApiOperation(value = "特别处理重新打开工单创建工单流程信息", notes = "特别处理重新打开工单创建工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "特别处理重新打开工单失败") })
@@ -301,21 +128,20 @@ public class WorkFlowController {
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();
-        Integer nextStatus = WorkOrderStatusType.EDITING.getCode();
+        WorkOrderStatusType nextStatus = WorkOrderStatusType.EDITING;
         String comments = data.getComments();
         String operator = data.getOperator();
-        Integer typeId = data.getTypeId();
+        Integer typeId =  data.getTypeId();
         Float refund = data.getRefund();
 
-        if (null == workOrderId || 0 == workOrderId
-        ) {
-            StringUtil.throw400Exp(response, "400002:工单号不能为空");
-            return result;
+        if (null == workOrderId || 0 == workOrderId ) {
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_ID_BLANK);
         }
 
         if (null == operator || operator.isEmpty()) {
-            StringUtil.throw400Exp(response, "400003: 操作员不能为空");
-            return result;
+            if(null == username || username.isEmpty()) {
+                throw new MyException(MyErrorEnum.PARAM_OPERATOR_BLANK);
+            }
         }
 
         if (null != typeId){
@@ -329,31 +155,21 @@ public class WorkFlowController {
             }
         }
 
-        WorkOrder workOrder;
-        try {
-            workOrder = workOrderService.selectById(workOrderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
+        WorkOrder workOrder = workOrderService.getById(workOrderId);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
         }
         log.info("特别处理重新打开工单： {}",JSON.toJSONString(workOrder));
 
-        Integer orderStatus = workOrder.getStatus();
+        WorkOrderStatusType orderStatus = workOrder.getStatus();
         if (!WorkOrderStatusType.isClosedStatus(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为处理完成时才可以重新打开");
             return result;
         }
 
         WorkFlow workFlow = new WorkFlow();
-
         workFlow.setWorkOrderId(workOrderId);
-        workFlow.setUpdatedBy(operator);
-
         workFlow.setStatus(nextStatus);
 
         if (null != comments && !comments.isEmpty()) {
@@ -366,7 +182,7 @@ public class WorkFlowController {
                 workFlow.setComments(oldComments + tmpStr);
                 workOrder.setComments("重新打开工单 同时更改工单类型,从 " + workOrder.getTypeId().toString() + " 到 " + typeId.toString());
             }
-            workOrder.setTypeId(typeId);
+            workOrder.setTypeId(WorkOrderType.checkByCode(typeId));
             if (WorkOrderType.EXCHANGE.getCode().equals(typeId)){
                 workOrder.setRefundAmount(0.00F);
             }else {
@@ -405,7 +221,8 @@ public class WorkFlowController {
         IdData result = new IdData();
         String username = JwtTokenUtil.getUsername(authentication);
         Long workOrderId = data.getWorkOrderId();
-        Integer nextStatus = data.getStatus();
+        Integer nextStatusCode = data.getStatus();
+        WorkOrderStatusType nextStatus = WorkOrderStatusType.checkByCode(nextStatusCode);
         String comments = data.getComments();
         String operator = data.getOperator();
         Integer handleFare = null;//data.getHandleFare();
@@ -422,23 +239,16 @@ public class WorkFlowController {
             return result;
         }
 
-        WorkOrder workOrder;
-        try {
-            workOrder = workOrderService.selectById(workOrderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
+        WorkOrder workOrder = workOrderService.getById(workOrderId);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
             return result;
         }
         log.info("工单： {}",JSON.toJSONString(workOrder));
-        String iAppId = workOrder.getiAppId();
-        Integer orderStatus = workOrder.getStatus();
+        String iAppId = workOrder.getIAppId();
+        WorkOrderStatusType orderStatus = workOrder.getStatus();
         if (WorkOrderStatusType.isClosedStatus(orderStatus)
-                || WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
+                || WorkOrderStatusType.REJECT.equals(orderStatus)) {
             StringUtil.throw400Exp(response, "400007:工单状态为审核失败或处理完成时不可更改");
             return result;
         }
@@ -446,7 +256,6 @@ public class WorkFlowController {
         WorkFlow workFlow = new WorkFlow();
 
         workFlow.setWorkOrderId(workOrderId);
-        workFlow.setUpdatedBy(operator);
 
         workFlow.setStatus(nextStatus);
 
@@ -454,13 +263,11 @@ public class WorkFlowController {
             workFlow.setComments(comments);
         }
 
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
         if (null != username && !username.isEmpty()) {
             workFlow.setCreatedBy(username);
         }
 
-        if (WorkOrderStatusType.HANDLING.getCode().equals(nextStatus)){
+        if (WorkOrderStatusType.HANDLING.equals(nextStatus)){
             //上传退货物流信息
             if (YiYaTong.MERCHANT_ID == workOrder.getMerchantId()){
                 //怡亚通的订单,需要发送物流信息
@@ -496,13 +303,13 @@ public class WorkFlowController {
 
         }
 
-        if (WorkOrderStatusType.REFUNDING.getCode().equals(orderStatus)
-                && (WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus))) {
+        if (WorkOrderStatusType.REFUNDING.equals(orderStatus)
+                && (WorkOrderStatusType.REFUNDING.equals(nextStatus))) {
             StringUtil.throw400Exp(response, "40000a:工单状态已经为退款处理中");
             return result;
         }
 
-        if (null == nextStatus || WorkOrderStatusType.Int2String(nextStatus).isEmpty()) {
+        if (null == nextStatus) {
             StringUtil.throw400Exp(response, "400005:状态码错误");
             return result;
         }
@@ -531,7 +338,7 @@ public class WorkFlowController {
             }
         }
 
-        Integer workTypeId = workOrder.getTypeId();
+        WorkOrderType workTypeId = workOrder.getTypeId();
 
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
         ConfigBean configBean;
@@ -563,9 +370,9 @@ public class WorkFlowController {
             }
         }
         log.info("create WorkFlow: isGat={}, isAggPay={}",isGat, isAggPay);
-        if ((WorkOrderType.RETURN.getCode().equals(workTypeId) || WorkOrderType.REFUND.getCode().equals(workTypeId)) &&
-             ((WorkOrderStatusType.REFUNDING.getCode().equals(nextStatus)) && (WorkOrderStatusType.ACCEPTED.getCode().equals(orderStatus) ||
-               WorkOrderStatusType.HANDLING.getCode().equals(orderStatus)))) {
+        if ((WorkOrderType.RETURN.equals(workTypeId) || WorkOrderType.REFUND.equals(workTypeId)) &&
+             ((WorkOrderStatusType.REFUNDING.equals(nextStatus)) && (WorkOrderStatusType.ACCEPTED.equals(orderStatus) ||
+               WorkOrderStatusType.HANDLING.equals(orderStatus)))) {
 
             if (isGat) {
                 if (null == refund){
@@ -640,10 +447,10 @@ public class WorkFlowController {
                     String aggpayRefundNo = aBean.getOutRefundNo();
                     if (null != aggpayRefundNo && !aggpayRefundNo.isEmpty()){
                         try {
-                            workOrder = workOrderService.selectById(workOrderId);
+                            workOrder = workOrderService.getById(workOrderId);
                             if (null != workOrder) {
                                 if (!WorkOrderStatusType.isClosedStatus(workOrder.getStatus())) {
-                                    workOrder.setStatus(WorkOrderStatusType.REFUNDING.getCode());
+                                    workOrder.setStatus(WorkOrderStatusType.REFUNDING);
                                 }
                                 if (null == workOrder.getRefundNo() || workOrder.getRefundNo().isEmpty()) {
                                     //怡亚通的订单,退款号来自申请接口返回的serviceSn,不需要更新
@@ -651,9 +458,8 @@ public class WorkFlowController {
                                     workOrder.setRefundNo(outerRefundNo);
                                 }
                                 workOrder.setGuanaitongTradeNo(aggpayRefundNo);
-                                workOrder.setUpdateTime(new Date());
                                 workOrder.setRefundAmount(refund);
-                                workOrderService.update(workOrder);
+                                workOrderService.updateById(workOrder);
                             }
                         }catch (Exception e){
                             StringUtil.throw400Exp(response,"400006:work_order update failed "+e.getMessage());
@@ -684,106 +490,65 @@ public class WorkFlowController {
 
     }
 
-    @ApiOperation(value = "更新工单流程信息", notes = "更新工单流程信息")
-    @ApiResponses({ @ApiResponse(code = 400, message = "failed to update record") })
-    @ResponseStatus(code = HttpStatus.CREATED)
-    @PutMapping("work_flows/{id}")
-    public IdData updateProfile(HttpServletResponse response,
-                                @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                @RequestBody WorkFlowBodyBean data) throws RuntimeException {
+    private Long
+    createWorkFlow(WorkOrder workOrder, WorkFlow workFlow){
 
-        log.info("update WorkFlow param : {}", JSON.toJSONString(data));
-        IdData result = new IdData();
-        String username = JwtTokenUtil.getUsername(authentication);
-        String comments = data.getComments();
-        String operator = data.getOperator();
-
-        if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response, "400002:ID is wrong");
-            return result;
-        }
-
-        WorkFlow workFlow;
-        try {
-            workFlow = workFlowService.selectById(id);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
-        if (null == workFlow) {
-            StringUtil.throw400Exp(response, "400003:工单流程不存在");
-            return result;
-        }
-
-        workFlow.setUpdateTime(new Date());
-
-        if (!username.isEmpty()) {
-            workFlow.setUpdatedBy(username);
-        } else {
-            if (null != operator && !operator.isEmpty()) {
-                workFlow.setUpdatedBy(operator);
+        if (WorkOrderStatusType.REFUNDING.equals(workFlow.getStatus())
+                && null != workOrder.getRefundNo()){
+            String oldComments = workFlow.getComments();
+            if (null == oldComments || oldComments.isEmpty()){
+                oldComments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
             }
+            workFlow.setComments(oldComments);
         }
 
-        if (null != comments && !comments.isEmpty()) {
+        workFlowService.save(workFlow);
+
+        log.info("create work_flow {}",JSON.toJSONString(workFlow));
+        return workFlow.getId();
+    }
+
+    private void
+    updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow,boolean canRollBackStatus) throws Exception{
+
+        if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
+                && null != workOrder.getRefundNo()){
+            String comments = workFlow.getComments();
+            if (null == comments || comments.isEmpty()){
+                comments = "{\"refundNo\":"+"\""+workOrder.getRefundNo()+"\"}";
+            }
             workFlow.setComments(comments);
         }
 
-        result.id = id;
-        response.setStatus(MyErrorMap.e201.getCode());
-        log.info("update WorkFlow done");
-        return result;
+        workFlowService.save(workFlow);
+
+        log.info("create work_flow {}",JSON.toJSONString(workFlow));
+        if (!workFlow.getStatus().equals(workOrder.getStatus())) {
+            Long workOrderId = workOrder.getId();
+            try {
+                if (canRollBackStatus) {
+                    //允许工单状态回退
+                    workOrder.setStatus(workFlow.getStatus());
+                    workOrder.setUpdateTime(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                    workOrderService.updateById(workOrder);
+                } else {
+                    workOrder = workOrderService.getById(workOrderId);
+                    if (null != workOrder) {
+                        if (!WorkOrderStatusType.isClosedStatus(workOrder.getStatus())) {
+                            workOrder.setStatus(workFlow.getStatus());
+                        }
+                        workOrder.setUpdateTime(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                        workOrderService.updateById(workOrder);
+                    }
+                }
+            }catch (Exception e) {
+                log.error("数据库操作异常 {}",e.getMessage(),e);
+                throw e;
+            }
+        }
+        log.info("Update workOrder success {}",JSON.toJSONString(workOrder));
     }
 
-
-    @ApiOperation(value = "删除工单流程信息", notes = "删除工单流程信息")
-    @ApiResponses({ @ApiResponse(code = 400, message = "failed to delete WorkFlow's profile") })
-    @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    @DeleteMapping("work_flows/{id}")
-    public void deleteWorkFlow(HttpServletResponse response,
-                                          @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                          @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
-                                          ) throws RuntimeException {
-
-        log.info("delete WorkFlow id = {}",id);
-
-        if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response, "400002: ID is wrong");
-            return;
-        }
-
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (username.isEmpty()) {
-            log.warn("can not find username in token");
-        }
-
-
-        WorkFlow workFlow;
-        try {
-            workFlow = workFlowService.selectById(id);
-        } catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006: "+e.getMessage());
-            return;
-        }
-        if (null == workFlow) {
-            StringUtil.throw400Exp(response, "400003: failed to find record");
-            return;
-        }
-
-        try {
-            workFlowService.deleteById(id);
-        } catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return;
-        }
-        response.setStatus(MyErrorMap.e204.getCode());
-
-        log.info("delete WorkFlow success");
-
-    }
 
     private static final String YIYATONG_RESEND_REFUND = "为怡亚通工单补发退款请求";
     @ApiOperation(value = YIYATONG_RESEND_REFUND, notes = "仅仅对怡亚通工单可用")
@@ -800,14 +565,7 @@ public class WorkFlowController {
 
         String operator = JwtTokenUtil.getUsername(authentication);
 
-        WorkOrder workOrder;
-        try {
-            workOrder = workOrderService.selectById(workOrderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
+        WorkOrder workOrder = workOrderService.getById(workOrderId);
         if (null == workOrder) {
             StringUtil.throw400Exp(response, "400004:工单号不存在");
         }
@@ -828,9 +586,8 @@ public class WorkFlowController {
 
         WorkFlow workFlow = new WorkFlow();
         workFlow.setWorkOrderId(workOrderId);
-        workFlow.setUpdatedBy(operator);
         workFlow.setCreatedBy(operator);
-        workFlow.setStatus(WorkOrderStatusType.RESERVED.getCode());
+        workFlow.setStatus(WorkOrderStatusType.RESERVED);
 
         String customer = workOrder.getReceiverId();
         String orderId = workOrder.getOrderId();
@@ -858,24 +615,20 @@ public class WorkFlowController {
                 //复用该字段保存星链子订单sn
                 workOrder.setGuanaitongTradeNo(bean.getOrderSn());
             } else {
-                workFlow.setCreateTime(new Date());
-                workFlow.setUpdateTime(new Date());
                 JSONObject commentsJson = new JSONObject();
                 commentsJson.put("remark","怡亚通退款申请失败");
                 commentsJson.put("operation",WebSideWorkFlowStatusEnum.UNKNOWN.getCode());
                 workFlow.setComments(commentsJson.toJSONString());
-                workFlowService.insert(workFlow);
+                workFlowService.save(workFlow);
                 StringUtil.throw400Exp(response, "420101:怡亚通退款申请失败");
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            workFlow.setCreateTime(new Date());
-            workFlow.setUpdateTime(new Date());
             JSONObject commentsJson = new JSONObject();
             commentsJson.put("remark",e.getMessage());
             commentsJson.put("operation",WebSideWorkFlowStatusEnum.UNKNOWN.getCode());
             workFlow.setComments(commentsJson.toJSONString());
-            workFlowService.insert(workFlow);
+            workFlowService.save(workFlow);
 
             StringUtil.throw400Exp(response, e.getMessage());
         }
@@ -884,11 +637,9 @@ public class WorkFlowController {
         commentsJson.put("remark",comments+" 新申请怡亚通退款号："+workOrder.getGuanaitongTradeNo());
         commentsJson.put("operation",WebSideWorkFlowStatusEnum.UNKNOWN.getCode());
         workFlow.setComments(commentsJson.toJSONString());
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
 
         try {
-            workFlowService.insert(workFlow);
+            workFlowService.save(workFlow);
             log.info("未发送请求到怡亚通,仅创建工作流 {}", JSON.toJSONString(workFlow));
         }catch (Exception e){
             log.error("数据库操作异常 {}",e.getMessage(),e);
