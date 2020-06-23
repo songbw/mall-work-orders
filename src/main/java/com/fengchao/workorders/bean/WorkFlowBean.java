@@ -41,6 +41,7 @@ public class WorkFlowBean {
         WorkFlowBean bean = new WorkFlowBean();
         BeanUtils.copyProperties(workFlow, bean);
         bean.setOperator(workFlow.getCreatedBy());
+        bean.setStatus(workFlow.getStatus().getCode());
         return bean;
     }
 }

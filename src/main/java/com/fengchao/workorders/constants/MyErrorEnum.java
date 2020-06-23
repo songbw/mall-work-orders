@@ -11,9 +11,17 @@ public enum MyErrorEnum {
     RESPONSE_FUNCTION_ERROR(400, "failed"),
 
     PARAM_DATE_TIME_STRING_WRONG(400005, "日期时间格式错误：YYYY-MM-DD hh:mm:ss"),
-    PARAM_ADDRESS_BLANK(400005, "地址内容 content 缺失"),
+    PARAM_ADDRESS_BLANK(400006, "地址内容 content 缺失"),
+    PARAM_I_APP_ID_BLANK(400007, "appId缺失"),
+    PARAM_I_APP_ID_INVALID(400008, "未配置或无效的iAppId"),
 
     PARAM_BODY_BLANK(400101, "http post body不可为空"),
+    PARAM_GAT_APP_ID_BLANK(400102, "关爱通AppId不能空缺"),
+    PARAM_CUSTOMER_BLANK(400103, "customer不能空缺"),
+    PARAM_MERCHANT_ID_BLANK(400104, "merchantId不能空缺"),
+    PARAM_TITLE_BLANK(400105, "标题不能空缺"),
+    HEADER_MERCHANT_ID_BLANK(400106, "header中merchant不能空缺"),
+
     PARAM_OPERATOR_BLANK(400133, "操作员不可为空"),
     PARAM_WORK_ORDER_ID_BLANK(400134, "工单ID不可为空"),
     PARAM_WORK_ORDER_STATUS_BLANK(400135, "工单状态码不可为空"),
@@ -25,6 +33,7 @@ public enum MyErrorEnum {
     PARAM_ORDER_PAY_CODE_BLANK(400141, "支付码不能为空"),
     PARAM_REFUND_AMOUNT_BLANK(400142, "退款金额不可为空"),
     PARAM_REFUND_AMOUNT_INVALID(400143, "退款金额错误"),
+    PARAM_ORDER_ID_BLANK(400144, "子订单ID不可为空"),
 
     PARAMETER_NAME_EXIST(400202, "名称已经存在"),
     PARAMETER_PHONE_EXIST(400203, "电话号码已经存在"),
@@ -66,13 +75,26 @@ public enum MyErrorEnum {
     WORK_ORDER_HAS_CLOSED(410414, "工单已经处于关闭状态"),
     WORK_ORDER_REJECT_CAN_NOT_CLOSE(410415, "审核失败的工单不需要关闭"),
     WORK_ORDER_SET_STATUS_FAILED(410416, "设置工单状态失败"),
+    WORK_ORDER_STATUS_NOT_ACCEPT(410417, "工单必须审核通过才能进行处理"),
+    WORK_ORDER_STATUS_CAN_NOT_UPDATE(410418, "工单状态为审核失败或处理完成时不可更改"),
+    WORK_ORDER_STATUS_REFUNDING(410419, "工单状态已经为退款处理中"),
+    WORK_ORDER_FARE_RETURNED(410420, "该订单运费已退"),
+    WORK_ORDER_NOT_YIYATONG(410421, "该订单非怡亚通订单"),
 
 
     NEED_RETRY(420003, "系统忙，请重试"),
     MYSQL_ERROR(420005, "数据存取异常，请联系管理员"),
 
-    API_EQUITY_CREATE_TICKETS_NULL(420101,"权益服务调用返回为空 "),
-    API_EQUITY_CREATE_TICKETS_FAILED(420102,"权益服务调用返回失败 "),
+    API_SEARCH_ORDER_FAILED(420101,"调用订单服务失败 "),
+    API_SEARCH_ORDER_ID_BLANK(420102,"调用订单服务返回缺失id "),
+    API_SEARCH_ORDER_NUMBER_BLANK(420103,"调用订单服务返回缺失num "),
+    API_SEARCH_ORDER_STATUS_INVALID(420104,"所属订单状态不符和退款要求 "),
+
+    API_GAT_CLIENT_POST_FAILED(420201,"调用关爱通服务失败 "),
+
+    API_AGG_PAY_FAILED(420301,"调用聚合支付服务失败 "),
+
+    API_YI_YA_TONG_REFUND_FAILED(420401,"调用怡亚通退款申请失败 "),
     ;
 
     private Integer code;

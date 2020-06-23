@@ -3,9 +3,11 @@ package com.fengchao.workorders.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
+import com.fengchao.workorders.constants.MyErrorEnum;
 import com.fengchao.workorders.constants.WorkOrderStatusType;
 import com.fengchao.workorders.constants.WorkOrderType;
 import com.fengchao.workorders.entity.WorkFlow;
+import com.fengchao.workorders.exception.MyException;
 import com.fengchao.workorders.feign.IAggPayClient;
 import com.fengchao.workorders.entity.WorkOrder;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
@@ -142,28 +144,19 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/{id}")
-    public WorkOrderBean getWorkOrderById(HttpServletResponse response,
-                                 @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                 @ApiParam(value="id",required=true)@PathVariable("id") Long id) {
+    public WorkOrderBean
+    getWorkOrderById(@ApiParam(value="id",required=true)@PathVariable("id") Long id) {
 
         String functionDescription = "获取指定工单信息";
         WorkOrderBean bean = new WorkOrderBean();
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (username.isEmpty()) {
-            log.warn("can not find username in token");
-        }
 
         if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response, "400002:ID is wrong");
-            return bean;
+            return new WorkOrderBean();
         }
 
         WorkOrder workOrder = workOrderService.getById(id);
-
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400003:Failed to find work_order");
-            return bean;
+            return new WorkOrderBean();
         }
 
         BeanUtils.copyProperties(workOrder, bean);
@@ -188,7 +181,7 @@ public class WorkOrderController {
             if (null == aggPayResult || null == aggPayResult.getCode() ||
                     200 != aggPayResult.getCode() || null == aggPayResult.getData()) {
                 log.error("未找到聚合支付服务, 或调用查询聚合支付退款状态接口失败");
-                response.setStatus(MyErrorMap.e200.getCode());
+
                 return bean;
             }
             bean.setComments(JSON.toJSONString(aggPayResult.getData()));
@@ -196,7 +189,7 @@ public class WorkOrderController {
             // 根据查询结果更新工单记录
             checkWorkOrderByAggPay(workOrder,aggPayResult.getData());
         }
-        response.setStatus(MyErrorMap.e200.getCode());
+
         log.info("{} {}",functionDescription,JSON.toJSONString(bean));
         return bean;
 
@@ -206,46 +199,26 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @PostMapping("work_orders/byOrderList")
-    public List<WorkOrderBean> getWorkOrderByOrderIdList(HttpServletResponse response,
-                                          @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
-                                          @ApiParam(value="idList",required=true) @Valid @RequestBody List<String> idList) {
+    public List<WorkOrderBean>
+    getWorkOrderByOrderIdList(HttpServletResponse response,
+                              @ApiParam(value="idList",required=true) @Valid @RequestBody List<String> idList) {
 
         String functionDescription = "根据订单号列表获取工单信息";
 
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (username.isEmpty()) {
-            log.warn("can not find username in token");
-        }
-
         if (null == idList || 0 == idList.size()) {
-            StringUtil.throw400Exp(response, "400002: 订单号列表缺失");
-            return null;
+            throw new MyException(MyErrorEnum.RESPONSE_FUNCTION_ERROR, "订单号列表缺失");
         }
 
-        List<WorkOrder> workOrders;
-        try {
-            workOrders = workOrderService.selectByOrderIdList(idList);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
+        List<WorkOrder> workOrders = workOrderService.selectByOrderIdList(idList);
         if (null == workOrders || 0 == workOrders.size()) {
-            StringUtil.throw400Exp(response, "400003:Failed to find work_order");
-            return null;
+            return new ArrayList<>(0);
         }
 
         List<WorkOrderBean> list = new ArrayList<>();
         for(WorkOrder w: workOrders) {
-            WorkOrderBean bean = new WorkOrderBean();
-            BeanUtils.copyProperties(w, bean);
-            if (null != w.getGuanaitongRefundAmount()) {
-                bean.setRealRefundAmount(w.getGuanaitongRefundAmount());
-            }
-            list.add(bean);
+            list.add(WorkOrderBean.convert(w));
         }
-        response.setStatus(MyErrorMap.e200.getCode());
+
         log.info("{} 查询到={} 条",functionDescription,list.size());
         return list;
 
@@ -270,8 +243,7 @@ public class WorkOrderController {
 
         if (null == merchantIdInHeader) {
             log.warn("can not find merchant in header");
-            StringUtil.throw400Exp(response, "400002:merchant  is wrong");
-            return null;
+            throw new MyException(MyErrorEnum.HEADER_MERCHANT_ID_BLANK);
         }
 
         Long merchant;
@@ -281,31 +253,19 @@ public class WorkOrderController {
             merchant = merchantId;
         }
 
-        PageInfo<WorkOrder> pages;
-        try {
-            pages = workOrderService.selectAbnormalRefundList(pageIndex, pageSize,
+        PageInfo<WorkOrder> pages = workOrderService.selectAbnormalRefundList(pageIndex, pageSize,
                     iAppId, orderId, merchant,
                     timeStart, timeEnd);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-        List<WorkOrderBean> workOrderBeans = new ArrayList<>();
 
+        List<WorkOrderBean> workOrderBeans = new ArrayList<>();
         if ((pageIndex -1) * pages.getPageSize() <= pages.getTotal()) {
             List<WorkOrder> workOrders = batchQueryAggPay(pages.getRows());
             for (WorkOrder a : workOrders) {
-                WorkOrderBean b = new WorkOrderBean();
-                BeanUtils.copyProperties(a, b);
-
-                workOrderBeans.add(b);
+                workOrderBeans.add(WorkOrderBean.convert(a));
             }
         }
-        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),pageIndex, workOrderBeans);
 
-        response.setStatus(MyErrorMap.e200.getCode());
-        return result;
-
+        return new PageInfo<>(pages.getTotal(), pages.getPageSize(),pageIndex, workOrderBeans);
     }
 
     @ApiOperation(value = "条件查询工单", notes = "查询工单信息")
@@ -313,8 +273,7 @@ public class WorkOrderController {
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/pages")
     public PageInfo<WorkOrderBean>
-    queryWorkOrders(HttpServletResponse response,
-                    @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
+    queryWorkOrders(
                     @RequestHeader(value = "merchant") Long merchantIdInHeader,
                     @ApiParam(value="页码")@RequestParam(defaultValue = "1") Integer pageIndex,
                     @ApiParam(value="每页记录数")@RequestParam(defaultValue = "10") Integer pageSize,
@@ -333,14 +292,9 @@ public class WorkOrderController {
                     @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status
                     ) {
 
-        //String username = JwtTokenUtil.getUsername(authentication);
-        if (null == authentication) {
-            log.info("can not get authentication");
-        }
         if (null == merchantIdInHeader) {
             log.warn("can not find merchant in header");
-            StringUtil.throw400Exp(response, "400002:merchant  is wrong");
-            return null;
+            throw new MyException(MyErrorEnum.HEADER_MERCHANT_ID_BLANK);
         }
 
         Long merchant;
@@ -350,15 +304,10 @@ public class WorkOrderController {
             merchant = merchantId;
         }
 
-        PageInfo<WorkOrder> pages;
-        try {
-            pages = workOrderService.selectPage(pageIndex, pageSize, iAppId,
+        PageInfo<WorkOrder> pages= workOrderService.selectPage(pageIndex, pageSize, iAppId,
                     title, receiverId, receiverName, receiverPhone, orderId, typeId, merchant,
                     status, timeStart, timeEnd,refundTimeStart, refundTimeEnd);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
+
         List<WorkOrderBean> list = new ArrayList<>();
         List<WorkOrder> workOrders = batchQueryAggPay(pages.getRows());
         if ((pageIndex -1) * pages.getPageSize() <= pages.getTotal()) {
@@ -366,11 +315,7 @@ public class WorkOrderController {
                 list.add(WorkOrderBean.convert(a));
             }
         }
-        PageInfo<WorkOrderBean> result = new PageInfo<>(pages.getTotal(), pages.getPageSize(),pageIndex, list);
-
-        response.setStatus(MyErrorMap.e200.getCode());
-        return result;
-
+        return new PageInfo<>(pages.getTotal(), pages.getPageSize(),pageIndex, list);
     }
 
     @ApiOperation(value = "创建工单信息", notes = "创建工单信息")
@@ -378,8 +323,8 @@ public class WorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_orders")
     public IdData createProfile(HttpServletResponse response,
-                                            @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                            @RequestBody WorkOrderBodyBean data) {
+                                @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
+                                @RequestBody WorkOrderBodyBean data) {
 
         log.info("create WorkOrder param: {}",JSON.toJSONString(data));
         if (null == authentication) {
@@ -397,68 +342,24 @@ public class WorkOrderController {
         Long merchantId = data.getMerchantId();
         Integer typeId = data.getTypeId();
         Integer num = data.getNum();
-        String iAppId = data.getiAppId();
-        String tAppId = data.gettAppId();
+        String iAppId = data.getIAppId();
+        String tAppId = data.getTAppId();
 
-
-        if (null == orderId || orderId.isEmpty() ) {
-            StringUtil.throw400Exp(response, "400002:所属订单不能空缺");
-            return result;
-        }
-        if (null == iAppId || iAppId.isEmpty() ) {
-            StringUtil.throw400Exp(response, "400007:iAppId不能空缺");
-            return result;
-        }
-        if (null == receiverId || receiverId.isEmpty() ) {
-            StringUtil.throw400Exp(response, "400003:客户不能空缺");
-            return result;
-        }
-        if (null == merchantId) {
-            StringUtil.throw400Exp(response, "400004:merchantId不能空缺");
-            return result;
-        }
-
-        if (null == typeId || 0 == typeId ||
-                null == title || title.isEmpty()
-        ) {
-            StringUtil.throw400Exp(response, "400002:工单标题, 工单类型, 所属订单不能空缺");
-            return result;
-        }
-
-        if (WorkOrderType.Int2String(typeId).isEmpty()) {
-            StringUtil.throw400Exp(response, "400005:工单类型错误");
-            return result;
-        }
+        data.checkFields();
 
         WorkOrder workOrder = new WorkOrder();
 
-        WorkOrder selectedWO;
-        try {
-            selectedWO = workOrderService.getValidNumOfOrder(receiverId, orderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-
+        WorkOrder selectedWO = workOrderService.getValidNumOfOrder(receiverId, orderId);
         if (null == selectedWO) {//totally new order
             log.info("there is not work order of this orderId: " + orderId);
-            JSONObject json;
-            try {
-                json = workOrderService.getOrderInfo(receiverId, orderId, merchantId);
-            }catch (Exception e) {
-                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                return null;
-            }
-
+            JSONObject json = workOrderService.getOrderInfo(receiverId, orderId, merchantId);
             if (null == json) {
-                StringUtil.throw400Exp(response, "400007:找不到订单信息");
-                return result;
+                throw new MyException(MyErrorEnum.API_SEARCH_ORDER_FAILED);
             }
 
             Integer parentOrderId = json.getInteger("id");
             if (null == parentOrderId) {
-                StringUtil.throw400Exp(response, "400008: searchOrder, 获取id失败");
-                return result;
+                throw new MyException(MyErrorEnum.API_SEARCH_ORDER_ID_BLANK);
             } else {
                 workOrder.setParentOrderId(parentOrderId);
             }
@@ -481,8 +382,7 @@ public class WorkOrderController {
             workOrder.setReceiverName(json.getString("receiverName"));
         } else {
             if (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum()) {
-                StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
-                return result;
+                throw new MyException(MyErrorEnum.REFUND_COUNT_OVERFLOW);
             }
 
             workOrder.setFare(selectedWO.getFare());
@@ -542,15 +442,12 @@ public class WorkOrderController {
         //Long merchantId = data.getMerchantId();
 
         if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response, "400002:ID is wrong");
-            return result;
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_ID_BLANK);
         }
 
         WorkOrder workOrder = workOrderService.getById(id);
-
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400003:工单不存在");
-            return result;
+            throw new MyException(MyErrorEnum.WORK_ORDER_NO_NOT_FOUND);
         }
 
         if (null != title && !title.isEmpty() ) {
@@ -717,41 +614,30 @@ public class WorkOrderController {
         return successResult;
     }
 */
+
     @ApiOperation(value = "删除工单流程信息", notes = "删除工单流程信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to delete WorkOrder's profile") })
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     @DeleteMapping("work_orders/{id}")
-    public void deleteWorkOrder(HttpServletResponse response,
-                                          @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                          @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication
-                                          ) throws RuntimeException {
+    public void
+    deleteWorkOrder(HttpServletResponse response,
+                    @ApiParam(value="id",required=true)@PathVariable("id") Long id
+                    ){
 
         log.info("delete WorkOrders param : {}",id);
-
         if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response, "400002: ID is wrong");
             return;
-        }
-
-        String username = JwtTokenUtil.getUsername(authentication);
-
-        if (username.isEmpty()) {
-            log.warn("can not find username in token");
         }
 
         WorkOrder workOrder = workOrderService.getById(id);
-
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400002: failed to find record");
-            return;
+            throw new MyException(MyErrorEnum.COMMON_DB_GET_RECORD_RESULT_NULL);
         }
 
         workOrderService.removeById(id);
-
         response.setStatus(MyErrorMap.e204.getCode());
 
         log.info("delete WorkOrder profile");
-
     }
 
     @ApiOperation(value = "退款统计", notes = "退款统计信息")
@@ -789,8 +675,7 @@ public class WorkOrderController {
                   @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd
                 ) {
 
-        List<WorkOrder> list = workOrderService.selectByTimeRange(timeStart, timeEnd);
-        return new ResultObject<>(list);
+        return new ResultObject<>(workOrderService.selectByTimeRange(timeStart, timeEnd));
     }
 
     @ApiOperation(value = "获取商户退货人数", notes = "获取商户退货人数")
@@ -852,44 +737,29 @@ public class WorkOrderController {
     @ApiOperation(value = "发起关爱通退款", notes = "发起关爱通退款")
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("refund/guanaitong")
-    public GuanAiTongNo sendRefund(HttpServletResponse response,
-                                @RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                @RequestBody Map<String, Long> data) {
+    public GuanAiTongNo
+    sendRefund(HttpServletResponse response,
+               @RequestBody Map<String, Long> data) {
 
-        if (null == authentication) {
-            log.info("can not get authentication");
-        }
+
         GuanAiTongNo result = new GuanAiTongNo();
         Long id = data.get("id");
         Integer hasFare = (int)(long)data.get("fare");
         if (null == id) {
             log.error("send refund to GuanAiTong for work-order: id is null");
-            StringUtil.throw400Exp(response, "400002: id is wrong");
-            return result;
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_ID_BLANK);
         }
         log.info("send refund for work-order: id = " + id.toString());
 
-        String guanAiTongTradeNo;
-        try {
-            guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id,hasFare,null);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
-        if (null == guanAiTongTradeNo) {
-            StringUtil.throw400Exp(response, "400003: 关爱通退款接口没有返回关爱通退款单号");
-            return result;
+        String guanAiTongTradeNo = workOrderService.sendRefund2GuangAiTong(id,hasFare,null);
+
+        if (null == guanAiTongTradeNo || guanAiTongTradeNo.isEmpty()) {
+            throw new MyException(MyErrorEnum.API_GAT_CLIENT_POST_FAILED," 关爱通退款接口没有返回关爱通退款单号");
         } else {
-            if (guanAiTongTradeNo.isEmpty()) {
-                StringUtil.throw400Exp(response, "400004: send to GuanAiTong failed");
-                return null;
-            } else {
                 if (guanAiTongTradeNo.contains("Error:")) {
                     String errMsg = guanAiTongTradeNo.replace(':','-');
-                    StringUtil.throw400Exp(response, "400006: " + errMsg);
-                    return result;
+                    throw new MyException(MyErrorEnum.API_GAT_CLIENT_POST_FAILED,errMsg);
                 }
-            }
         }
 
         result.tradeNo = guanAiTongTradeNo;
@@ -912,8 +782,8 @@ public class WorkOrderController {
     public ResultObject<List<String>>
     queryRefundedOrderDetailIdList(@RequestParam(value = "merchantId", required = false) Long merchantId,
                                    @RequestParam(value = "appId", required = false) String appId,
-                                   @RequestParam(value = "startTime") String startTime,
-                                   @RequestParam(value = "endTime") String endTime) {
+                                   @RequestParam(value = "startTime", required = false) String startTime,
+                                   @RequestParam(value = "endTime", required = false) String endTime) {
         // 返回值
         ResultObject<List<String>> resultObject = new ResultObject<>(500, "获取已退款的子订单id集合默认错误", null);
 
@@ -1031,15 +901,14 @@ public class WorkOrderController {
     public ResultObject<List<WorkOrder>>
     queryRefundedOrderDetailList(@RequestParam(value = "merchantId", required = false) Long merchantId,
                                  @RequestParam(value = "appId", required = false) String appId,
-                                 @RequestParam(value = "startTime") String startTime,
-                                 @RequestParam(value = "endTime") String endTime) {
+                                 @RequestParam(value = "startTime", required = false) String startTime,
+                                 @RequestParam(value = "endTime", required = false) String endTime) {
         // 返回值
         ResultObject<List<WorkOrder>> resultObject = new ResultObject<>(500, "获取已退款的子订单信息集合默认错误", null);
 
         log.info("获取已退款的子订单信息集合 入参 appId={}, merchantId:{}, startTime:{}, endTime:{}", appId,merchantId, startTime, endTime);
 
-        List<WorkOrder> workOrderList = null;
-
+        List<WorkOrder> workOrderList;
 
         if (null == startTime || null == endTime){
             resultObject.setCode(500);

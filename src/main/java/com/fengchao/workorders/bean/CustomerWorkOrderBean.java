@@ -1,12 +1,21 @@
 package com.fengchao.workorders.bean;
 
+import com.fengchao.workorders.constants.MyErrorEnum;
+import com.fengchao.workorders.constants.WorkOrderType;
+import com.fengchao.workorders.exception.MyException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ *
+ * @author Clark
+ * */
 
+@Getter
+@Setter
 @ApiModel(value="客户工单更新信息Bean")
 public class CustomerWorkOrderBean {
     @ApiModelProperty(value="所属订单ID", example="111",required=true)
@@ -18,16 +27,16 @@ public class CustomerWorkOrderBean {
     @ApiModelProperty(value="第三方appID", example="20110843",required=true)
     private String tAppId;
 
-    @ApiModelProperty(value="商户ID", example="10",required=false)
+    @ApiModelProperty(value="商户ID", example="10")
     private Long merchantId;
 
     @ApiModelProperty(value="工单标题", example="退货000011",required=true)
     private String title;
 
-    @ApiModelProperty(value="工单描述", example="退货000011",required=false)
+    @ApiModelProperty(value="工单描述", example="退货000011")
     private String description;
 
-    @ApiModelProperty(value="客户", example="张三",required=false)
+    @ApiModelProperty(value="客户", example="张三")
     private String customer;
 
     @ApiModelProperty(value="工单类型ID", example="123",required=true)
@@ -36,75 +45,32 @@ public class CustomerWorkOrderBean {
     @ApiModelProperty(value="退货数量", example="1",required=true)
     private Integer num;
 
-    public String getOrderId() {
-        return orderId;
-    }
+    public void checkFields(){
+        if (null == orderId || orderId.isEmpty()) {
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_ID_BLANK);
+        }
+        if (null == iAppId || iAppId.isEmpty()) {
+            throw new MyException(MyErrorEnum.PARAM_I_APP_ID_BLANK);
+        }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
+        if (null == customer || customer.isEmpty()) {
+            throw new MyException(MyErrorEnum.PARAM_CUSTOMER_BLANK);
+        }
 
-    public String getiAppId() {
-        return iAppId;
-    }
+        if (null == merchantId) {
+            throw new MyException(MyErrorEnum.PARAM_MERCHANT_ID_BLANK);
+        }
 
-    public void setiAppId(String iAppId) {
-        this.iAppId = iAppId;
-    }
+        if (null == title || title.isEmpty()) {
+            throw new MyException(MyErrorEnum.PARAM_TITLE_BLANK);
+        }
 
-    public String gettAppId() {
-        return tAppId;
-    }
-
-    public void settAppId(String tAppId) {
-        this.tAppId = tAppId;
-    }
-
-    public Long getMerchantId() {
-        return merchantId;
-    }
-
-    public void setMerchantId(Long merchantId) {
-        this.merchantId = merchantId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(String customer) {
-        this.customer = customer;
-    }
-
-    public Integer getTypeId() {
-        return typeId;
-    }
-
-    public void setTypeId(Integer typeId) {
-        this.typeId = typeId;
-    }
-
-    public Integer getNum() {
-        return num;
-    }
-
-    public void setNum(Integer num) {
-        this.num = num;
+        if (null == typeId) {
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_TYPE_BLANK);
+        }else{
+            if(null == WorkOrderType.checkByCode(typeId)){
+                throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_TYPE_INVALID);
+            }
+        }
     }
 }

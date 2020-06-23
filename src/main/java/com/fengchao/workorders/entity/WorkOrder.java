@@ -165,7 +165,7 @@ public class WorkOrder extends AbstractEntity{
 
     public final static String STATUS = "status";
     @ApiModelProperty(value = "工单状态")
-    @TableField(TRADE_NO)
+    @TableField(STATUS)
     @JsonSerialize(using = ToStringSerializer.class)
     private WorkOrderStatusType status;
 

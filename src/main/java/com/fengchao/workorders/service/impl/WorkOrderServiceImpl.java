@@ -9,8 +9,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.constants.MyErrorEnum;
 import com.fengchao.workorders.constants.WorkOrderStatusType;
 import com.fengchao.workorders.constants.WorkOrderType;
+import com.fengchao.workorders.exception.MyException;
 import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -83,7 +86,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
     selectPage(int pageIndex, int pageSize, String iAppId,
                String title, String receiverId, String receiverName, String receiverPhone,
                String orderId, Integer typeId, Long merchantId,Integer statusCode,
-               String createTimeStart, String createTimeEnd,String refundTimeBegin, String refundTimeEnd) throws Exception{
+               String createTimeStart, String createTimeEnd,String refundTimeBegin, String refundTimeEnd){
 
         QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
         wrapper.orderByDesc(WorkOrder.CREATE_TIME);
@@ -184,7 +187,8 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
     }
 
     @Override
-    public List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception{
+    public List<WorkOrder>
+    selectByOrderIdList(List<String> orderIdList){
 
         QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
         wrapper.in(WorkOrder.ORDER_ID,orderIdList);
@@ -226,10 +230,12 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
         QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
         wrapper.orderByDesc(WorkOrder.CREATE_TIME);
         if (null != dateStart) {
-            wrapper.ge(WorkOrder.CREATE_TIME, getDateTimeByDate(StringUtil.Date2String(LocalDateTime.now()).substring(0,10), false));
+            LocalDateTime start = getDateTimeByDate(dateStart, false);
+            log.info("start time = {}",start);
+            wrapper.ge(WorkOrder.CREATE_TIME, start);
         }
         if(null != dateEnd) {
-            wrapper.le(WorkOrder.CREATE_TIME, getDateTimeByDate(StringUtil.Date2String(LocalDateTime.now()).substring(0,10), true));
+            wrapper.le(WorkOrder.CREATE_TIME, getDateTimeByDate(dateEnd, true));
         }
         return list(wrapper);
     }
@@ -263,12 +269,12 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
 
     @Override
     public WorkOrder
-    getValidNumOfOrder(String openId, String orderId) throws Exception {
+    getValidNumOfOrder(String openId, String orderId){
         log.info("getValidNumOfOrder param: openId={}, orderId={}",openId,orderId);
         int validNum;
 
         if(null == orderId || null == openId){
-
+            return null;
         }
 
         openId = openId.trim();
@@ -336,7 +342,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
 
     @Override
     @SuppressWarnings("unchecked")
-    public JSONObject getOrderInfo(String openId, String subOrderId, Long merchantId) throws Exception{
+    public JSONObject getOrderInfo(String openId, String subOrderId, Long merchantId){
         QueryOrderBodyBean body = new QueryOrderBodyBean();
         body.setOpenId(openId);
         body.setPageIndex(1);
@@ -344,14 +350,12 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
         body.setSubOrderId(subOrderId);
         Map<String, Object> map = new HashedMap();
         map.put("merchant", 0);//fix it
-        if (null == orderService) {
-            throw new Exception("未发现服务: order");
-        }
+
         OperaResult result = orderService.getOrderList(body,map);
-        if (null == result) {
-            throw new Exception("order searchOrder got response null");
-        }
         log.info("searchOrder result : {}",JSON.toJSONString(result));
+        if(null == result || null == result.getCode()){
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_FAILED);
+        }
         if (result.getCode() == 200) {
             Map<String, Object> data = result.getData();
             if (null == data) {
@@ -554,19 +558,18 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
     }
 
     @Override
-    public String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception {
+    public String
+    sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) {
 
         log.info("sendRefund2GuangAiTong enter : workOrderId = ", workOrderId);
         WorkOrder wo = getById(workOrderId);
         if (null == wo) {
-            log.info("failed to find work-order record by id : " + workOrderId);
-            throw new Exception("failed to find work-order record by id : " + workOrderId);
+            throw new MyException(MyErrorEnum.WORK_ORDER_NO_NOT_FOUND);
         }
 
-        log.info("find work-order: " + wo.toString());
+        log.info("找到工单:{} " ,JSON.toJSONString(wo));
         if (null == wo.getOrderId()) {
-            log.error("sendRefund2GuangAiTong: can not find orderId in work_order");
-            throw new Exception("can not find orderId in work_order");
+            throw new MyException(MyErrorEnum.RESPONSE_FUNCTION_ERROR,"工单记录异常");
         }
 
         String tradeNo = wo.getTradeNo();
@@ -574,23 +577,16 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
         Float refundAmount = (null == refund) ? wo.getRefundAmount() : refund;
         String reason = wo.getTitle();
         if (null == tradeNo || null == appId || null == refundAmount || null == reason) {
-            log.warn("tradeNo, appId, refundAmount or reason are missing ");
-            throw new Exception("check workOrder, found tradeNo, appId, refundAmount or reason are missing");
+            throw new MyException(MyErrorEnum.RESPONSE_FUNCTION_ERROR,"工单记录异常");
         }
 
         if (null != handleFare && 0 != handleFare) {
-            boolean handledFare;
-            try {
-                handledFare = hasHandledFare(wo);
-            } catch (Exception e) {
-                throw new Exception(e);
-            }
-
+            boolean handledFare = hasHandledFare(wo);
             if (handledFare) {
-                throw new Exception("该订单已经处理过运费");
+                throw new MyException(MyErrorEnum.WORK_ORDER_FARE_RETURNED);
+            }else {
+                refundAmount += wo.getFare();
             }
-
-            refundAmount += wo.getFare();
         }
 
         String notifyUrl = GuanAiTongConfig.getConfigGatNotifyUrl();//"http://api.weesharing.com/v2/workorders/refund/notify";
@@ -621,7 +617,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
         ResultObject<String> gResult = guanAiTongClient.postRefund(wo.getIAppId(), bean);
         if (null == gResult) {
             log.warn("post to GuanAiTong refund failed");
-            throw new Exception("post to GuanAiTong refund failed");
+            throw new MyException(MyErrorEnum.API_GAT_CLIENT_POST_FAILED);
         }
 
         Integer code = gResult.getCode();
@@ -639,7 +635,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
                 errMsgSb.append(gResult.getMsg());
             }
 
-            throw new Exception(errMsgSb.toString());
+            throw new MyException(MyErrorEnum.RESPONSE_FUNCTION_ERROR,errMsgSb.toString());
         }
 
         wo = getById(workOrderId);
@@ -682,10 +678,10 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
                 wrapper.eq(WorkOrder.MERCHANT_ID,merchantId);
             }
             if(null != startTime){
-                wrapper.ge(WorkOrder.REFUND_TIME,DateUtil.parseDateTime(startTime,DateUtil.DATE_YYYY_MM_DD_HH_MM_SS));
+                wrapper.ge(WorkOrder.REFUND_TIME,getDateTimeByDate(startTime,false));
             }
             if(null != endTime){
-                wrapper.le(WorkOrder.REFUND_TIME,DateUtil.parseDateTime(endTime,DateUtil.DATE_YYYY_MM_DD_HH_MM_SS));
+                wrapper.le(WorkOrder.REFUND_TIME,getDateTimeByDate(endTime,true));
             }
             workOrderList = list(wrapper);
             log.info("查询已退款的记录 数据库返回:{}", JSONUtil.toJsonString(workOrderList));
@@ -798,8 +794,6 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
         }
 
         String timeString = dateStr.trim();
-        LocalDateTime dateTime;
-
         if (10 > timeString.length()) {
             return null;
         }
@@ -812,13 +806,6 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper,WorkOrder>
             }
         }
 
-        try {
-            dateTime = StringUtil.String2Date(timeString);
-        } catch (Exception ex) {
-            log.error("timeString is wrong {}",ex.getMessage());
-            return null;
-        }
-
-        return dateTime;
+        return LocalDateTime.parse(timeString, DateTimeFormatter.ofPattern(DateUtil.DATE_YYYY_MM_DD_HH_MM_SS));
     }
 }

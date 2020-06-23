@@ -1,5 +1,7 @@
 package com.fengchao.workorders.util;
 
+import com.fengchao.workorders.constants.MyErrorEnum;
+import com.fengchao.workorders.exception.MyException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.PrintWriter;
@@ -26,13 +28,6 @@ public class StringUtil {
         PrintWriter printWriter = new PrintWriter(writer);
         throwable.printStackTrace(printWriter);
         return "\n" + writer.toString();
-    }
-
-    public static void throw400Exp(HttpServletResponse response, String msg)
-            throws RuntimeException {
-        response.setStatus(MyErrorMap.e400.getCode());
-        response.setContentType("application/json;charset=UTF-8");
-        throw new RuntimeException(msg.trim());
     }
 
     public static String formatJson(String jsonStr) {
@@ -149,11 +144,10 @@ public class StringUtil {
         if (stringDate.isEmpty()) {
             return null;
         }
-        //log.debug("==String2Date: " + stringDate);
+        //log.info("==String2Date: " + stringDate);
         DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATA_TIME_PATTERN);
-        LocalDateTime returnDate = LocalDateTime.parse(stringDate,df);
 
-        return returnDate;
+        return LocalDateTime.parse(stringDate,df);
 
     }
 

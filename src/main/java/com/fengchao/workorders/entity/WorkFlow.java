@@ -32,7 +32,6 @@ public class WorkFlow extends AbstractEntity {
     public final static String STATUS = "status";
     public final static String COMMENTS = "comments";
     public final static String CREATED_BY = "created_by";
-    public final static String UPDATED_BY = "updated_by";
 
     @ApiModelProperty(value = "主键")
     @TableId(value = ID, type = IdType.AUTO)

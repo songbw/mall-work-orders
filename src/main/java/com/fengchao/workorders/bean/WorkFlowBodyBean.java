@@ -1,11 +1,17 @@
 package com.fengchao.workorders.bean;
 
+import com.fengchao.workorders.constants.MyErrorEnum;
+import com.fengchao.workorders.exception.MyException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ *
+ * @author Clark
+ * */
 @Getter
 @Setter
 @ToString
@@ -29,9 +35,19 @@ public class WorkFlowBodyBean {
     @ApiModelProperty(value="是否处理运费, 0 : 不处理运费", example="0")
     private Integer handleFare;
 
-    @ApiModelProperty(value="快递单号", example="2019111111",required=false)
+    @ApiModelProperty(value="快递单号", example="2019111111")
     private String expressNo;
 
-    @ApiModelProperty(value="工单类型ID", example="1",required=false)
+    @ApiModelProperty(value="工单类型ID", example="1")
     private Integer typeId;
+
+    public void checkParameters(){
+        if (null == workOrderId || 0 == workOrderId) {
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_ID_BLANK);
+        }
+        if (null == operator || operator.isEmpty()) {
+            throw new MyException(MyErrorEnum.PARAM_OPERATOR_BLANK);
+        }
+
+    }
 }

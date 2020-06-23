@@ -12,6 +12,8 @@ import com.fengchao.workorders.util.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,9 +60,9 @@ public class WorkFlowServiceImpl extends ServiceImpl<WorkFlowMapper, WorkFlow> i
 
     @Override
     public List<WorkFlow>
-    selectByWorkOrderId(Long workOrderId, Integer status) throws Exception{
+    selectByWorkOrderId(Long workOrderId, Integer status){
         if (null == workOrderId) {
-            throw new Exception("selectByWorkOrderId, workOrderId is null");
+            new ArrayList<>(0);
         }
         QueryWrapper wrapper = new QueryWrapper();
         wrapper.orderByDesc(WorkFlow.CREATE_TIME);

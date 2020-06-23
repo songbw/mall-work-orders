@@ -1,4 +1,7 @@
 package com.fengchao.workorders.util;
+import com.fengchao.workorders.constants.MyErrorEnum;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -6,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("serial")
+@Getter
+@Setter
 @ToString
 public class OperaResult implements Serializable {
 
@@ -18,28 +23,15 @@ public class OperaResult implements Serializable {
 	//封装的对象
 	private Map<String,Object> data = new HashMap<String,Object>();
 
-	public Integer getCode() {
-		return code;
-	}
-
-	public void setCode(Integer code) {
+	public OperaResult(Integer code,String msg,Map map){
 		this.code = code;
-	}
-
-	public String getMsg() {
-		return msg;
-	}
-
-	public void setMsg(String msg) {
 		this.msg = msg;
+		this.data = map;
 	}
 
-	public Map<String, Object> getData() {
-		return data;
+	public OperaResult(MyErrorEnum errorEnum){
+		this.code = errorEnum.getCode();
+		this.msg = errorEnum.getMsg();
+		this.data = null;
 	}
-
-	public void setData(Map<String, Object> data) {
-		this.data = data;
-	}
-
 }

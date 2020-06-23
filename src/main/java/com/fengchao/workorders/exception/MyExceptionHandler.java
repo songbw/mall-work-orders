@@ -4,6 +4,7 @@ import com.fengchao.workorders.constants.MyErrorEnum;
 import com.fengchao.workorders.util.ResultObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -87,6 +88,21 @@ public class MyExceptionHandler {
 
         response.setStatus(MyErrorEnum.RESPONSE_FUNCTION_ERROR.getCode());
         return map;
+    }
+
+    /**
+     * 参数格式错误，统一回复400
+     *
+     * @param request
+     * @param e
+     * @return
+     */
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseBody
+    public ResultObject<String> handleParseException(HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.error("{},请求参数错误:", request.getRequestURL(), e);
+        return new ResultObject<>(400,e.getLocalizedMessage(),null);
     }
 
     /**

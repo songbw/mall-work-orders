@@ -45,7 +45,6 @@ public class RefundConfig {
             return null;
         }
 
-
         if (null == this.ids || 0 == this.ids.size()){
             log.error("{} 没有发现任何配置项",_func);
             return null;

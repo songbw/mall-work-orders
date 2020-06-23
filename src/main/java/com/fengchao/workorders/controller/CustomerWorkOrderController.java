@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.config.GuanAiTongConfig;
+import com.fengchao.workorders.constants.MyErrorEnum;
 import com.fengchao.workorders.constants.WorkOrderStatusType;
 import com.fengchao.workorders.constants.WorkOrderType;
+import com.fengchao.workorders.exception.MyException;
 import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.entity.*;
 import com.fengchao.workorders.service.impl.*;
@@ -67,51 +69,54 @@ public class CustomerWorkOrderController {
         @ApiModelProperty(value="退货商品数", example="1",required=true)
         public Integer returnedNum;
 
-        @ApiModelProperty(value="申请退款金额", example="1.1",required=false)
+        @ApiModelProperty(value="申请退款金额", example="1.1")
         public Float refundAmount;
 
-        @ApiModelProperty(value="实际退款金额", example="1.1",required=false)
+        @ApiModelProperty(value="实际退款金额", example="1.1")
         public Float realRefundAmount;
-        @ApiModelProperty(value="商户ID", example="111",required=false)
+        @ApiModelProperty(value="商户ID", example="111")
         public Long merchantId;
 
         @ApiModelProperty(value="工单标题", example="退货000011",required=true)
         public String title;
 
-        @ApiModelProperty(value="工单描述", example="退货000011",required=false)
+        @ApiModelProperty(value="工单描述", example="退货000011")
         public String description;
 
-        @ApiModelProperty(value="客户ID", example="123",required=false)
+        @ApiModelProperty(value="客户ID", example="123")
         public String receiverId;
 
-        @ApiModelProperty(value="客户名称", example="李四",required=false)
+        @ApiModelProperty(value="客户名称", example="李四")
         public String receiverName;
 
-        @ApiModelProperty(value="客户电话", example="13345678901",required=false)
+        @ApiModelProperty(value="客户电话", example="13345678901")
         public String receiverPhone;
 
-        @ApiModelProperty(value="工单状态码", example="1",required=false)
+        @ApiModelProperty(value="工单状态码", example="1")
         public Integer status;
 
-        @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11",required=false)
+        @ApiModelProperty(value="更新时间", example="2019-06-16 11:11:11")
         public LocalDateTime updateTime;
 
-        @ApiModelProperty(value="退款完成时间", example="2019-06-16 11:11:11",required=false)
+        @ApiModelProperty(value="退款完成时间", example="2019-06-16 11:11:11")
         public LocalDateTime refundTime;
 
-        @ApiModelProperty(value="快递单号", example="2019111111",required=false)
+        @ApiModelProperty(value="快递单号", example="2019111111")
         public String expressNo;
 
-        @ApiModelProperty(value="工单类型ID", example="123",required=true)
+        @ApiModelProperty(value="工单类型ID", example="1")
         public Integer typeId;
 
-        @ApiModelProperty(value = "流程信息List", example = " ", required = true)
+        @ApiModelProperty(value = "流程信息List", example = " ")
         public List<WorkFlowBean> result;
 
     }
 
     private WorkFlowBeanList fillFlowBeans(WorkOrder a, List<WorkFlowBean> list){
         WorkFlowBeanList b = new WorkFlowBeanList();
+        if(null == a){
+            return b;
+        }
         b.result = list;
         b.description = a.getDescription();
         b.orderId = a.getOrderId();
@@ -125,11 +130,17 @@ public class CustomerWorkOrderController {
         b.refundAmount = a.getRefundAmount();
         b.returnedNum = a.getReturnedNum();
         b.refundTime = a.getRefundTime();
-        b.status = a.getStatus().getCode();
+        WorkOrderStatusType workOrderStatusType = WorkOrderStatusType.checkByName(String.valueOf(a.getStatus()));
+        if (null != workOrderStatusType) {
+            b.status = workOrderStatusType.getCode();
+        }
         b.tAppId = a.getTAppId();
         b.title = a.getTitle();
         b.updateTime = a.getUpdateTime();
-        b.typeId = a.getTypeId().getCode();
+        WorkOrderType workOrderType = WorkOrderType.checkByName(String.valueOf(a.getTypeId()));
+        if(null != workOrderType) {
+            b.typeId = workOrderType.getCode();
+        }
         return b;
     }
 
@@ -182,10 +193,8 @@ public class CustomerWorkOrderController {
         }
 
         WorkOrder workOrder = workOrderService.getById(workOrderId);
-
         if (null == workOrder){
-            StringUtil.throw400Exp(response, "400003:工单不存在");
-            return null;
+            throw new MyException(MyErrorEnum.WORK_ORDER_NO_NOT_FOUND);
         }
 
         WorkFlowBean workFlowZero = new WorkFlowBean();
@@ -232,6 +241,9 @@ public class CustomerWorkOrderController {
 
         log.info("app side create WorkFlow enter : param {}", JSON.toJSONString(data));
         IdResponseData result = new IdResponseData();
+        if(null == data){
+            return result;
+        }
 
         Long workOrderId = data.getWorkOrderId();
         Integer nextStatusCode = data.getStatus();
@@ -240,80 +252,58 @@ public class CustomerWorkOrderController {
         String operator = data.getOperator();
         String expressNo = data.getExpressNo();
 
-        if (null == workOrderId || 0 == workOrderId
-        ) {
-            StringUtil.throw400Exp(response, "400002:工单号不能为空");
-            return result;
-        }
-
-        if (null == operator || operator.isEmpty()) {
-            StringUtil.throw400Exp(response, "400003: 操作员不能为空");
-            return result;
-        }
+        data.checkParameters();
 
         WorkOrder workOrder = workOrderService.getById(workOrderId);
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400004:工单号不存在");
-            return result;
+            throw new MyException(MyErrorEnum.WORK_ORDER_NO_NOT_FOUND);
         }
 
         WorkOrderStatusType orderStatus = workOrder.getStatus();
-        if (!WorkOrderStatusType.ACCEPTED.equals(orderStatus)
-                && !WorkOrderStatusType.HANDLING.equals(orderStatus)) {
-            String msg;
-            if (WorkOrderStatusType.isClosedStatus(orderStatus)){
-                msg = "工单已经处理完成";
-            }else{
-                msg = "工单必须审核通过才能进行处理";
+        log.info("orderStatus= {}",orderStatus);
+        if (WorkOrderStatusType.ACCEPTED !=orderStatus
+                && WorkOrderStatusType.HANDLING != orderStatus) {
+            if (WorkOrderStatusType.isClosedStatus(orderStatus)) {
+                throw new MyException(MyErrorEnum.WORK_ORDER_HAS_CLOSED);
+            } else {
+                throw new MyException(MyErrorEnum.WORK_ORDER_STATUS_NOT_ACCEPT);
             }
-            StringUtil.throw400Exp(response, "400007:"+msg);
-            return result;
+
         }
 
-        if (null == nextStatus ||
-            !WorkOrderStatusType.HANDLING.equals(nextStatus)) {
-            StringUtil.throw400Exp(response, "400005:状态码错误");
-            return result;
+        if (!WorkOrderStatusType.HANDLING.equals(nextStatus)) {
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_STATUS_INVALID);
         }
 
-        if (null != expressNo){
+        if (null != expressNo) {
             workOrder.setExpressNo(expressNo);
         }
 
         WorkFlow workFlow = new WorkFlow();
-
         workFlow.setWorkOrderId(workOrderId);
-
         workFlow.setStatus(nextStatus);
 
         if (null != comments && !comments.isEmpty()) {
             workFlow.setComments(comments);
-            if (Constant.YI_YA_TONG_MERCHANT_ID == workOrder.getMerchantId()){
+            if (Constant.YI_YA_TONG_MERCHANT_ID == workOrder.getMerchantId()) {
                 //怡亚通的订单,需要发送物流信息
-                workOrderService.sendExpressInfo(workOrder,comments);
+                workOrderService.sendExpressInfo(workOrder, comments);
             }
         }
 
-        if (!operator.isEmpty()) {
-            workFlow.setCreatedBy(operator);
-        }
-
-       workFlowService.save(workFlow);
-
+        workFlow.setCreatedBy(operator);
+        workFlowService.save(workFlow);
+        result.id = workFlow.getId();
 
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
             workOrder.setStatus(workFlow.getStatus());
             workOrder.setUpdateTime(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-            try {
-                workOrderService.updateById(workOrder);
-            }catch (Exception e) {
-                StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                return null;
-            }
+
+            workOrderService.updateById(workOrder);
         }
 
         response.setStatus(MyErrorMap.e201.getCode());
-        log.info("create WorkFlow {} and update workOrder {} success ", workFlow.getId().toString(),workOrder.getId().toString());
+        log.info("create WorkFlow {} and update workOrder {} success ", workFlow.getId().toString(), workOrder.getId().toString());
         return result;
 
     }
@@ -323,9 +313,9 @@ public class CustomerWorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_orders")
-    public IdResponseData appCreateWorkOrder(HttpServletResponse response,
-                                          //@RequestHeader(value="Authorization",defaultValue="Bearer token") String authentication,
-                                          @RequestBody CustomerWorkOrderBean data) {
+    public IdResponseData
+    appCreateWorkOrder(HttpServletResponse response,
+                       @RequestBody CustomerWorkOrderBean data) {
 
         log.info("app side createWorkOrder: {}", JSON.toJSONString(data));
         IdResponseData result = new IdResponseData();
@@ -338,18 +328,10 @@ public class CustomerWorkOrderController {
         WorkOrderType typeId = WorkOrderType.checkByCode(typeIdCode);
         Long merchantId = data.getMerchantId();
         Integer num = data.getNum();
-        String iAppId = data.getiAppId();
-        String tAppId = data.gettAppId();
+        String iAppId = data.getIAppId();
+        String tAppId = data.getTAppId();
 
-        if (null == orderId || orderId.isEmpty()) {
-            StringUtil.throw400Exp(response, "400002:所属订单不能空缺");
-            return result;
-        }
-        if (null == iAppId || iAppId.isEmpty()) {
-            StringUtil.throw400Exp(response, "400007:iAppId不能空缺");
-            return result;
-        }
-
+        data.checkFields();
         String configIAppIds = GuanAiTongConfig.getConfigGatIAppId();
         boolean isGat = false;
         if (null != configIAppIds && !configIAppIds.isEmpty() && configIAppIds.equals(iAppId)) {
@@ -359,64 +341,30 @@ public class CustomerWorkOrderController {
         if (isGat) {
             //GuanAiTong order
             if (null == tAppId || tAppId.isEmpty()) {
-                StringUtil.throw400Exp(response, "400007: 关爱通AppId不能空缺");
-                return result;
+                throw new MyException(MyErrorEnum.PARAM_GAT_APP_ID_BLANK);
             }
         }
-        if (null == customer || customer.isEmpty()) {
-            StringUtil.throw400Exp(response, "400003:客户不能空缺");
-            return result;
-        }
-        if (null == merchantId) {
-            StringUtil.throw400Exp(response, "400004:merchantId不能空缺");
-            return result;
-        }
 
-        if (null == typeIdCode ||
-                null == title || title.isEmpty()) {
-            StringUtil.throw400Exp(response, "400002:工单标题, 工单类型, 所属订单不能空缺");
-            return result;
-        }
-
-        if (null == typeId) {
-            StringUtil.throw400Exp(response, "400005:工单类型错误");
-            return result;
-        }
         BigDecimal decCouponDiscount = new BigDecimal(0);
         WorkOrder workOrder = new WorkOrder();
 
-        WorkOrder selectedWO;
-        try {
-            selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
-        } catch (Exception e) {
-            StringUtil.throw400Exp(response, "400009:" + e.getMessage());
-            return result;
-        }
+        WorkOrder selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
 
         boolean isFull = (null != selectedWO) &&
                 (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum());
         if (isFull) {
-            StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
-            return result;
+            throw new MyException(MyErrorEnum.REFUND_COUNT_OVERFLOW);
         }
 
         log.info("准备新建工单, 子订单号= {}" ,orderId);
-        JSONObject json;
-        try {
-            json = workOrderService.getOrderInfo(customer, orderId, merchantId);
-        } catch (Exception e) {
-            StringUtil.throw400Exp(response, "400007:" + e.getMessage());
-            return result;
-        }
+        JSONObject json= workOrderService.getOrderInfo(customer, orderId, merchantId);
         if (null == json) {
-            StringUtil.throw400Exp(response, "400007: searchOrder失败");
-            return result;
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_FAILED);
         }
 
         Integer parentOrderId = json.getInteger("id");
         if (null == parentOrderId) {
-            StringUtil.throw400Exp(response, "400008: searchOrder, 获取id失败");
-            return result;
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_ID_BLANK);
         } else {
             workOrder.setParentOrderId(parentOrderId);
         }
@@ -447,8 +395,7 @@ public class CustomerWorkOrderController {
         Integer orderNum = json.getInteger("num");
         if (null == orderNum) {
             log.error("searchOrder info: num is null");
-            StringUtil.throw400Exp(response, "400008: searchOrder info: num is null");
-            return result;
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_NUMBER_BLANK);
         } else {
             workOrder.setOrderGoodsNum(orderNum);
         }
@@ -497,22 +444,17 @@ public class CustomerWorkOrderController {
                 Constant.YI_YA_TONG_MERCHANT_ID == orderMerchantId &&
                 needYiYaTongHandle) {
 
-            try {
-                AoYiRefundResponseBean bean = workOrderService.getYiYaTongRefundNo(title, subStatus,thirdOrderSn,skuId);
-                if (null != bean) {
-                    workOrder.setRefundNo(bean.getServiceSn());
-                    //复用该字段保存星链子订单sn
-                    workOrder.setGuanaitongTradeNo(bean.getOrderSn());
-                    workOrder.setMerchantId(orderMerchantId);
-                } else {
-                    StringUtil.throw400Exp(response, "420001:所属订单状态不符和退款要求");
-                    return result;
-                }
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                StringUtil.throw400Exp(response, e.getMessage());
-                return result;
+
+            AoYiRefundResponseBean bean = workOrderService.getYiYaTongRefundNo(title, subStatus, thirdOrderSn, skuId);
+            if (null != bean) {
+                workOrder.setRefundNo(bean.getServiceSn());
+                //复用该字段保存星链子订单sn
+                workOrder.setGuanaitongTradeNo(bean.getOrderSn());
+                workOrder.setMerchantId(orderMerchantId);
+            } else {
+                throw new MyException(MyErrorEnum.API_SEARCH_ORDER_STATUS_INVALID);
             }
+
         }
         /*对怡亚通订单需要特别处理 end*/
         if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
@@ -597,15 +539,13 @@ public class CustomerWorkOrderController {
         //Long merchantId = data.getMerchantId();
 
         if (null == id || 0 == id) {
-            StringUtil.throw400Exp(response, "400002:ID is wrong");
-            return result;
+            throw new MyException(MyErrorEnum.PARAM_WORK_ORDER_ID_BLANK);
         }
 
         workOrder = workOrderService.getById(id);
 
         if (null == workOrder) {
-            StringUtil.throw400Exp(response, "400003:工单不存在");
-            return result;
+            throw new MyException(MyErrorEnum.WORK_ORDER_NO_NOT_FOUND);
         }
         if (null != title && !title.isEmpty() ) {
             workOrder.setTitle(title);
@@ -636,25 +576,16 @@ public class CustomerWorkOrderController {
         */
         workOrder.setUpdateTime(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
-        try {
-            workOrderService.updateById(workOrder);
-        } catch (RuntimeException ex) {
-            StringUtil.throw400Exp(response, "400006:"+ex.getMessage());
-        }
+        workOrderService.updateById(workOrder);
 
-        result.id = id;
+        result.id = workOrder.getId();
         response.setStatus(MyErrorMap.e201.getCode());
         log.info("update WorkOrder done");
         return result;
     }
 
-    private CustomerQueryWorkOrderBean fillbeanByOrderInfo(WorkOrder workOrder) throws Exception{
-        JSONObject json;
-        try {
-            json = workOrderService.getOrderInfo(workOrder.getReceiverId(), workOrder.getOrderId(), workOrder.getMerchantId());
-        }catch (Exception e) {
-            throw new Exception(e);
-        }
+    private CustomerQueryWorkOrderBean fillbeanByOrderInfo(WorkOrder workOrder){
+        JSONObject json = workOrderService.getOrderInfo(workOrder.getReceiverId(), workOrder.getOrderId(), workOrder.getMerchantId());
         if (null == json) {
             return null;
         }
@@ -705,18 +636,13 @@ public class CustomerWorkOrderController {
             orderId = orderId.trim();
         }
 
-        PageInfo<WorkOrder> pages;
-        try {
-            pages = workOrderService.selectPage(pageIndex, pageSize,
+        PageInfo<WorkOrder> pages = workOrderService.selectPage(pageIndex, pageSize,
                      null, null,customer,
                     null, null, orderId,
                     null, null, null,
                     null, null,
                     null,null);
-        }catch(Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return null;
-        }
+
 
         List<CustomerQueryWorkOrderBean> list = new ArrayList<>();
 
@@ -725,12 +651,9 @@ public class CustomerWorkOrderController {
                 CustomerQueryWorkOrderBean b = new CustomerQueryWorkOrderBean();
                 BeanUtils.copyProperties(a, b);
                 CustomerQueryWorkOrderBean remoteBean;
-                try {
-                    remoteBean = fillbeanByOrderInfo(a);
-                }catch (Exception e){
-                    StringUtil.throw400Exp(response, "400007:"+e.getMessage());
-                    return null;
-                }
+
+                remoteBean = fillbeanByOrderInfo(a);
+
                 if (null != remoteBean){
                     b.setImage(remoteBean.getImage());
                     b.setName(remoteBean.getName());
@@ -738,13 +661,8 @@ public class CustomerWorkOrderController {
                 }
 
                 if (WorkOrderStatusType.ACCEPTED.getCode().equals(b.getStatus())){
-                    List<WorkFlow> workFlows;
-                    try {
-                        workFlows = workFlowService.selectByWorkOrderId(b.getId(), b.getStatus());
-                    }catch (Exception e){
-                        StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-                        return null;
-                    }
+                    List<WorkFlow> workFlows = workFlowService.selectByWorkOrderId(b.getId(), b.getStatus());
+
                     if (null != workFlows && 0 < workFlows.size()){
                         b.setDescription(workFlows.get(0).getComments());
                     }
@@ -772,37 +690,23 @@ public class CustomerWorkOrderController {
 
         ValidNumResponseData result = new ValidNumResponseData();
 
-        WorkOrder workOrder;
-        try {
-            workOrder = workOrderService.getValidNumOfOrder(customer, orderId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return result;
-        }
-        response.setStatus(MyErrorMap.e200.getCode());
+        WorkOrder workOrder= workOrderService.getValidNumOfOrder(customer, orderId);
+
         if (null != workOrder) {
             result.validNum = (0>= workOrder.getReturnedNum()?0:workOrder.getReturnedNum());
             log.info("get valid number {}",result.validNum);
             return result;
         }
 
-        JSONObject json;
-        try {
-            json = workOrderService.getOrderInfo(customer, orderId, merchantId);
-        }catch (Exception e) {
-            StringUtil.throw400Exp(response, "400006:"+e.getMessage());
-            return result;
-        }
+        JSONObject json = workOrderService.getOrderInfo(customer, orderId, merchantId);
         if (null == json) {
-            StringUtil.throw400Exp(response, "400003:找不到订单信息");
-            return result;
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_FAILED);
         }
 
         Integer orderNum = json.getInteger("num");
         if (null == orderNum) {
             log.info("get order info err: num is null");
-            StringUtil.throw400Exp(response, "400004:订单信息中找不到num");
-            return result;
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_NUMBER_BLANK);
         } else {
             result.validNum = orderNum;
         }
@@ -814,55 +718,44 @@ public class CustomerWorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("orders/allRefunds")
-    public ResultObject<ParentOrderRefundData> appQueryParentOrderRefund(HttpServletResponse response,
-                                                      @ApiParam(value="子订单ID",required=true)@RequestParam String orderId
-    ) {
+    public ResultObject<ParentOrderRefundData>
+    appQueryParentOrderRefund(@ApiParam(value="子订单ID")@RequestParam(required = false) String orderId) {
 
         ParentOrderRefundData result = new ParentOrderRefundData();
-        response.setStatus(MyErrorMap.e400.getCode());
 
         if (null == orderId || orderId.isEmpty()){
-            return new ResultObject<>(400002,"子订单号不可省略",null);
+            throw new MyException(MyErrorEnum.PARAM_ORDER_ID_BLANK);
         }
 
-        JSONObject json;
-        try {
-            json = workOrderService.getOrderInfo(null, orderId, 0L);
-        }catch (Exception e) {
-            return new ResultObject<>(400007,e.getMessage(),null);
-        }
+        JSONObject json = workOrderService.getOrderInfo(null, orderId, 0L);
         if (null == json) {
-            return new ResultObject<>(400007,"searchOrder失败",null);
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_FAILED);
         }
 
         Integer parentOrderId = json.getInteger("id");
         if (null == parentOrderId) {
-            return new ResultObject<>(400008,"searchOrder, 获取id失败",null);
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_ID_BLANK);
         } else {
             result.parentOrderId = parentOrderId;
         }
 
         Integer paymentAmount = json.getInteger("paymentAmount");
         if (null == paymentAmount) {
-            return new ResultObject<>(400008,"searchOrder,  paymentAmount is null",null);
+            throw new MyException(MyErrorEnum.API_SEARCH_ORDER_FAILED," 返回缺失paymentAmount");
         } else {
             result.paymentAmount = paymentAmount;
         }
 
-        List<WorkOrder> workOrders;
-        try {
-            workOrders = workOrderService.selectByParentOrderId(parentOrderId);
-        }catch (Exception e) {
-            return new ResultObject<>(400006,e.getMessage(),null);
-        }
+        List<WorkOrder> workOrders= workOrderService.selectByParentOrderId(parentOrderId);
+
 
         List<OrderRefundBean> list = new ArrayList<>();
         result.result = list;
-        response.setStatus(MyErrorMap.e200.getCode());
+
         if (null == workOrders || 0 == workOrders.size()){
             result.realRefundAmount = 0;
             result.refundAmount = 0;
-            return new ResultObject<>(200,"success",result);
+            return new ResultObject<>(result);
         }
 
         for(WorkOrder a : workOrders){
@@ -884,7 +777,7 @@ public class CustomerWorkOrderController {
             list.add(b);
         }
 
-        return new ResultObject<>(200,"success",result);
+        return new ResultObject<>(result);
 
     }
 

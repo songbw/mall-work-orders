@@ -4,12 +4,14 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
 
+@Slf4j
 public class JwtTokenUtil {
 
     /**
@@ -76,16 +78,20 @@ public class JwtTokenUtil {
     public static String getUsername(String authentication) {
 
         if (null == authentication || authentication.isEmpty()) {
-            return "";
+            return null;
         }
         //System.out.println("==JWT Util= get authentication : " + authentication);
-        Claims claims = Jwts.parser().setSigningKey(SECRET)
-                .parseClaimsJws(authentication.replace(TOKEN_PREFIX, ""))
-                .getBody();
+        try {
+            Claims claims = Jwts.parser().setSigningKey(SECRET)
+                    .parseClaimsJws(authentication.replace(TOKEN_PREFIX, ""))
+                    .getBody();
 
-        String username = claims.getSubject();
-        //System.out.println("==JWT Util= get user name : " + username);
-        return username;
-
+            String username = claims.getSubject();
+            //System.out.println("==JWT Util= get user name : " + username);
+            return username;
+        }catch (Exception e){
+            log.error(e.getMessage(),e);
+            return null;
+        }
     }
 }

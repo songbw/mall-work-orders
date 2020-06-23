@@ -25,6 +25,7 @@ public interface IWorkOrderService extends IService<WorkOrder> {
 
     List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception;
 
+
     List<WorkOrder> selectByParentOrderId(Integer parentOrderId) throws Exception;
 
     List<WorkOrder> selectByTimeRange(String createTimeStart, String createTimeEnd) throws Exception;
@@ -44,7 +45,7 @@ public interface IWorkOrderService extends IService<WorkOrder> {
 
     int countReturn(String createTimeStart, String createTimeEnd) throws Exception;
 
-    WorkOrder getValidNumOfOrder(String openId, String sbuOrderId) throws Exception;
+    WorkOrder getValidNumOfOrder(String openId, String sbuOrderId);
 
     JSONObject getOrderInfo(String openId, String sbuOrderId, Long merchantId) throws Exception;
 
