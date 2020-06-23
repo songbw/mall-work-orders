@@ -58,7 +58,7 @@ public class CustomerWorkOrderController {
 
     }
 
-    @ApiModel(value = "工单信息ID")
+    @ApiModel(value = "订单可退款商品数量")
     private class ValidNumResponseData implements Serializable {
         @ApiModelProperty(value = "validNum", example = "1", required = true)
         public Integer validNum;
