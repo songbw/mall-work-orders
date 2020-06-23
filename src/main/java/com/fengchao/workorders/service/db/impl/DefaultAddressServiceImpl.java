@@ -1,4 +1,4 @@
-package com.fengchao.workorders.service.impl;
+package com.fengchao.workorders.service.db.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,10 +7,9 @@ import com.fengchao.workorders.constants.MyErrorEnum;
 import com.fengchao.workorders.entity.DefaultAddress;
 import com.fengchao.workorders.exception.MyException;
 import com.fengchao.workorders.mapper.DefaultAddressMapper;
-import com.fengchao.workorders.service.IDefaultAddressService;
+import com.fengchao.workorders.service.db.IDefaultAddressService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,6 @@ import java.util.List;
  * */
 
 @Slf4j
-@Transactional
 @Service
 public class DefaultAddressServiceImpl extends ServiceImpl<DefaultAddressMapper, DefaultAddress> implements IDefaultAddressService {
 

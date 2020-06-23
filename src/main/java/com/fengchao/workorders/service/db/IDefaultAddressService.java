@@ -1,4 +1,4 @@
-package com.fengchao.workorders.service;
+package com.fengchao.workorders.service.db;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fengchao.workorders.entity.DefaultAddress;

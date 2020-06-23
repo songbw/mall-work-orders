@@ -186,4 +186,10 @@ public class WorkOrder extends AbstractEntity{
     @TableField(COMMENTS)
     @JsonSerialize(using = ToStringSerializer.class)
     private String comments;
+
+    public final static String RENTER_ID = "renter_id";
+    @ApiModelProperty(value = "工单注释")
+    @TableField(RENTER_ID)
+    @JsonSerialize(using = ToStringSerializer.class)
+    private String renterId;
 }

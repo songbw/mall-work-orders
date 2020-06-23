@@ -5,7 +5,7 @@ import com.fengchao.workorders.bean.AddressBean;
 import com.fengchao.workorders.constants.MyErrorEnum;
 import com.fengchao.workorders.entity.DefaultAddress;
 import com.fengchao.workorders.exception.MyException;
-import com.fengchao.workorders.service.impl.DefaultAddressServiceImpl;
+import com.fengchao.workorders.service.db.impl.DefaultAddressServiceImpl;
 import com.fengchao.workorders.util.MyErrorMap;
 import com.fengchao.workorders.util.ResultObject;
 import io.swagger.annotations.*;

@@ -1,4 +1,4 @@
-package com.fengchao.workorders.service.impl;
+package com.fengchao.workorders.service.db.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -19,7 +19,7 @@ import com.fengchao.workorders.feign.OrderService;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.entity.*;
-import com.fengchao.workorders.service.IWorkOrderService;
+import com.fengchao.workorders.service.db.IWorkOrderService;
 //import org.joda.time.DateTime;
 //import org.springframework.beans.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
