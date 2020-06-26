@@ -581,8 +581,6 @@ public class WorkOrderController {
         if (null != tAppId && !tAppId.isEmpty()) {
             workOrder.settAppId(tAppId);
         }
-        workOrder.setCreateTime(new Date());
-        workOrder.setUpdateTime(new Date());
 
         try {
             result.id = workOrderService.insert(workOrder);
@@ -678,8 +676,6 @@ public class WorkOrderController {
         }
 */
 
-        workOrder.setUpdateTime(new Date());
-
         try {
             workOrderService.update(workOrder);
         }catch (Exception e) {
@@ -736,8 +732,7 @@ public class WorkOrderController {
         WorkFlow workFlow = new WorkFlow();
         workFlow.setWorkOrderId(workOrder.getId());
         workFlow.setCreatedBy("怡亚通通知");
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(workFlow.getCreateTime());
+
         workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(AoYiRefundCallBackPostBean.convert2workflowCommentsCode(aoyiRefundStatus,oldStatus),JSON.toJSONString(data)));
         /*
         if (AoYiRefundCallBackPostBean.isPassedStatus(aoyiRefundStatus)) {
@@ -757,6 +752,16 @@ public class WorkOrderController {
         }
 
         log.info("{} 新建工作流记录 {}", functionName, JSON.toJSONString(workFlow));
+
+        ////主动查询怡亚通退款状态获取退货地址
+        WorkFlow addressWorkFlow = workOrderService.getYiYaTongRetureAddress(workOrder);
+        if(null != addressWorkFlow){
+            String addressComments = addressWorkFlow.getComments();
+            addressWorkFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.NOTIFY_WAITING_RETURN_RECEIVED,addressComments));
+            workFlowService.insert(addressWorkFlow);
+            log.info("{} 新建工作流记录 {}", functionName, JSON.toJSONString(workFlow));
+        }
+
         return successResult;
     }
 

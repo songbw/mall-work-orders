@@ -431,7 +431,6 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
 
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-        wo.setUpdateTime(new Date());
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
@@ -500,7 +499,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         wo.setGuanaitongRefundAmount(refund_amount);
         wo.setGuanaitongTradeNo(trade_no);
         wo.setStatus(WorkOrderStatusType.CLOSED.getCode());
-        wo.setUpdateTime(new Date());
+
         try {
             workOrderDao.updateByPrimaryKey(wo);
         } catch (Exception ex) {
@@ -647,7 +646,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                     //to CLOSE work_order, if did not handle fare, set it to 0.00f, then can handle fare later.
                     wo.setFare(0.00f);
                 }
-                wo.setUpdateTime(new Date());
+
                 workOrderDao.updateByPrimaryKey(wo);
             }
         } catch (Exception ex) {
@@ -745,5 +744,33 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         }
         return responseBean;
 
+    }
+
+    @Override
+    public WorkFlow
+    getYiYaTongRetureAddress(WorkOrder workOrder) {
+        log.info("获取怡亚通退货地址 工单：{}",JSON.toJSONString(workOrder));
+        JSONObject responseJson = aoYiClient.getReturnStatus(workOrder.getRefundNo());
+        log.info("获取怡亚通退货地址 返回 response = {}",JSON.toJSONString(responseJson));
+        if (null != responseJson) {
+            Integer code = responseJson.getInteger("code");
+            if (null != code && 200 == code) {
+                JSONObject dataJson = responseJson.getJSONObject("data");
+                if (null != dataJson) {
+                    String address = dataJson.getString("recieveAddr");
+                    if(null != address){
+                        WorkFlow workFlow = new WorkFlow();
+                        workFlow.setStatus(WorkOrderStatusType.ACCEPTED.getCode());
+                        workFlow.setComments("退货地址: "+address);
+                        workFlow.setWorkOrderId(workOrder.getId());
+                        workFlow.setCreatedBy("怡亚通查询");
+
+                        return workFlow;
+                    }
+                }
+            }
+
+        }
+        return null;
     }
 }

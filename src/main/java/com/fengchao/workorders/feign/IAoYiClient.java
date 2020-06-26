@@ -1,5 +1,6 @@
 package com.fengchao.workorders.feign;
 
+import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.AoYiRefundOnlyPostBean;
 import com.fengchao.workorders.bean.AoYiRefundReturnPostBean;
 import com.fengchao.workorders.bean.YiYaTongReturnGoodsBean;
@@ -8,6 +9,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(value = "aoyi-client", fallback = AoYiClientH.class)
 public interface IAoYiClient {
@@ -20,5 +22,8 @@ public interface IAoYiClient {
 
     @RequestMapping(value = "/star/orders/return/goods", method = RequestMethod.POST)
     String postReturnGoods(@RequestBody YiYaTongReturnGoodsBean body);
+
+    @RequestMapping(value = "/star/orders/return/status", method = RequestMethod.GET)
+    JSONObject getReturnStatus(@RequestParam String serviceSn);
 
 }

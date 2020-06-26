@@ -299,8 +299,7 @@ public class CustomerWorkOrderController {
                 workOrderService.sendExpressInfo(workOrder,comments);
             }
         }
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
+
         if (!operator.isEmpty()) {
             workFlow.setCreatedBy(operator);
         }
@@ -319,7 +318,7 @@ public class CustomerWorkOrderController {
 
         if (!workFlow.getStatus().equals(workOrder.getStatus())) {
             workOrder.setStatus(workFlow.getStatus());
-            workOrder.setUpdateTime(new Date());
+
             try {
                 workOrderService.update(workOrder);
             }catch (Exception e) {
@@ -545,8 +544,6 @@ public class CustomerWorkOrderController {
         workOrder.setMerchantId(merchantId);
         workOrder.setStatus(WorkOrderStatusType.EDITING.getCode());
         workOrder.setReceiverId(customer);
-        workOrder.setCreateTime(new Date());
-        workOrder.setUpdateTime(new Date());
 
         //String username = null;//JwtTokenUtil.getUsername(authentication);
         //if (null != username) {
@@ -576,8 +573,7 @@ public class CustomerWorkOrderController {
             }else{
                 workFlow.setComments(WebSideWorkFlowStatusEnum.buildComments(WebSideWorkFlowStatusEnum.THIRD_SN_BLANK,"需要与怡亚通确认下单信息"));
             }
-            workFlow.setCreateTime(new Date());
-            workFlow.setUpdateTime(workFlow.getCreateTime());
+
             try {
                 workFlowService.insert(workFlow);
                 if (needYiYaTongHandle) {
@@ -660,7 +656,6 @@ public class CustomerWorkOrderController {
             workOrder.setMerchantId(merchantId);
         }
         */
-        workOrder.setUpdateTime(new Date());
 
         try {
             workOrderService.update(workOrder);

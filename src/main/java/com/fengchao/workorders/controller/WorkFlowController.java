@@ -212,8 +212,7 @@ public class WorkFlowController {
 
     private Long createWorkFlow(WorkOrder workOrder, WorkFlow workFlow){
         Long flowId;
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
+
         if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
                 && null != workOrder.getRefundNo()){
             String oldComments = workFlow.getComments();
@@ -241,8 +240,7 @@ public class WorkFlowController {
     private void
     updateFlowAndWorkorder(WorkOrder workOrder, WorkFlow workFlow,boolean canRollBackStatus) throws Exception{
         Long flowId;
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
+
         if (WorkOrderStatusType.REFUNDING.getCode().equals(workFlow.getStatus())
            && null != workOrder.getRefundNo()){
             String comments = workFlow.getComments();
@@ -269,7 +267,7 @@ public class WorkFlowController {
                 if (canRollBackStatus) {
                     //允许工单状态回退
                     workOrder.setStatus(workFlow.getStatus());
-                    workOrder.setUpdateTime(new Date());
+
                     workOrderService.update(workOrder);
                 } else {
                     workOrder = workOrderService.selectById(workOrderId);
@@ -277,7 +275,7 @@ public class WorkFlowController {
                         if (!WorkOrderStatusType.CLOSED.getCode().equals(workOrder.getStatus())) {
                             workOrder.setStatus(workFlow.getStatus());
                         }
-                        workOrder.setUpdateTime(new Date());
+
                         workOrderService.update(workOrder);
                     }
                 }
@@ -454,8 +452,6 @@ public class WorkFlowController {
             workFlow.setComments(comments);
         }
 
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
         if (null != username && !username.isEmpty()) {
             workFlow.setCreatedBy(username);
         }
@@ -651,7 +647,6 @@ public class WorkFlowController {
                                     workOrder.setRefundNo(outerRefundNo);
                                 }
                                 workOrder.setGuanaitongTradeNo(aggpayRefundNo);
-                                workOrder.setUpdateTime(new Date());
                                 workOrder.setRefundAmount(refund);
                                 workOrderService.update(workOrder);
                             }
@@ -716,8 +711,6 @@ public class WorkFlowController {
             StringUtil.throw400Exp(response, "400003:工单流程不存在");
             return result;
         }
-
-        workFlow.setUpdateTime(new Date());
 
         if (!username.isEmpty()) {
             workFlow.setUpdatedBy(username);
@@ -857,20 +850,20 @@ public class WorkFlowController {
                             json.getString("skuId")
                             );
             if (null != bean) {
-                workOrder.setRefundNo(bean.getServiceSn());
+                WorkOrder updateRecord = new WorkOrder();
+                updateRecord.setId(workOrder.getId());
+                updateRecord.setRefundNo(bean.getServiceSn());
                 //复用该字段保存星链子订单sn
-                workOrder.setGuanaitongTradeNo(bean.getOrderSn());
+                updateRecord.setGuanaitongTradeNo(bean.getOrderSn());
+                workOrderService.update(updateRecord);
+
             } else {
-                workFlow.setCreateTime(new Date());
-                workFlow.setUpdateTime(new Date());
                 workFlow.setComments("怡亚通退款申请失败");
                 workFlowService.insert(workFlow);
                 StringUtil.throw400Exp(response, "420101:怡亚通退款申请失败");
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            workFlow.setCreateTime(new Date());
-            workFlow.setUpdateTime(new Date());
             workFlow.setComments(e.getMessage());
             workFlowService.insert(workFlow);
 
@@ -878,8 +871,6 @@ public class WorkFlowController {
         }
 
         workFlow.setComments(comments+" 新申请怡亚通退款号："+workOrder.getGuanaitongTradeNo());
-        workFlow.setCreateTime(new Date());
-        workFlow.setUpdateTime(new Date());
 
         try {
             workFlowService.insert(workFlow);
