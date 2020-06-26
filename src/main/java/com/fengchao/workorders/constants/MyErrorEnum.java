@@ -10,6 +10,7 @@ public enum MyErrorEnum {
     RESPONSE_SUCCESS(200, "success"),
     RESPONSE_FUNCTION_ERROR(400, "failed"),
 
+    PARAM_VERIFY_ERROR(400004, "参数校验错误："),
     PARAM_DATE_TIME_STRING_WRONG(400005, "日期时间格式错误：YYYY-MM-DD hh:mm:ss"),
     PARAM_ADDRESS_BLANK(400006, "地址内容 content 缺失"),
     PARAM_I_APP_ID_BLANK(400007, "appId缺失"),

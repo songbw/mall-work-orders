@@ -5,18 +5,24 @@ import com.fengchao.workorders.util.ResultObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  * 异常统一处理
+ * @author clark
  * */
 @Slf4j
 @ControllerAdvice
@@ -24,15 +30,15 @@ import java.util.Map;
 public class MyExceptionHandler {
 
     /**
-     * 业务异常统一封装成400，返回code和message
+     * 业务异常统一封装成200，返回code和message
      *
-     * @param e
+     * @param e Exception
      * @return Map
      */
+    @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
     @ExceptionHandler(value = MyException.class)
-    public Map<String, Object> errorHandle(Exception e, HttpServletResponse response) {
-        Map<String, Object> map = new HashMap<>();
+    public ResultObject<String> errorHandle(MyException e) {
         if (log.isDebugEnabled()) {
             log.debug("raw message: " + e.getMessage());
         }
@@ -54,12 +60,7 @@ public class MyExceptionHandler {
             if (0 < msgIndex){
                 errMessage = message.substring(msgIndex+defMsg.length()).trim();
                 message = errMessage;
-            }/*else {
-                if (message.contains(":")) {
-                    String[] errInfo = message.split(":");
-                    errMessage = errInfo[errInfo.length - 1].trim();
-                }
-            }*/
+            }
 
             int codeIndexBegin = message.indexOf("@");
             int codeIndexEnd = message.indexOf("@",codeIndexBegin+1);
@@ -80,37 +81,85 @@ public class MyExceptionHandler {
             }
         }
 
-        if (null != e.getCause()) {
-            map.put(ResultObject.DATA,e.getCause().getMessage());
-        }
-        map.put(ResultObject.MESSAGE,errMessage);
-        map.put(ResultObject.CODE,errCode);
-
-        response.setStatus(MyErrorEnum.RESPONSE_FUNCTION_ERROR.getCode());
-        return map;
+        return new ResultObject<>(errCode,errMessage, null);
     }
+
 
     /**
      * 参数格式错误，统一回复400
      *
-     * @param request
-     * @param e
-     * @return
+     * @param request httpRequest
+     * @param e Exception
+     * @return result
      */
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseBody
     public ResultObject<String> handleParseException(HttpMessageNotReadableException e, HttpServletRequest request) {
-        log.error("{},请求参数错误:", request.getRequestURL(), e);
-        return new ResultObject<>(400,e.getLocalizedMessage(),null);
+        log.error("{},请求参数错误 {}:", request.getRequestURL(), e.getMessage());
+        return new ResultObject<>(400,e.getMessage(),null);
+    }
+
+    /**
+     * 参数校验错误，统一回复400
+     *
+     * @param request httpRequest
+     * @param e Exception
+     * @return result
+     */
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
+    public ResultObject<String> handleVerifyException(MethodArgumentNotValidException e, HttpServletRequest request) {
+        log.error("{},请求参数错误: {}", request.getRequestURL(), e.getMessage() );
+        String errorMessage = e.getMessage();
+        BindingResult bindingResult = e.getBindingResult();
+        if(null != bindingResult.getFieldError()){
+            FieldError fieldError = bindingResult.getFieldError();
+            String defaultMessage = fieldError.getDefaultMessage();
+            if(null != defaultMessage && !defaultMessage.isEmpty()){
+                errorMessage = defaultMessage;
+            }
+
+        }
+
+        return new ResultObject<>(MyErrorEnum.PARAM_VERIFY_ERROR.getCode(),MyErrorEnum.PARAM_VERIFY_ERROR.getMsg()+ errorMessage,null);
+    }
+
+
+    /**
+     * 参数验证异常统一在此处理，统一回复400
+     *
+     * @param request httpRequest
+     * @param e Exception
+     * @return result
+     */
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    public ResultObject<String> handleConstraintViolationException(ConstraintViolationException e, HttpServletRequest request) {
+        log.error("{},系统异常详细信息:{} - {}", request.getRequestURL(),e.getMessage(),e.getConstraintViolations().toString());
+        String errorMessage = e.getMessage();
+        if (null != e.getConstraintViolations()){
+            Iterator iterator = e.getConstraintViolations().iterator();
+            while (iterator.hasNext()) {
+                ConstraintViolation item=(ConstraintViolation)iterator.next();
+                if(null != item && null != item.getMessage()){
+                    errorMessage = item.getMessage();
+                }
+            }
+
+        }
+
+        return new ResultObject<>(400,errorMessage,null);
     }
 
     /**
      * 非业务异常统一在此处理，统一回复500
      *
-     * @param request
-     * @param e
-     * @return
+     * @param request httpRequest
+     * @param e Exception
+     * @return result
      */
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)

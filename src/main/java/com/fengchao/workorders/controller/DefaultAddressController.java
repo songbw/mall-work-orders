@@ -10,18 +10,23 @@ import com.fengchao.workorders.util.MyErrorMap;
 import com.fengchao.workorders.util.ResultObject;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.util.*;
 
 /**
  * 退货默认地址管理
  * @author Clark
  * */
+@Validated
 @Slf4j
 @Api(tags="DefaultAddressAPI", description = "缺省地址管理相关", produces = "application/json;charset=UTF-8")
 @RestController
@@ -116,4 +121,18 @@ public class DefaultAddressController {
         return new ResultObject<>();
     }
 
+    @ApiOperation(value = "test")
+    @ApiResponses({ @ApiResponse(code = 400, message = "failed to create record") })
+    @ResponseStatus(code = HttpStatus.CREATED)
+    @GetMapping("test")
+    public ResultObject<String>
+    test(@RequestParam
+         @Length(min = 2, max = 10, message = "name 长度必须在 {min} - {max} 之间")
+                 String name
+) {
+
+        log.info("test 入参 {}", name);
+
+        return new ResultObject<>();
+    }
 }
