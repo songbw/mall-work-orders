@@ -1,18 +1,10 @@
 package com.fengchao.workorders.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
-import com.fengchao.workorders.config.GuanAiTongConfig;
-import com.fengchao.workorders.constants.MyErrorEnum;
-import com.fengchao.workorders.constants.WorkOrderStatusType;
-import com.fengchao.workorders.constants.WorkOrderType;
 import com.fengchao.workorders.dto.ParentOrderRefundData;
 import com.fengchao.workorders.dto.WorkFlowBeanList;
-import com.fengchao.workorders.exception.MyException;
-import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.entity.*;
-import com.fengchao.workorders.service.db.impl.*;
 import com.fengchao.workorders.service.impl.AppSideWorkOrderServiceImpl;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
@@ -21,7 +13,6 @@ import io.swagger.annotations.*;
 //import org.slf4j.LoggerFactory;
 //import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,12 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
 
 /**
  *
@@ -90,11 +76,10 @@ public class CustomerWorkOrderController {
                       @RequestHeader(value="renterId",required = false) String renterId,
                       @RequestBody WorkFlowBodyBean data) {
 
-        log.info("app side create WorkFlow enter : param {}", JSON.toJSONString(data));
+        log.info("APP创建工单处理流程信息 入参： {}", JSON.toJSONString(data));
         IdResponseData result = new IdResponseData();
         WorkFlow workFlow = appSideWorkOrderService.handleWorkOrder(renterId,data);
         result.id = workFlow.getId();
-        response.setStatus(MyErrorMap.e201.getCode());
         log.info("create WorkFlow and update workOrdersuccess ");
         return result;
 
@@ -105,18 +90,17 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_orders")
     public IdResponseData
-    appCreateWorkOrder(HttpServletResponse response,
+    appCreateWorkOrder(
                        @RequestHeader(value="renterId",required = false) String renterId,
                        @RequestBody CustomerWorkOrderBean data) {
 
-        log.info("app side createWorkOrder: {}", JSON.toJSONString(data));
+        log.info("APP创建工单信息: {}", JSON.toJSONString(data));
         IdResponseData result = new IdResponseData();
 
         WorkOrder workOrder = appSideWorkOrderService.createWorkOrder(renterId,data);
-        response.setStatus(MyErrorMap.e201.getCode());
         result.id = workOrder.getId();
 
-        log.info("createWorkOrder success {} ", JSON.toJSONString(workOrder));
+        log.info("APP创建工单信息 完成 {} ", JSON.toJSONString(workOrder));
         return result;
 
     }
@@ -126,19 +110,19 @@ public class CustomerWorkOrderController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PutMapping("work_orders/{id}")
     public IdResponseData
-    appUpdateWorkOrder(HttpServletResponse response,
+    appUpdateWorkOrder(
                        @ApiParam(value="id",required=true)@PathVariable("id") Long id,
                        @RequestHeader(value="renterId",required = false) String renterId,
                        @RequestBody CustomerWorkOrderBean data) {
 
-        log.info("app side updateWorkOrder: id={}, param: {}",id, JSON.toJSONString(data));
+        log.info("APP更新工单信息: id={}, param: {}",id, JSON.toJSONString(data));
 
         IdResponseData result = new IdResponseData();
         WorkOrder updatedWorkOrder = appSideWorkOrderService.updateWorkOrder(renterId,data,id);
 
         result.id = updatedWorkOrder.getId();
-        response.setStatus(MyErrorMap.e201.getCode());
-        log.info("update WorkOrder done");
+
+        log.info("APP更新工单信息 done");
         return result;
     }
 

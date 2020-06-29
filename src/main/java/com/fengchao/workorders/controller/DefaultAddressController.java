@@ -18,8 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.util.*;
 
 /**
@@ -74,49 +72,33 @@ public class DefaultAddressController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("addresses")
     public ResultObject<DefaultAddress>
-    createAddress(HttpServletResponse response,
-                  @RequestBody AddressBean data) {
-
+    createAddress(@RequestBody AddressBean data) {
         log.info("新建地址信息 入参 {}", JSON.toJSONString(data));
-        DefaultAddress record = DefaultAddress.convert(data);
-        DefaultAddress newRecord = defaultAddressService.createRecord(record);
-        response.setStatus(201);
-        return new ResultObject<>(newRecord);
+        return new ResultObject<>(defaultAddressService.createRecord(DefaultAddress.convert(data)));
     }
 
     @ApiOperation(value = "更新地址信息", notes = "更新地址信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to update record") })
     @ResponseStatus(code = HttpStatus.OK)
     @PutMapping("addresses/{id}")
-    public ResultObject<DefaultAddress> updateAddress(HttpServletResponse response,
-                                @ApiParam(value="id",required=true)@PathVariable("id") Long id,
-                                @RequestBody AddressBean data) {
-
+    public ResultObject<DefaultAddress>
+    updateAddress(@ApiParam(value="id",required=true)@PathVariable("id") Long id,
+                  @RequestBody AddressBean data) {
         log.info("更新地址信息 入参 {}", JSON.toJSONString(data));
-
         DefaultAddress address = DefaultAddress.updateConvert(data);
-        DefaultAddress updatedRecord = defaultAddressService.updateRecordById(address,id);
-
-        response.setStatus(201);
-        return new ResultObject<>(updatedRecord);
+        return new ResultObject<>(defaultAddressService.updateRecordById(address,id));
     }
 
     @ApiOperation(value = "删除地址信息", notes = "删除地址信息")
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to delete record") })
-    @ResponseStatus(code = HttpStatus.OK)
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
     @DeleteMapping("addresses/{id}")
-    public ResultObject<String> deleteAddress(HttpServletResponse response,
-                                  @ApiParam(value="id",required=true)@PathVariable("id") long id) {
+    public ResultObject<String>
+    deleteAddress(@ApiParam(value="id",required=true)@PathVariable("id") long id) {
 
         DefaultAddress record = defaultAddressService.selectById(id);
         log.info("删除记录 {}",JSON.toJSONString(record));
-        try{
-            defaultAddressService.removeById(id);
-        }catch (Exception e){
-            throw new MyException(MyErrorEnum.MYSQL_ERROR);
-        }
-
-        response.setStatus(MyErrorMap.e204.getCode());
+        defaultAddressService.removeById(id);
         log.info("删除记录 成功");
         return new ResultObject<>();
     }
@@ -126,13 +108,19 @@ public class DefaultAddressController {
     @ResponseStatus(code = HttpStatus.CREATED)
     @GetMapping("test")
     public ResultObject<String>
-    test(@RequestParam
+    test(@RequestParam(required = false) String mayNull,
+         @RequestParam
          @Length(min = 2, max = 10, message = "name 长度必须在 {min} - {max} 之间")
-                 String name
-) {
+                 String name ) {
 
         log.info("test 入参 {}", name);
 
-        return new ResultObject<>();
+        String result = Optional
+                .ofNullable(mayNull)
+                .map(a->a+"after map")
+                .filter(a->a.contains("123"))
+                .orElseGet(()->"is Null");
+
+        return ResultObject.isOk().data(result);
     }
 }

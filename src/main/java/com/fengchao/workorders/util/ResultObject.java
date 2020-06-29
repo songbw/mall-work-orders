@@ -5,6 +5,8 @@ import com.fengchao.workorders.constants.MyErrorEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.io.Serializable;
 //import lombok.AllArgsConstructor;
 
 @Getter
@@ -12,7 +14,7 @@ import lombok.ToString;
 @ToString
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 //@AllArgsConstructor
-public class ResultObject<T>{
+public class ResultObject<T> implements Serializable {
     public static final String CODE = "code";
     public static final String MESSAGE = "msg";
     public static final String DATA = "data";
@@ -45,4 +47,12 @@ public class ResultObject<T>{
         this.data = data;
     }
 
+    public static ResultObject isOk(){
+        return new ResultObject();
+    }
+
+    public ResultObject data(T data){
+        this.setData(data);
+        return this;
+    }
 }

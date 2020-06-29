@@ -85,7 +85,7 @@ public class WorkFlowController {
     getWorkFlowById(@ApiParam(value="id",required=true)@PathVariable("id") Long id) {
         List<WorkFlowBean> beans = new ArrayList<>();
         List<WorkFlow> workFlows =
-                Optional.ofNullable(workFlowService.selectByWorkOrderId(id,null)).orElse(new ArrayList<>(0));
+                Optional.ofNullable(workFlowService.selectByWorkOrderId(id,null)).orElseGet(()->new ArrayList<>(0));
         workFlows.forEach(flow->beans.add(WorkFlowBean.convert(flow)));
         return beans;
     }
@@ -124,15 +124,12 @@ public class WorkFlowController {
     @ApiResponses({ @ApiResponse(code = 400, message = "特别处理重新打开工单失败") })
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("work_flows/work_order")
-    public IdData renewProfile(HttpServletResponse response,
+    public IdData renewProfile(
                                 @RequestHeader(value="Authorization",required = false) String authentication,
                                 @RequestBody WorkFlowBodyBean data) {
 
         log.info("特别处理重新打开工单 入参 {}", JSON.toJSONString(data));
-        IdData result = new IdData();
-        if(null == data){
-            return result;
-        }
+
 
         Long workOrderId = data.getWorkOrderId();
         WorkOrderStatusType nextStatus = WorkOrderStatusType.EDITING;
@@ -196,9 +193,9 @@ public class WorkFlowController {
         }
 
         updateFlowAndWorkorder(workOrder,workFlow,true);
-
+        IdData result = new IdData();
         result.id = workFlow.getId();
-        response.setStatus(MyErrorMap.e201.getCode());
+
         log.info("特别处理重新打开工单 success");
         return result;
     }
