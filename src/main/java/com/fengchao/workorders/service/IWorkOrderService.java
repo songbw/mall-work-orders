@@ -1,9 +1,7 @@
 package com.fengchao.workorders.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.fengchao.workorders.bean.AggPayNotifyBean;
-import com.fengchao.workorders.bean.AoYiRefundResponseBean;
-import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
+import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.model.WorkFlow;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
@@ -94,4 +92,6 @@ public interface IWorkOrderService {
 
     WorkFlow
     getYiYaTongRetureAddress(WorkOrder workOrder);
+
+    OperaResponse syncAdd(ThirdWorkOrderBean bean) ;
 }

@@ -9,6 +9,7 @@ import com.fengchao.workorders.feign.IAggPayClient;
 import com.fengchao.workorders.feign.IAoYiClient;
 import com.fengchao.workorders.feign.IGuanAiTongClient;
 import com.fengchao.workorders.feign.OrderService;
+import com.fengchao.workorders.mapper.WorkFlowMapper;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.model.*;
@@ -18,6 +19,8 @@ import com.fengchao.workorders.service.IWorkOrderService;
 //import org.springframework.beans.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
+import org.graalvm.compiler.nodes.calc.IntegerDivRemNode;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
@@ -41,6 +44,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     //private RestTemplate restTemplate;
     private WorkOrderMapper mapper;
     private IAoYiClient aoYiClient;
+    private WorkFlowMapper workFlowMapper ;
     // @Autowired
     // private RedisTemplate<Object, Object> redisTemplate;
 
@@ -49,6 +53,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                                 WorkOrderMapper mapper,
                                 IGuanAiTongClient guanAiTongClient,
                                 IAoYiClient aoYiClient,
+                                WorkFlowMapper workFlowMapper,
                                 OrderService orderService
                               ) {
         this.workOrderDao = workOrderDao;
@@ -57,6 +62,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         this.guanAiTongClient = guanAiTongClient;
         this.mapper = mapper;
         this.aoYiClient = aoYiClient;
+        this.workFlowMapper = workFlowMapper ;
     }
 
     @Override
@@ -772,5 +778,21 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         }
         return null;
+    }
+
+    @Override
+    public OperaResponse syncAdd(ThirdWorkOrderBean bean) {
+        OperaResponse response = new OperaResponse() ;
+        bean.setId(null);
+        WorkOrder workOrder = new WorkOrder() ;
+        BeanUtils.copyProperties(bean, workOrder);
+        mapper.insertSelective(workOrder) ;
+        List<WorkFlow> workFlows = bean.getWorkFlows() ;
+        workFlows.forEach(workFlow -> {
+            workFlow.setId(null);
+            workFlow.setWorkOrderId(workOrder.getId());
+            workFlowMapper.insertSelective(workFlow) ;
+        });
+        return response;
     }
 }
