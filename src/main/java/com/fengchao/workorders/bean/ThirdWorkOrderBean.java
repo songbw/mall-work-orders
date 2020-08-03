@@ -14,5 +14,5 @@ import java.util.List;
 @Setter
 @Getter
 public class ThirdWorkOrderBean extends WorkOrder {
-    private List<WorkFlow> workFlowList ;
+    private List<WorkFlow> workFlows ;
 }
