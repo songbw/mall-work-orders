@@ -8,6 +8,7 @@ import com.fengchao.workorders.model.WorkFlow;
 import com.fengchao.workorders.model.WorkFlowExample;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.model.WorkOrderExample;
+import com.fengchao.workorders.util.JSONUtil;
 import com.fengchao.workorders.util.PageInfo;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -234,6 +235,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         WorkOrderExample.Criteria criteria = example.createCriteria();
         criteria.andParentOrderIdEqualTo(parentOrderId);
         List<WorkOrder> workOrders = mapper.selectByExample(example) ;
+        log.info("selectByParentOrderId 结果： {}", JSONUtil.toJsonString(workOrders));
         return workOrders;
     }
 }
