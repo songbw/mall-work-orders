@@ -5,10 +5,7 @@ import com.fengchao.workorders.service.impl.WorkOrderServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 订单列表
@@ -21,11 +18,10 @@ public class ThirdWorkOrderController {
     @Autowired
     private WorkOrderServiceImpl service;
 
-    @GetMapping
-    private OperaResponse getAll(@RequestParam("orderId") String orderId) {
+    @GetMapping("/{orderId}")
+    private OperaResponse getAll(@PathVariable("orderId") Integer orderId) {
         OperaResponse response = new OperaResponse() ;
-        int id = Integer.valueOf(orderId);
-        response.setData(service.selectWorkOrderByOrderId(id));
+        response.setData(service.selectWorkOrderByOrderId(orderId));
         return response;
     }
 
