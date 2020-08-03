@@ -227,4 +227,13 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         List<WorkFlow> list = workFlowMapper.selectByExample(example);
         return list;
     }
+
+    @Override
+    public List<WorkOrder> selectByParentOrderId(Integer parentOrderId) {
+        WorkOrderExample example = new WorkOrderExample();
+        WorkOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andParentOrderIdEqualTo(parentOrderId);
+        List<WorkOrder> workOrders = mapper.selectByExample(example) ;
+        return workOrders;
+    }
 }

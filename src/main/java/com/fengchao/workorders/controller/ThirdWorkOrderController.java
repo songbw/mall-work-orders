@@ -21,7 +21,7 @@ public class ThirdWorkOrderController {
     private IWorkOrderService service;
 
     @GetMapping
-    private OperaResponse getAll(String orderId) {
+    private OperaResponse getAll(Integer orderId) {
         OperaResponse response = new OperaResponse() ;
         response.setData(service.selectWorkOrderByOrderId(orderId));
         return response;

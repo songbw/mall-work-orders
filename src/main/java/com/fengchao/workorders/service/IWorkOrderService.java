@@ -60,6 +60,6 @@ public interface IWorkOrderService {
 
     String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception;
 
-    List<ThirdWorkOrderBean> selectWorkOrderByOrderId(String orderId) ;
+    List<ThirdWorkOrderBean> selectWorkOrderByOrderId(Integer orderId) ;
 
 }

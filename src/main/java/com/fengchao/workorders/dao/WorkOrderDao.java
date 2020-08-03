@@ -60,4 +60,6 @@ public interface WorkOrderDao {
     List<WorkOrder> selectRefundSuccessOrderDetailIdList(Long merchantId, Date startTime, Date endTime);
 
     List<WorkFlow> selectWorkFlowByWorkOrderId(Long workOrderId) ;
+
+    List<WorkOrder> selectByParentOrderId(Integer parentOrderId) ;
 }
