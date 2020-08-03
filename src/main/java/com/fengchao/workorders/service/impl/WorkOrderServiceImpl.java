@@ -594,21 +594,16 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
     @Override
     public List<ThirdWorkOrderBean> selectWorkOrderByOrderId(Integer orderId) {
-        try {
-            List<WorkOrder> workOrders = workOrderDao.selectByParentOrderId(orderId) ;
-            List<ThirdWorkOrderBean> thirdWorkOrderBeans = new ArrayList<>() ;
-            workOrders.forEach(workOrder -> {
-                ThirdWorkOrderBean thirdWorkOrderBean = new ThirdWorkOrderBean();
-                BeanUtils.copyProperties(workOrder, thirdWorkOrderBean);
-                List<WorkFlow> workFlows = workOrderDao.selectWorkFlowByWorkOrderId(workOrder.getId()) ;
-                thirdWorkOrderBean.setWorkFlowList(workFlows);
-                thirdWorkOrderBeans.add(thirdWorkOrderBean) ;
-            });
-            return thirdWorkOrderBeans ;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        List<WorkOrder> workOrders = workOrderDao.selectByParentOrderId(orderId) ;
+        List<ThirdWorkOrderBean> thirdWorkOrderBeans = new ArrayList<>() ;
+        workOrders.forEach(workOrder -> {
+            ThirdWorkOrderBean thirdWorkOrderBean = new ThirdWorkOrderBean();
+            BeanUtils.copyProperties(workOrder, thirdWorkOrderBean);
+            List<WorkFlow> workFlows = workOrderDao.selectWorkFlowByWorkOrderId(workOrder.getId()) ;
+            thirdWorkOrderBean.setWorkFlowList(workFlows);
+            thirdWorkOrderBeans.add(thirdWorkOrderBean) ;
+        });
+        return thirdWorkOrderBeans ;
     }
 
 
