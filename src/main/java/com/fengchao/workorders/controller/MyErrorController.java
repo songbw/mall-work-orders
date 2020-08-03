@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice
+//@ControllerAdvice
 @ResponseBody
 public class MyErrorController {
 
