@@ -17,7 +17,7 @@ import java.util.List;
  * 订单列表
  */
 @RestController
-@RequestMapping(value = "/third/workorder")
+@RequestMapping(value = "/third")
 @Slf4j
 public class ThirdWorkOrderController {
 
@@ -25,8 +25,8 @@ public class ThirdWorkOrderController {
     private IWorkOrderService service;
 
 
-    @PostMapping
-    private OperaResponse add(@RequestBody ThirdWorkOrderBean bean) {
+    @PostMapping("workorder")
+    public OperaResponse add(@RequestBody ThirdWorkOrderBean bean) {
         return service.syncAdd(bean);
     }
 
