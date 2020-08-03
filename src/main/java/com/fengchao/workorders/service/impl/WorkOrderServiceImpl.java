@@ -595,6 +595,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     @Override
     public List<ThirdWorkOrderBean> selectWorkOrderByOrderId(Integer orderId) {
         List<WorkOrder> workOrders = workOrderDao.selectByParentOrderId(orderId) ;
+        log.info("selectWorkOrderByOrderId is : {}", JSONUtil.toJsonString(workOrders));
         List<ThirdWorkOrderBean> thirdWorkOrderBeans = new ArrayList<>() ;
         workOrders.forEach(workOrder -> {
             ThirdWorkOrderBean thirdWorkOrderBean = new ThirdWorkOrderBean();
