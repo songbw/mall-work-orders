@@ -22,7 +22,7 @@ public class ThirdWorkOrderController {
     private WorkOrderServiceImpl service;
 
     @GetMapping("workorder")
-    private OperaResponse getAll(@RequestParam("orderId") Integer orderId) {
+    public OperaResponse getAll(@RequestParam("orderId") Integer orderId) {
         OperaResponse response = new OperaResponse() ;
         response.setData(service.selectWorkOrderByOrderId(orderId));
         return response;
