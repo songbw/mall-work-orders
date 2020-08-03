@@ -601,7 +601,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             ThirdWorkOrderBean thirdWorkOrderBean = new ThirdWorkOrderBean();
             BeanUtils.copyProperties(workOrder, thirdWorkOrderBean);
             List<WorkFlow> workFlows = workOrderDao.selectWorkFlowByWorkOrderId(workOrder.getId()) ;
-            thirdWorkOrderBean.setWorkFlowList(workFlows);
+            thirdWorkOrderBean.setWorkFlows(workFlows);
             thirdWorkOrderBeans.add(thirdWorkOrderBean) ;
         });
         return thirdWorkOrderBeans ;
