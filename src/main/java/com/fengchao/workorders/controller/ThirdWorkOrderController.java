@@ -3,6 +3,7 @@ package com.fengchao.workorders.controller;
 import com.fengchao.workorders.bean.OperaResponse;
 import com.fengchao.workorders.bean.ThirdWorkOrderBean;
 import com.fengchao.workorders.service.IWorkOrderService;
+import com.fengchao.workorders.service.impl.WorkOrderServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -22,7 +23,7 @@ import java.util.List;
 public class ThirdWorkOrderController {
 
     @Autowired
-    private IWorkOrderService service;
+    private WorkOrderServiceImpl service;
 
 
     @PostMapping("workorder")
