@@ -14,6 +14,7 @@ import com.fengchao.workorders.dao.impl.WorkOrderDaoImpl;
 import com.fengchao.workorders.service.IWorkOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -589,6 +590,25 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         /* End*/
 
         return guanAiTongNo;
+    }
+
+    @Override
+    public List<ThirdWorkOrderBean> selectWorkOrderByOrderId(String orderId) {
+        try {
+            List<WorkOrder> workOrders = workOrderDao.selectByOrderId(orderId) ;
+            List<ThirdWorkOrderBean> thirdWorkOrderBeans = new ArrayList<>() ;
+            workOrders.forEach(workOrder -> {
+                ThirdWorkOrderBean thirdWorkOrderBean = new ThirdWorkOrderBean();
+                BeanUtils.copyProperties(workOrder, thirdWorkOrderBean);
+                List<WorkFlow> workFlows = workOrderDao.selectWorkFlowByWorkOrderId(workOrder.getId()) ;
+                thirdWorkOrderBean.setWorkFlowList(workFlows);
+                thirdWorkOrderBeans.add(thirdWorkOrderBean) ;
+            });
+            return thirdWorkOrderBeans ;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 

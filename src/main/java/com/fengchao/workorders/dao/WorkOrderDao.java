@@ -1,5 +1,6 @@
 package com.fengchao.workorders.dao;
 
+import com.fengchao.workorders.model.WorkFlow;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
 import org.apache.ibatis.annotations.Param;
@@ -57,4 +58,6 @@ public interface WorkOrderDao {
      * @return
      */
     List<WorkOrder> selectRefundSuccessOrderDetailIdList(Long merchantId, Date startTime, Date endTime);
+
+    List<WorkFlow> selectWorkFlowByWorkOrderId(Long workOrderId) ;
 }

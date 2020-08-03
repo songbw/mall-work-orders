@@ -2,6 +2,7 @@ package com.fengchao.workorders.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.GuanAiTongNotifyBean;
+import com.fengchao.workorders.bean.ThirdWorkOrderBean;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.util.PageInfo;
 
@@ -58,5 +59,7 @@ public interface IWorkOrderService {
     List<WorkOrder> querySuccessRefundOrderDetailIdList(Long merchantId, Date startTime, Date endTime) throws Exception;
 
     String sendRefund2GuangAiTong(Long workOrderId, Integer handleFare, Float refund) throws Exception;
+
+    List<ThirdWorkOrderBean> selectWorkOrderByOrderId(String orderId) ;
 
 }

@@ -3,7 +3,6 @@ package com.fengchao.workorders.service;
 import com.fengchao.workorders.model.WorkFlow;
 import com.fengchao.workorders.util.PageInfo;
 
-//import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 //import java.util.Map;

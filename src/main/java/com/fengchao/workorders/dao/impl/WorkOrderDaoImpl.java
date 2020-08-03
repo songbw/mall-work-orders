@@ -1,8 +1,11 @@
 package com.fengchao.workorders.dao.impl;
 
 import com.fengchao.workorders.dao.WorkOrderDao;
+import com.fengchao.workorders.mapper.WorkFlowMapper;
 import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.mapper.WorkOrderXMapper;
+import com.fengchao.workorders.model.WorkFlow;
+import com.fengchao.workorders.model.WorkFlowExample;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.model.WorkOrderExample;
 import com.fengchao.workorders.util.PageInfo;
@@ -23,10 +26,13 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
     private WorkOrderXMapper workOrderXMapper;
 
+    private WorkFlowMapper workFlowMapper ;
+
     @Autowired
-    public WorkOrderDaoImpl(WorkOrderMapper mapper, WorkOrderXMapper workOrderXMapper) {
+    public WorkOrderDaoImpl(WorkOrderMapper mapper, WorkOrderXMapper workOrderXMapper, WorkFlowMapper workFlowMapper) {
         this.mapper = mapper;
         this.workOrderXMapper = workOrderXMapper;
+        this.workFlowMapper = workFlowMapper ;
     }
 
     @Override
@@ -211,5 +217,14 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
 
         List<WorkOrder> workOrderList = mapper.selectByExample(example);
         return workOrderList;
+    }
+
+    @Override
+    public List<WorkFlow> selectWorkFlowByWorkOrderId(Long workOrderId) {
+        WorkFlowExample example = new WorkFlowExample();
+        WorkFlowExample.Criteria criteria = example.createCriteria();
+        criteria.andWorkOrderIdEqualTo(workOrderId);
+        List<WorkFlow> list = workFlowMapper.selectByExample(example);
+        return list;
     }
 }
