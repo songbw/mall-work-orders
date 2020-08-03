@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -21,7 +22,7 @@ public class ThirdWorkOrderController {
     private WorkOrderServiceImpl service;
 
     @GetMapping
-    private OperaResponse getAll(Integer orderId) {
+    private OperaResponse getAll(@RequestParam("orderId") Integer orderId) {
         OperaResponse response = new OperaResponse() ;
         response.setData(service.selectWorkOrderByOrderId(orderId));
         return response;
