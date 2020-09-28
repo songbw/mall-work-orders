@@ -1,12 +1,13 @@
 package com.fengchao.workorders.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.feign.IAggPayClient;
+import com.fengchao.workorders.feign.VendorsServiceClient;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
+import com.fengchao.workorders.rpc.VendorsRpcService;
 import com.fengchao.workorders.service.impl.*;
 import com.fengchao.workorders.util.*;
 import com.fengchao.workorders.util.PageInfo;
@@ -15,8 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 //import java.io.IOException;
 import java.io.Serializable;
-import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +41,7 @@ public class WorkOrderController {
     private WorkOrderServiceImpl workOrderService;
     private IAggPayClient aggPayClient;
     private WorkFlowServiceImpl workFlowService;
+    private VendorsRpcService vendorsRpcService ;
 
     @ApiModel(value = "工单信息ID")
     private class IdData implements Serializable {
@@ -73,11 +74,13 @@ public class WorkOrderController {
     @Autowired
     public WorkOrderController(IAggPayClient aggPayClient,
                                WorkFlowServiceImpl workFlowService,
-                               WorkOrderServiceImpl workOrderService
+                               WorkOrderServiceImpl workOrderService,
+                               VendorsRpcService vendorsRpcService
                              ) {
         this.workOrderService = workOrderService;
         this.aggPayClient = aggPayClient;
         this.workFlowService = workFlowService;
+        this.vendorsRpcService = vendorsRpcService ;
     }
 
     private Date getDateType(String timeStr, boolean isEnd) throws Exception{
@@ -366,6 +369,7 @@ public class WorkOrderController {
     public PageInfo<WorkOrderBean> queryWorkOrders(HttpServletResponse response,
                                                    @RequestHeader(value = "Authorization", defaultValue = "Bearer token") String authentication,
                                                    @RequestHeader(value = "merchant") Long merchantIdInHeader,
+                                                   @RequestHeader(value = "renter") String renterInHeader,
                                                    @ApiParam(value="页码")@RequestParam(required=false) Integer pageIndex,
                                                    @ApiParam(value="每页记录数")@RequestParam(required=false) Integer pageSize,
                                                    @ApiParam(value="标题")@RequestParam(required=false) String title,
@@ -380,7 +384,8 @@ public class WorkOrderController {
                                                    @ApiParam(value="退款完成结束日期")@RequestParam(required=false) String refundTimeEnd,
                                                    @ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
                                                    @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd,
-                                                   @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status
+                                                   @ApiParam(value="工单状态码")@RequestParam(required=false) Integer status,
+                                                   @ApiParam(value="租户ID")@RequestParam(required=false) String renterId
                                                      ) {
 
         java.util.Date dateCreateTimeStart ;
@@ -409,18 +414,54 @@ public class WorkOrderController {
             return null;
         }
 
-        Long merchant;
-        if (0 != merchantIdInHeader) {
-            merchant = merchantIdInHeader;
+//        Long merchant;
+//        if (0 != merchantIdInHeader) {
+//            merchant = merchantIdInHeader;
+//        } else {
+//            merchant = merchantId;
+//        }
+
+        List<Long> merchantIds = null ;
+        if ("0".equals(renterInHeader)) {
+            // 平台管理员
+            // 获取所有租户下的所有商户信息
+            if (StringUtils.isNotBlank(iAppId)) {
+                merchantIds = vendorsRpcService.queryMerhantListByAppId(iAppId) ;
+            } else {
+                if (StringUtils.isNotBlank(renterId)) {
+                    merchantIds = vendorsRpcService.queryRenterMerhantList(renterId) ;
+                } else {
+                    merchantIds = vendorsRpcService.queryRenterMerhantList("") ;
+                }
+            }
+            //  判断商户中是否存在merchantId
+            if (merchantIds.contains(merchantId))  {
+                merchantIds = null;
+            }
         } else {
-            merchant = merchantId;
+            // 租户
+            if (merchantIdInHeader == 0) {
+                // 获取当前租户下的所有商户信息
+                if (StringUtils.isNotBlank(iAppId)) {
+                    merchantIds = vendorsRpcService.queryMerhantListByAppId(iAppId) ;
+                } else {
+                    merchantIds = vendorsRpcService.queryRenterMerhantList(renterInHeader) ;
+                }
+            } else {
+                // 租户的商户
+                merchantIds = vendorsRpcService.queryRenterMerhantList(renterInHeader) ;
+                if (merchantIds.contains(merchantIdInHeader)) {
+                    merchantId = merchantIdInHeader ;
+                }
+            }
         }
+
 
         PageInfo<WorkOrder> pages;
         try {
             pages = workOrderService.selectPage(index, limit, "id", "DESC",iAppId,
-                    title, receiverId, receiverName, receiverPhone, orderId, typeId, merchant,
-                    status, dateCreateTimeStart, dateCreateTimeEnd,dateRefundTimeStart, dateRefundTimeEnd);
+                    title, receiverId, receiverName, receiverPhone, orderId, typeId, merchantId,
+                    status, dateCreateTimeStart, dateCreateTimeEnd,dateRefundTimeStart, dateRefundTimeEnd, merchantIds);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

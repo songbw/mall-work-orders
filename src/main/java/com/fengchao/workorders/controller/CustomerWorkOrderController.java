@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -743,7 +742,7 @@ public class CustomerWorkOrderController {
                     null, null, orderId,
                     null, null, null,
                     null, null,
-                    null,null);
+                    null,null, null);
         }catch(Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

@@ -113,7 +113,8 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
                                            String orderId, Long merchantId,
                                            Integer typeId, Integer status,
                                            Date createTimeStart, Date createTimeEnd,
-                                           Date refundTimeBegin, Date refundTimeEnd
+                                           Date refundTimeBegin, Date refundTimeEnd,
+                                           List<Long> merchantIds
                                 ) throws Exception{
 
         WorkOrderExample example = new WorkOrderExample();
@@ -159,6 +160,9 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
         }
         if (null != createTimeEnd){
             criteria.andCreateTimeLessThanOrEqualTo(createTimeEnd);
+        }
+        if (merchantIds != null && merchantIds.size() > 0) {
+            criteria.andMerchantIdIn(merchantIds) ;
         }
         /*
         if (null != createTimeStart && null != createTimeEnd) {
