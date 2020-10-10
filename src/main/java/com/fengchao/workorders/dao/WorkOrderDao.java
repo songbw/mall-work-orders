@@ -36,7 +36,7 @@ public interface WorkOrderDao {
                                     Integer status,
                                     Date createTimeStart,
                                     Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd,
-    List<Long> merchantIds) throws Exception;
+    List<String> appIds) throws Exception;
 
     int countType(Integer typeId,
                   Date createTimeStart,

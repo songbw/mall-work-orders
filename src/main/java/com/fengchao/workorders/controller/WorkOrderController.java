@@ -421,39 +421,18 @@ public class WorkOrderController {
 //            merchant = merchantId;
 //        }
 
-        List<Long> merchantIds = null ;
+        List<String> appIds = null ;
         if ("0".equals(renterInHeader)) {
             // 平台管理员
             // 获取所有租户下的所有商户信息
-            if (StringUtils.isNotBlank(iAppId)) {
-                merchantIds = vendorsRpcService.queryMerhantListByAppId(iAppId) ;
-            } else {
+            if (StringUtils.isBlank(iAppId)) {
                 if (StringUtils.isNotBlank(renterId)) {
-                    merchantIds = vendorsRpcService.queryRenterMerhantList(renterId) ;
-                } else {
-                    merchantIds = vendorsRpcService.queryRenterMerhantList("") ;
+                    appIds = vendorsRpcService.queryAppIdList(renterId) ;
                 }
-            }
-            //  判断商户中是否存在merchantId
-            if (merchantIds.contains(merchantId))  {
-                merchantIds = null;
             }
         } else {
             // 租户
-            if (merchantIdInHeader == 0) {
-                // 获取当前租户下的所有商户信息
-                if (StringUtils.isNotBlank(iAppId)) {
-                    merchantIds = vendorsRpcService.queryMerhantListByAppId(iAppId) ;
-                } else {
-                    merchantIds = vendorsRpcService.queryRenterMerhantList(renterInHeader) ;
-                }
-            } else {
-                // 租户的商户
-                merchantIds = vendorsRpcService.queryRenterMerhantList(renterInHeader) ;
-                if (merchantIds.contains(merchantIdInHeader)) {
-                    merchantId = merchantIdInHeader ;
-                }
-            }
+            appIds = vendorsRpcService.queryAppIdList(renterInHeader) ;
         }
 
 
@@ -461,7 +440,7 @@ public class WorkOrderController {
         try {
             pages = workOrderService.selectPage(index, limit, "id", "DESC",iAppId,
                     title, receiverId, receiverName, receiverPhone, orderId, typeId, merchantId,
-                    status, dateCreateTimeStart, dateCreateTimeEnd,dateRefundTimeStart, dateRefundTimeEnd, merchantIds);
+                    status, dateCreateTimeStart, dateCreateTimeEnd,dateRefundTimeStart, dateRefundTimeEnd, appIds);
         }catch (Exception e) {
             StringUtil.throw400Exp(response, "400006:"+e.getMessage());
             return null;

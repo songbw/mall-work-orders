@@ -25,7 +25,7 @@ public interface IWorkOrderService {
     PageInfo<WorkOrder> selectPage(int page, int rows, String sort, String order, String iAppId,
                                    String title, String receiverId, String receiverName, String receiverPhone,
                                    String orderId, Integer typeId, Long merchantId, Integer status,
-                                   Date createTimeStart, Date createTimeEnd, Date refundTimeBegin, Date refundTimeEnd, List<Long> merchantIds) throws Exception;
+                                   Date createTimeStart, Date createTimeEnd, Date refundTimeBegin, Date refundTimeEnd, List<String> appIds) throws Exception;
 
     List<WorkOrder> selectByOrderIdList(List<String> orderIdList) throws Exception;
 

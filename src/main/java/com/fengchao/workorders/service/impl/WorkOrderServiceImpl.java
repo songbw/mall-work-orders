@@ -101,7 +101,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     public PageInfo<WorkOrder> selectPage(int pageIndex, int pageSize, String sort, String order,String iAppId,
                                           String title, String receiverId, String receiverName, String receiverPhone,
                                           String orderId, Integer typeId, Long merchantId,Integer status,
-                                         Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd, List<Long> merchantIds) throws Exception{
+                                         Date createTimeStart, Date createTimeEnd,Date refundTimeBegin, Date refundTimeEnd, List<String> appIds) throws Exception{
 
         PageInfo<WorkOrder> pageInfo;
         try {
@@ -109,7 +109,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
             pageInfo = workOrderDao.selectRange(pageIndex,pageSize,sort, order,iAppId,
                     title, receiverId, receiverPhone, receiverName,
                     orderId, merchantId, typeId, status,
-                    createTimeStart, createTimeEnd, refundTimeBegin, refundTimeEnd, merchantIds);
+                    createTimeStart, createTimeEnd, refundTimeBegin, refundTimeEnd, appIds);
         }catch (Exception e) {
             throw new Exception(e);
         }
