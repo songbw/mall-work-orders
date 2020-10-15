@@ -23,4 +23,7 @@ public interface VendorsServiceClient {
     @RequestMapping(value = "/renter/api/companiesByAppId/{appId}", method = RequestMethod.GET)
     OperaResponse<List<Long>> queryAppIdMerchantList(@PathVariable("appId") String appId);
 
+    @RequestMapping(value = "/renter/api/appId/byMerchant", method = RequestMethod.GET)
+    OperaResponse<List<String>> queryAppIdsByMerchantId(@RequestParam("merchantId") Long merchantId );
+
 }

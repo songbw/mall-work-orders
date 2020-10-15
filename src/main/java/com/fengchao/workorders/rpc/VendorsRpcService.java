@@ -85,4 +85,18 @@ public class VendorsRpcService {
         return renterCompanyList;
 
     }
+
+    public List<String> queryAppIdListByMerchantId(Long merchantId) {
+        List<String> appIds = new ArrayList<>();
+
+        OperaResponse<List<String>> response = vendorsServiceClient.queryAppIdsByMerchantId(merchantId) ;
+
+        log.info("vendor 服务 queryAppIdListByMerchantId 入参merchantId： {},  返回值：{}",merchantId, JSON.toJSONString(response));
+        if (response.getCode() == 200) {
+            appIds = response.getData() ;
+        } else {
+            log.warn("查询所有的商户信息 调用vendors rpc服务 错误!");
+        }
+        return appIds;
+    }
 }

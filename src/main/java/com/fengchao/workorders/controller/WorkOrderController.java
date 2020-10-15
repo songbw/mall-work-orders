@@ -425,7 +425,10 @@ public class WorkOrderController {
         if ("0".equals(renterInHeader)) {
             // 平台管理员
             // 获取所有租户下的所有商户信息
-            if (StringUtils.isBlank(iAppId)) {
+            if (merchantIdInHeader != 0) {
+                appIds = vendorsRpcService.queryAppIdListByMerchantId(merchantIdInHeader) ;
+            }
+            if (StringUtils.isBlank(iAppId) && merchantIdInHeader == 0) {
                 if (StringUtils.isNotBlank(renterId)) {
                     appIds = vendorsRpcService.queryAppIdList(renterId) ;
                 }
