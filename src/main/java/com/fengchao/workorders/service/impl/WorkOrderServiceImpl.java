@@ -282,6 +282,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         body.setSubOrderId(subOrderId);
         Map<String, Object> map = new HashedMap();
         map.put("merchant", 0);//fix it
+        map.put("renter", "0");//fix it
         if (null == orderService) {
             throw new Exception("未发现服务: order");
         }
