@@ -440,6 +440,11 @@ public class WorkOrderController {
 
 
         PageInfo<WorkOrder> pages;
+        if (appIds == null || appIds.size() <= 0) {
+            if (!"0".equals(renterInHeader) || merchantIdInHeader != 0) {
+                return new PageInfo<>(0, pageSize,index, null);
+            }
+        }
         try {
             pages = workOrderService.selectPage(index, limit, "id", "DESC",iAppId,
                     title, receiverId, receiverName, receiverPhone, orderId, typeId, merchantId,
