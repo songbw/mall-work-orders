@@ -427,6 +427,7 @@ public class WorkOrderController {
             // 获取所有租户下的所有商户信息
             if (merchantIdInHeader != 0) {
                 appIds = vendorsRpcService.queryAppIdListByMerchantId(merchantIdInHeader) ;
+                merchantId = merchantIdInHeader;
             }
             if (StringUtils.isBlank(iAppId) && merchantIdInHeader == 0) {
                 if (StringUtils.isNotBlank(renterId)) {
