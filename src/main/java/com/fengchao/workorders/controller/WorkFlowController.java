@@ -342,8 +342,9 @@ public class WorkFlowController {
         log.info("特别处理重新打开工单： {}",JSON.toJSONString(workOrder));
 
         Integer orderStatus = workOrder.getStatus();
-        if (!WorkOrderStatusType.CLOSED.getCode().equals(orderStatus)) {
-            StringUtil.throw400Exp(response, "400007:工单状态为处理完成时才可以重新打开");
+        if (!WorkOrderStatusType.CLOSED.getCode().equals(orderStatus) &&
+                !WorkOrderStatusType.REJECT.getCode().equals(orderStatus)) {
+            StringUtil.throw400Exp(response, "400007:工单状态为终结态时才可以重新打开");
             return result;
         }
 

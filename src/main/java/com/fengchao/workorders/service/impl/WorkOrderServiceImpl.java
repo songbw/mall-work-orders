@@ -92,6 +92,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         if (null == workOrder) {
             return;
         }
+        workOrder.setUpdateTime(new Date());
         workOrderDao.updateByPrimaryKeySelective(workOrder);
         //System.out.println("updated workOrder for: " + workOrder.getId());
         log.info("updated user for: " + workOrder.getId());
