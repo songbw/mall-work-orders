@@ -187,7 +187,7 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
     }
 
     @Override
-    public int countType(Integer typeId, Date createTimeStart, Date createTimeEnd) {
+    public int countType(Integer typeId, Date createTimeStart, Date createTimeEnd, List<String> appIds) {
         WorkOrderExample example = new WorkOrderExample();
         WorkOrderExample.Criteria criteria = example.createCriteria();
         WorkOrderExample.Criteria orCriteria = example.createCriteria();
@@ -201,6 +201,10 @@ public class WorkOrderDaoImpl implements WorkOrderDao {
             orCriteria.andCreateTimeEqualTo(createTimeEnd);
             example.or(criteria);
             example.or(orCriteria);
+        }
+        if (appIds != null && appIds.size() > 0) {
+            criteria.andIAppIdIn(appIds);
+            orCriteria.andIAppIdIn(appIds);
         }
 
         return (int)mapper.countByExample(example);

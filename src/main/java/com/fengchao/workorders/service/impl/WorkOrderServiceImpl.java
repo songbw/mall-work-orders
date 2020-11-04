@@ -14,6 +14,7 @@ import com.fengchao.workorders.mapper.WorkOrderMapper;
 import com.fengchao.workorders.model.WorkFlow;
 import com.fengchao.workorders.model.WorkOrder;
 import com.fengchao.workorders.model.WorkOrderExample;
+import com.fengchao.workorders.rpc.VendorsRpcService;
 import com.fengchao.workorders.service.IWorkOrderService;
 import com.fengchao.workorders.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,6 +43,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     private WorkOrderMapper mapper;
     private IAoYiClient aoYiClient;
     private WorkFlowMapper workFlowMapper ;
+    private VendorsRpcService vendorsRpcService ;
     // @Autowired
     // private RedisTemplate<Object, Object> redisTemplate;
 
@@ -50,7 +53,8 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                                 IGuanAiTongClient guanAiTongClient,
                                 IAoYiClient aoYiClient,
                                 WorkFlowMapper workFlowMapper,
-                                OrderService orderService
+                                OrderService orderService,
+                                VendorsRpcService vendorsRpcService
                               ) {
         this.workOrderDao = workOrderDao;
         //this.restTemplate = restTemplate;
@@ -59,6 +63,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         this.mapper = mapper;
         this.aoYiClient = aoYiClient;
         this.workFlowMapper = workFlowMapper ;
+        this.vendorsRpcService = vendorsRpcService;
     }
 
     @Override
@@ -161,17 +166,27 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
     }
 
     @Override
-    public int countReturn(Date createTimeStart, Date createTimeEnd) {
+    public int countReturn(String renterId, Date createTimeStart, Date createTimeEnd) {
+        List<String> appIds = null;
+        if (!StringUtils.isEmpty(renterId) && "0".equals(renterId)) {
+            // 查询APPId
+            appIds = vendorsRpcService.queryAppIdList(renterId) ;
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        if (appIds != null && appIds.size() > 0) {
+            map.put("appIds", appIds);
+        }
+
         int typeId;
 
         typeId = WorkOrderType.RETURN.getCode();
-        int c1 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
+        int c1 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd, appIds);
 
         typeId = WorkOrderType.REFUND.getCode();
-        int c2 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
+        int c2 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd, appIds);
 
         typeId = WorkOrderType.EXCHANGE.getCode();
-        int c3 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd);
+        int c3 = workOrderDao.countType(typeId,createTimeStart, createTimeEnd, appIds);
 
         return c1 + c2 + c3;
     }

@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fengchao.workorders.bean.*;
 import com.fengchao.workorders.feign.IAggPayClient;
-import com.fengchao.workorders.feign.VendorsServiceClient;
 import com.fengchao.workorders.model.*;
 //import com.fengchao.workorders.service.TokenAuthenticationService;
 import com.fengchao.workorders.rpc.VendorsRpcService;
@@ -903,7 +902,8 @@ public class WorkOrderController {
     @ApiResponses({ @ApiResponse(code = 400, message = "failed to find record") })
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("work_orders/refunds")
-    public ResultObject<ReturnCount> countReturn(@ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
+    public ResultObject<ReturnCount> countReturn(@RequestHeader("renter") String renterId,
+                                                 @ApiParam(value="开始日期")@RequestParam(required=false) String timeStart,
                                                  @ApiParam(value="结束日期")@RequestParam(required=false) String timeEnd
                                                 ) {
 
@@ -927,7 +927,7 @@ public class WorkOrderController {
         }
         int countReturn;
         try {
-            countReturn = workOrderService.countReturn(dateCreateTimeStart, dateCreateTimeEnd);
+            countReturn = workOrderService.countReturn(renterId, dateCreateTimeStart, dateCreateTimeEnd);
         }catch (Exception e) {
             result.setCode(400);
             result.setMsg("400006:"+e.getMessage());

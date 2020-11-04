@@ -40,7 +40,7 @@ public interface WorkOrderDao {
 
     int countType(Integer typeId,
                   Date createTimeStart,
-                  Date createTimeEnd);
+                  Date createTimeEnd, List<String> appIds);
 
     WorkOrder selectByRefundNo(String refundNo);
     WorkOrder selectByOutRefundNo(String outRefundNo);

@@ -47,7 +47,7 @@ public interface IWorkOrderService {
      */
     Integer queryRefundUserCount(Long merchantId) throws Exception;
 
-    int countReturn(Date createTimeStart, Date createTimeEnd) throws Exception;
+    int countReturn(String renterId, Date createTimeStart, Date createTimeEnd) throws Exception;
 
     WorkOrder getValidNumOfOrder(String openId, String sbuOrderId) throws Exception;
 
