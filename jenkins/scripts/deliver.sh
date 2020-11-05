@@ -2,8 +2,8 @@
 
 set user smartadmin
 set passwd Smartautotech@123
-set host 119.3.249.174
-set port 22205
+set host 121.36.52.130
+set port 22051
 set src_dir ./target/
 set tag_dir /data/server/workorders/userapps
 set name workorders-0.0.1-SNAPSHOT.jar
