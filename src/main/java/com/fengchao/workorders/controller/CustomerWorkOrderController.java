@@ -398,6 +398,7 @@ public class CustomerWorkOrderController {
         BigDecimal decCouponDiscount = new BigDecimal(0);
         WorkOrder workOrder = new WorkOrder();
 
+        Integer refundedFen = 0;
         WorkOrder selectedWO;
         try {
             selectedWO = workOrderService.getValidNumOfOrder(customer, orderId);
@@ -406,11 +407,13 @@ public class CustomerWorkOrderController {
             return result;
         }
 
-        boolean isFull = (null != selectedWO) &&
-                (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum());
-        if (isFull) {
-            StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
-            return result;
+        if(null != selectedWO) {
+            boolean isFull = (0 >= selectedWO.getReturnedNum() || num > selectedWO.getReturnedNum());
+            if (isFull) {
+                StringUtil.throw400Exp(response, "400006:所属订单退货数量已满");
+                return result;
+            }
+            refundedFen = Integer.valueOf(FeeUtil.Yuan2Fen(String.valueOf(selectedWO.getRefundAmount())));
         }
 
         log.info("准备新建工单, 子订单号= {}" ,orderId);
@@ -445,6 +448,7 @@ public class CustomerWorkOrderController {
         Integer skuCouponDiscount = json.getInteger("skuCouponDiscount");
         if (null == unitPrice) {
             log.info("searchOrder info: salePrice is null");
+            StringUtil.throw400Exp(response, "400008: searchOrder, 获取售价失败");
         } else {
             workOrder.setSalePrice(unitPrice);
         }
@@ -478,10 +482,17 @@ public class CustomerWorkOrderController {
         if (null != fare) {
             workOrder.setFare(fare);
         }
+        workOrder.setReturnedNum(num);
         Integer paymentAmount = json.getInteger("paymentAmount");
         if (null != paymentAmount) {
             workOrder.setPaymentAmount(paymentAmount);
         }
+        Integer saleFen = Integer.valueOf((FeeUtil.Yuan2Fen(String.valueOf(unitPrice))));
+        Integer wantRefundFen = num*saleFen;
+        if(paymentAmount - refundedFen < wantRefundFen){
+            wantRefundFen = paymentAmount - refundedFen;
+        }
+        workOrder.setRefundAmount(Float.valueOf(FeeUtil.Fen2Yuan(String.valueOf(wantRefundFen))));
 
         workOrder.setiAppId(iAppId);
         if (null != tAppId && !tAppId.isEmpty()) {
@@ -490,7 +501,7 @@ public class CustomerWorkOrderController {
         workOrder.setTitle(title);
         workOrder.setDescription(description);
         workOrder.setOrderId(orderId);
-        workOrder.setReturnedNum(num);
+
         /*对怡亚通订单需要特别处理
         * merchantId = 4 为怡亚通订单
         * 如果subStatus = 1, 调用postRefundOnly 未发货退款
@@ -531,6 +542,7 @@ public class CustomerWorkOrderController {
         if (WorkOrderType.EXCHANGE.getCode().equals(typeId)) {
             workOrder.setRefundAmount(0.00f);
         } else {
+            /*
             BigDecimal decUnitPrice = new BigDecimal(workOrder.getSalePrice());
             BigDecimal decNum = new BigDecimal(num);
             BigDecimal decRefundAmount = decUnitPrice.multiply(decNum);
@@ -538,6 +550,9 @@ public class CustomerWorkOrderController {
             decRefundAmount = decRefundAmount.subtract(decCouponDiscount);
             //log.info("=== decRefundAmount = {}", decRefundAmount);
             workOrder.setRefundAmount(decRefundAmount.floatValue());
+            */
+            //String salePrice = FeeUtil.Yuan2Fen(String.valueOf(workOrder.getSalePrice()));
+           // workOrder.setRefundAmount(Float.valueOf(FeeUtil.Fen2Yuan(String.valueOf(num*(Integer.valueOf(salePrice))))));
         }
         workOrder.setTypeId(typeId);
         workOrder.setMerchantId(merchantId);

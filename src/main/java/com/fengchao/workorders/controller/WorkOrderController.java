@@ -139,7 +139,7 @@ public class WorkOrderController {
                 if (AggPayRefundStatusEnum.SUCCESS.getCode().equals(b.getStatus())) {
                     itemOk += 1;
                     if (null != b.getTradeDate() && 0 < b.getTradeDate().compareTo(endTime)){
-                        endTime = b.getCreateDate();
+                        endTime = DateUtil.normalizeString(b.getCreateDate(),false);
                     }
                 } else {
                     itemFailed += 1;

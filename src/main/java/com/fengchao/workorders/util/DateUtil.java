@@ -30,6 +30,47 @@ public class DateUtil {
 
     public static final String TIME_HH_mm_ss = "HH:mm:ss";
 
+    public static String
+    normalizeString(String timeString, boolean canReturnNull){
+        if(StringUtils.isBlank(timeString)){
+            if(canReturnNull) {
+                return null;
+            }else{
+                return nowDateTimeString();
+            }
+        }
+        timeString = timeString.trim();
+        int theLength = timeString.length();
+        if(19 == theLength){
+            if(timeString.contains("T")){
+                return timeString.substring(0,10)+" "+timeString.substring(11);
+            }else{
+                return timeString;
+            }
+        }else if(14==theLength){
+            StringBuilder sb = new StringBuilder();
+            sb.append(timeString.substring(0,4));
+            sb.append("-");
+            sb.append(timeString.substring(4,6));
+            sb.append("-");
+            sb.append(timeString.substring(6,8));
+            sb.append(" ");
+            sb.append(timeString.substring(8,10));
+            sb.append(":");
+            sb.append(timeString.substring(10,12));
+            sb.append(":");
+            sb.append(timeString.substring(12));
+            return sb.toString();
+
+        }else {
+            if(canReturnNull) {
+                return null;
+            }else{
+                return nowDateTimeString();
+            }
+        }
+    }
+
     /**
      * 将一个日期加上或减去 seocndsToAdd 妙数,得出新的日期
      *
@@ -180,6 +221,11 @@ public class DateUtil {
         return formatDate;
     }
 
+    public static
+    String nowDateTimeString() {
+        return nowDate(DATE_YYYY_MM_DD_HH_MM_SS);
+    }
+
     /**
      * 获取当前的日期时间
      *
@@ -304,8 +350,5 @@ public class DateUtil {
         return localDateTime1.compareTo(localDateTime2);
     }
 
-    public static void main(String args[]) {
-        System.out.println(convertToLocalTime("21:42:58", DateUtil.TIME_HH_mm_ss).toString());
-    }
 
 }

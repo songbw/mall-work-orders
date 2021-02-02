@@ -246,6 +246,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
 
         int usedNum = 0;
         int goodsNum = 0;
+        int refundFee = 0;
         String open_id = baseWO.getReceiverId();
         if (openId.equals(open_id) && null != baseWO.getOrderGoodsNum()) {
             goodsNum = baseWO.getOrderGoodsNum();
@@ -257,6 +258,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
                     && null != wo.getStatus()
                     ) {
                 usedNum += wo.getReturnedNum();
+                refundFee += Integer.valueOf(FeeUtil.Yuan2Fen(String.valueOf(wo.getRefundAmount())));
             }
         }
 
@@ -268,6 +270,7 @@ public class WorkOrderServiceImpl implements IWorkOrderService {
         //list中第一个记录作为传递信息对象，临时复用returnedNum存储可申请退款的商品数量
         //该返回对象不可用于判定申请退款的商品数量外的其他目的
         workOrder.setReturnedNum(validNum);
+        workOrder.setRefundAmount(Float.valueOf(FeeUtil.Fen2Yuan(String.valueOf(refundFee))));
         log.info("getValidNumOfOrder : {}",JSON.toJSONString(workOrder));
         return workOrder;
 
